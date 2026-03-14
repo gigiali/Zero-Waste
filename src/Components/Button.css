@@ -1,0 +1,113 @@
+/* Base button styles */
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: Arial, sans-serif;
+}
+
+/* Primary blue button (Sign up with email) */
+.btn.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn.btn-primary:hover {
+  background-color: #0056b3;
+}
+
+/* Secondary white button (Continue with Google) */
+.btn.btn-secondary {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn.btn-secondary:hover {
+  background-color: #f8f9fa;
+}
+
+/* Green primary button (Sign In, Near Me) */
+.btn.btn-success {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn.btn-success:hover {
+  background-color: #218838;
+}
+
+/* Red danger button (Delete) */
+.btn.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* Filter buttons */
+.btn.btn-filter {
+  background-color: #f8f9fa;
+  color: #333;
+  border: 1px solid #dee2e6;
+  padding: 8px 16px;
+  font-size: 14px;
+  border-radius: 20px;
+}
+
+.btn.btn-filter:hover {
+  background-color: #e9ecef;
+}
+
+.btn.btn-filter.active {
+  background-color: #f8f9fa;
+  color: #28a745;
+  border-color: #dee2e6;
+}
+
+/* Google button */
+.btn.btn-google {
+  background-color: white;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.btn.btn-google:hover {
+  background-color: #f8f9fa;
+}
+
+/* Text-only buttons */
+.btn.btn-text {
+  background-color: transparent;
+  color: #333;
+  border: none;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.btn.btn-text:hover {
+  text-decoration: underline;
+  background-color: transparent;
+}
+
+/* Small button variant for filter buttons */
+.btn-small {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+/* Large button variant */
+.btn-large {
+  padding: 16px 32px;
+  font-size: 18px;
+}
