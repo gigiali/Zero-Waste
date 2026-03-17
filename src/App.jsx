@@ -1,25 +1,25 @@
 import React from "react";
-import Button from "./components/Button.jsx";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import SignIn from "./pages/SignIn";
+import SignUp from "./pages/SignUp";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 
 function App() {
   return (
-    <div>
-      <Button text="Sign In" variant="success" />
-      <Button text="Create account" variant="success" />
-      <Button text="Reserve Now" variant="success" />
-      <Button text="All" variant="filter" />
-      <Button text="Restaurant" variant="filter" />
-      <Button text="Bakery" variant="filter" />
-      <Button text="Supermarket" variant="filter" />
-      <Button text="Hotel" variant="filter" />
-      <Button text="Cancel" variant="secondary" />
-      <Button text="Create Offer" variant="success" />
-      <Button text="Call Business" variant="success" />
-      <Button text="Browse More Offers" variant="secondary" />
-      <Button text="Add New Offer" variant="success" icon="+" />
-      <Button text="Edit" variant="secondary" />
-      <Button text="Delete" variant="danger" />
-    </div>
+    <BrowserRouter>
+
+      <Routes>
+
+        <Route path="/" element={<SignIn />} />
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+
+      </Routes>
+
+    </BrowserRouter>
   );
 }
 

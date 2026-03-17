@@ -55,6 +55,67 @@
   background-color: #c82333;
 }
 
+/* Filter buttons (All, Restaurant, Hotel, etc.) */
+.btn.btn-filter {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #dee2e6;
+}
+
+.btn.btn-filter:hover {
+  background-color: #e9ecef;
+}
+
+.btn.btn-filter.active {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
+}
+
+/* Text-only button */
+.btn.btn-text {
+  background: none;
+  color: #007bff;
+  padding: 8px 16px;
+}
+
+.btn.btn-text:hover {
+  text-decoration: underline;
+}
+
+/* Google button */
+.btn.btn-google {
+  background-color: #4285f4;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn.btn-google:hover {
+  background-color: #357ae8;
+}
+
+/* Coffee Shop button */
+.btn.btn-coffee {
+  background-color: #6f4e37;
+  color: white;
+}
+
+.btn.btn-coffee:hover {
+  background-color: #5a3d2b;
+}
+
+/* Dessert Shop button */
+.btn.btn-dessert {
+  background-color: #e91e63;
+  color: white;
+}
+
+.btn.btn-dessert:hover {
+  background-color: #d32f2f;
+}
+
 /* Filter buttons */
 .btn.btn-filter {
   background-color: #f8f9fa;

@@ -1,5 +1,5 @@
 import React from "react";
-import './Button.css';
+import "./Button.css";
 function Button({ text, variant = "primary", icon = null, active = false, onClick }) {
   const getButtonClasses = () => {
     let classes = "btn";
