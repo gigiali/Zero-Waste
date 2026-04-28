@@ -1,30 +1,38 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Button from "../Components/Button";
 import "./SignUp.css";
 
 function SignUp() {
   const [activeRole, setActiveRole] = useState("customer");
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    fullName: "",
+    name: "",
     email: "",
     password: "",
+    phone: "",
     address: "",
-    businessName: "",
-    businessType: "",
-    agreeToTerms: false
+    accepted_terms: false,
+    role: "customer"
   });
   const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
 
+  const validatePhone = (phone) => {
+    const phoneRegex = /^[0-9]+$/;
+    return phoneRegex.test(phone) && phone.length >= 10;
+  };
+
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.fullName.trim()) {
-      newErrors.fullName = "Full name is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Full name is required";
     }
 
     if (!formData.email.trim()) {
@@ -39,31 +47,107 @@ function SignUp() {
       newErrors.password = "Password must be at least 6 characters";
     }
 
-    if (activeRole === "customer" && !formData.address.trim()) {
+    if (!formData.phone.trim()) {
+      newErrors.phone = "Phone number is required";
+    } else if (!validatePhone(formData.phone)) {
+      newErrors.phone = "Please enter a valid phone number";
+    }
+
+    if (!formData.address.trim()) {
       newErrors.address = "Address is required";
     }
 
-    if (activeRole === "business" && !formData.businessName.trim()) {
-      newErrors.businessName = "Business name is required";
-    }
-
-    if (activeRole === "business" && !formData.businessType) {
-      newErrors.businessType = "Business type is required";
-    }
-
-    if (!formData.agreeToTerms) {
-      newErrors.agreeToTerms = "You must agree to the Terms of Service and Privacy Policy";
+    if (!formData.accepted_terms) {
+      newErrors.accepted_terms = "You must agree to the Terms of Service and Privacy Policy";
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log("Sign up successful", { ...formData, role: activeRole });
-      // Handle sign up logic here
+      setIsLoading(true);
+      
+      try {
+        // Prepare form data for API
+        const submitData = {
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          password_confirmation: formData.password,
+          address: formData.address,
+          phone: formData.phone,
+          role: formData.role,
+          accepted_terms: formData.accepted_terms
+        };
+
+        console.log("Submitting registration data:", submitData);
+
+        // Make API call to backend
+        const response = await fetch('https://stagnate-deferred-pork.ngrok-free.dev/api/register', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+          },
+          body: JSON.stringify(submitData)
+        });
+
+        console.log('Response status:', response.status);
+        
+        const responseData = await response.json();
+        console.log('Response data:', responseData);
+
+        if (response.ok) {
+          // Success
+          if (responseData.token) {
+            localStorage.setItem('token', responseData.token);
+          }
+          
+          // Store user data
+          if (responseData.user) {
+            localStorage.setItem('user', JSON.stringify(responseData.user));
+            localStorage.setItem('userRole', responseData.user.role);
+          }
+          
+          // Redirect based on role
+          console.log('Checking redirect - formData.role:', formData.role);
+          console.log('Checking redirect - activeRole:', activeRole);
+          
+          if (formData.role === 'vendor') {
+            console.log('Redirecting vendor to business-setup');
+            navigate('/business-setup'); // Vendor goes to Business Setup first
+          } else {
+            console.log('Redirecting customer to home');
+            navigate('/'); // Customer goes to home
+          }
+        } else {
+          // Handle errors
+          if (response.status === 422) {
+            // Validation errors
+            if (responseData.errors) {
+              const newErrors = {};
+              Object.keys(responseData.errors).forEach(field => {
+                newErrors[field] = responseData.errors[field][0];
+              });
+              setErrors(newErrors);
+            } else {
+              setErrors({ general: responseData.message || "Validation failed. Please check your inputs." });
+            }
+          } else {
+            // Other errors
+            setErrors({ general: responseData.message || "Registration failed. Please try again." });
+          }
+        }
+        
+      } catch (error) {
+        console.error('Registration error:', error);
+        setErrors({ general: "Registration failed. Please check your connection and try again." });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -75,58 +159,50 @@ function SignUp() {
     }
   };
 
+  const handleRoleChange = (role) => {
+    setActiveRole(role);
+    setFormData(prev => ({ ...prev, role: role === "business" ? "vendor" : "customer" }));
+  };
+
   return (
     <div className="signup-page">
       <div className="signup-container">
-        {/* Title */}
-        <div className="signup-header">
-          <h2>Create Account</h2>
-          <p>{activeRole === "business" ? "List your business and connect with customers" : "Join our community today"}</p>
+        {/* Green Header Section */}
+        <div className="signup-header-section">
+          <div className="header-content">
+            <h2>Create Account</h2>
+            <p>{activeRole === "business" ? "List your business and connect with customers" : "Join our community today"}</p>
+          </div>
         </div>
 
-        {/* Business/Customer Switcher */}
-        <div className="role-switcher">
-          <button 
-            className={`role-btn ${activeRole === "customer" ? "active" : ""}`}
-            onClick={() => setActiveRole("customer")}
-          >
-            Customer
-          </button>
-          <button 
-            className={`role-btn ${activeRole === "business" ? "active" : ""}`}
-            onClick={() => setActiveRole("business")}
-          >
-            Business
-          </button>
-        </div>
+        {/* White Form Section */}
+        <div className="signup-form-section">
+          {/* Form */}
+          <form className="signup-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Full Name</label>
+              <input
+                type="text"
+                placeholder="Enter your full name"
+                className="form-input"
+                value={formData.name}
+                onChange={(e) => handleInputChange("name", e.target.value)}
+              />
+              {errors.name && <span className="error-text">{errors.name}</span>}
+            </div>
 
-        {/* Form */}
-        <form className="signup-form" onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label>Full Name</label>
-            <input
-              type="text"
-              placeholder="Enter your full name"
-              className="form-input"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange("fullName", e.target.value)}
-            />
-            {errors.fullName && <span className="error-text">{errors.fullName}</span>}
-          </div>
+            <div className="form-group">
+              <label>Email</label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="form-input"
+                value={formData.email}
+                onChange={(e) => handleInputChange("email", e.target.value)}
+              />
+              {errors.email && <span className="error-text">{errors.email}</span>}
+            </div>
 
-          <div className="form-group">
-            <label>Email</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="form-input"
-              value={formData.email}
-              onChange={(e) => handleInputChange("email", e.target.value)}
-            />
-            {errors.email && <span className="error-text">{errors.email}</span>}
-          </div>
-
-          {activeRole === "customer" && (
             <div className="form-group">
               <label>Password</label>
               <input
@@ -138,9 +214,7 @@ function SignUp() {
               />
               {errors.password && <span className="error-text">{errors.password}</span>}
             </div>
-          )}
 
-          {activeRole === "customer" && (
             <div className="form-group">
               <label>Address</label>
               <input
@@ -152,76 +226,65 @@ function SignUp() {
               />
               {errors.address && <span className="error-text">{errors.address}</span>}
             </div>
-          )}
 
-          {activeRole === "business" && (
             <div className="form-group">
-              <label>Password</label>
+              <label>Phone Number</label>
               <input
-                type="password"
-                placeholder="Create a strong password"
+                type="tel"
+                placeholder="Enter your phone number"
                 className="form-input"
-                value={formData.password}
-                onChange={(e) => handleInputChange("password", e.target.value)}
+                value={formData.phone}
+                onChange={(e) => handleInputChange("phone", e.target.value)}
               />
-              {errors.password && <span className="error-text">{errors.password}</span>}
+              {errors.phone && <span className="error-text">{errors.phone}</span>}
             </div>
-          )}
 
-          {activeRole === "business" && (
-            <div className="form-group">
-              <label>Business Name</label>
-              <input
-                type="text"
-                placeholder="Enter your business name"
-                className="form-input"
-                value={formData.businessName}
-                onChange={(e) => handleInputChange("businessName", e.target.value)}
-              />
-              {errors.businessName && <span className="error-text">{errors.businessName}</span>}
+            {/* I am a Section */}
+            <div className="role-selection">
+              <h3 className="role-selection-title">I am a</h3>
+              <div className="role-buttons">
+                <button 
+                  type="button" // Fix: Add type="button" to prevent form submission
+                  className={`role-select-btn ${activeRole === "business" ? "active-business" : ""}`}
+                  onClick={() => handleRoleChange("business")}
+                >
+                  Business
+                </button>
+                <button 
+                  type="button" // Fix: Add type="button" to prevent form submission
+                  className={`role-select-btn ${activeRole === "customer" ? "active-customer" : ""}`}
+                  onClick={() => handleRoleChange("customer")}
+                >
+                  Customer
+                </button>
+              </div>
             </div>
-          )}
 
-          {activeRole === "business" && (
-            <div className="form-group">
-              <label>Business Type</label>
-              <select 
-                className="form-input"
-                value={formData.businessType}
-                onChange={(e) => handleInputChange("businessType", e.target.value)}
-              >
-                <option value="">Select business type</option>
-                <option value="restaurant">Restaurant</option>
-                <option value="supermarket">Supermarket</option>
-                <option value="coffee-shop">Coffee Shop</option>
-                <option value="hotel">Hotel</option>
-                <option value="bakery">Bakery</option>
-                <option value="dessert-shop">Dessert Shop</option>
-              </select>
-              {errors.businessType && <span className="error-text">{errors.businessType}</span>}
+            {/* Terms & Policy - last before Create Account */}
+            <div className="form-options">
+              <label className="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  checked={formData.accepted_terms}
+                  onChange={(e) => handleInputChange("accepted_terms", e.target.checked)}
+                />
+                <span>
+                  I agree to <a href="/terms" className="terms-link">Terms of Service</a> and <a href="/privacy" className="privacy-link">Privacy Policy</a>
+                </span>
+              </label>
             </div>
-          )}
+            {errors.accepted_terms && <span className="error-text">{errors.accepted_terms}</span>}
+            
+            {/* General Error Display */}
+            {errors.general && <div className="general-error">{errors.general}</div>}
 
-          <div className="form-options">
-            <label className="checkbox-label">
-              <input 
-                type="checkbox" 
-                checked={formData.agreeToTerms}
-                onChange={(e) => handleInputChange("agreeToTerms", e.target.checked)}
-              />
-              <span>
-                I agree to the <a href="/terms" className="terms-link">Terms of Service</a> and <a href="/privacy" className="privacy-link">Privacy Policy</a>
-              </span>
-            </label>
+            <Button text={isLoading ? "Creating Account..." : "Create Account"} variant="success" className="signup-btn" disabled={isLoading} />
+
+          </form>
+
+          <div className="signin-prompt">
+            Already have an account? <a href="/signin">Sign In</a>
           </div>
-          {errors.agreeToTerms && <span className="error-text">{errors.agreeToTerms}</span>}
-
-          <Button text="Create Account" variant="success" className="signup-btn" />
-
-        </form>
-
-        <div className="signin-prompt">
-          Already have an account? <a href="/signin">Sign In</a>
         </div>
       </div>
     </div>

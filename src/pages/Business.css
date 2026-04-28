@@ -1,0 +1,373 @@
+.business-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.business-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  animation: slideUp 0.6s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Loading State */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  color: #666;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Business Header */
+.business-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 40px 30px;
+  color: white;
+  text-align: center;
+}
+
+.business-header h2 {
+  font-size: 28px;
+  font-weight: 600;
+  margin: 0 0 10px 0;
+}
+
+.business-header p {
+  font-size: 16px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+/* Business Content */
+.business-content {
+  padding: 30px;
+}
+
+.welcome-section {
+  margin-bottom: 40px;
+  text-align: center;
+}
+
+.welcome-section h3 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 10px 0;
+}
+
+.welcome-section p {
+  font-size: 16px;
+  color: #666;
+  margin: 0;
+}
+
+.business-info {
+  margin-bottom: 40px;
+}
+
+.info-card {
+  background: #f8f9fa;
+  border-radius: 15px;
+  padding: 25px;
+  border-left: 4px solid #667eea;
+}
+
+.info-card h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.info-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.info-item:last-child {
+  border-bottom: none;
+}
+
+.info-item label {
+  font-weight: 600;
+  color: #555;
+  min-width: 80px;
+}
+
+.info-item span {
+  color: #333;
+  font-weight: 500;
+}
+
+.business-actions {
+  margin-bottom: 30px;
+}
+
+.business-actions h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.action-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 15px;
+}
+
+.action-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  color: #333;
+}
+
+.action-button:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.1);
+}
+
+.action-icon {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.action-button span:last-child {
+  font-weight: 500;
+}
+
+/* Vendor Offers Section */
+.vendor-offers-section {
+  margin-bottom: 30px;
+}
+
+.vendor-offers-section h4 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #333;
+  margin: 0 0 20px 0;
+}
+
+.offers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.offer-card {
+  background: white;
+  border: 2px solid #e0e0e0;
+  border-radius: 15px;
+  padding: 20px;
+  transition: all 0.3s ease;
+}
+
+.offer-card:hover {
+  border-color: #667eea;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.1);
+}
+
+.offer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.offer-header h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+}
+
+.offer-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.offer-status.active {
+  background: #28a745;
+  color: white;
+}
+
+.offer-status.pending {
+  background: #ffc107;
+  color: #333;
+}
+
+.offer-status.inactive {
+  background: #dc3545;
+  color: white;
+}
+
+.offer-details p {
+  font-size: 14px;
+  color: #666;
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+.offer-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+}
+
+.offer-price {
+  font-weight: 600;
+  color: #28a745;
+}
+
+.offer-date {
+  color: #999;
+}
+
+.no-offers {
+  text-align: center;
+  padding: 40px 20px;
+  background: #f8f9fa;
+  border-radius: 15px;
+  border: 2px dashed #e0e0e0;
+}
+
+.no-offers p {
+  color: #666;
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Business Footer */
+.business-footer {
+  padding: 20px 30px;
+  background: #f8f9fa;
+  text-align: center;
+}
+
+.logout-button {
+  padding: 10px 20px;
+  background: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.logout-button:hover {
+  background: #c82333;
+  transform: translateY(-1px);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .business-page {
+    padding: 10px;
+  }
+
+  .business-container {
+    border-radius: 15px;
+  }
+
+  .business-header {
+    padding: 30px 20px;
+  }
+
+  .business-header h2 {
+    font-size: 24px;
+  }
+
+  .business-content {
+    padding: 20px;
+  }
+
+  .action-grid {
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .business-page {
+    padding: 0;
+  }
+
+  .business-container {
+    border-radius: 0;
+    min-height: 100vh;
+  }
+
+  .business-header {
+    padding: 20px 15px;
+  }
+
+  .business-content {
+    padding: 15px;
+  }
+
+  .business-footer {
+    padding: 15px;
+  }
+
+  .info-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
+
+  .action-grid {
+    grid-template-columns: 1fr;
+  }
+}

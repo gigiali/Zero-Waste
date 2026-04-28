@@ -4,6 +4,8 @@ import SignIn from "./pages/SignIn";
 import SignUp from "./pages/SignUp";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import BusinessSetup from "./pages/BusinessSetup";
+import Business from "./pages/Business";
 
 function App() {
   return (
@@ -16,6 +18,8 @@ function App() {
         <Route path="/signup" element={<SignUp />} />
         <Route path="/terms" element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/business-setup" element={<BusinessSetup />} />
+        <Route path="/business" element={<Business />} />
 
       </Routes>
 
