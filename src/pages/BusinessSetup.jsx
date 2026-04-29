@@ -132,7 +132,7 @@ function BusinessSetup() {
         console.log('Outgoing payload:', debugPayload);
         
         // Make API call
-        const response = await fetch('http://127.0.0.1:8000/api/vendor/complete-setup', {
+        const response = await fetch('https://stagnate-deferred-pork.ngrok-free.dev/api/vendor/complete-setup', {
           method: 'POST',
           headers: {
             'Accept': 'application/json',

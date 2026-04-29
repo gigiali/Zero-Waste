@@ -1,280 +1,339 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import Navigation from "../Components/Navigation";
 import "./Business.css";
 
-function Business() {
-  const navigate = useNavigate();
-  const [profileData, setProfileData] = useState(null);
-  const [vendorOffers, setVendorOffers] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+const Business = () => {
+  const [showModal, setShowModal] = useState(false);
+  const [offers, setOffers] = useState([
+    {
+      id: 1,
+      title: "Fresh Bread & Pastries Box",
+      description: "Assorted fresh bread and pastries from today",
+      originalPrice: 15.99,
+      discountPrice: 5.99,
+      quantity: 8,
+      expiresIn: "2h 30m",
+      status: "Active",
+    },
+    {
+      id: 2,
+      title: "Croissant Bundle",
+      description: "6 butter croissants",
+      originalPrice: 12.0,
+      discountPrice: 4.99,
+      quantity: 0,
+      expiresIn: "3h",
+      status: "Expired",
+    },
+  ]);
 
-  useEffect(() => {
-    // Check authentication and role
-    const checkAuth = () => {
-      try {
-        const token = localStorage.getItem('token');
-        const userRole = localStorage.getItem('userRole');
-        
-        console.log('Business Page Auth Check:');
-        console.log('Token exists:', !!token);
-        console.log('User role:', userRole);
-        
-        if (!token || userRole !== 'vendor') {
-          console.log('Authentication failed - redirecting to signin');
-          navigate('/signin');
-          return;
-        }
-        
-        console.log('Authentication passed - loading profile from backend');
-        // Load profile data from backend API
-        loadProfileData(token);
-        // Load vendor offers from API
-        loadVendorOffers(token);
-      } catch (error) {
-        console.error('Auth check error:', error);
-        navigate('/signin');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const [orders] = useState([
+    {
+      id: "ORD123",
+      offer: "Fresh Bread Bundle",
+      customer: "John Doe",
+      amount: "$5.99",
+      status: "Completed",
+    },
+    {
+      id: "ORD124",
+      offer: "Fresh Bread Bundle",
+      customer: "John Doe",
+      amount: "$5.99",
+      status: "Completed",
+    },
+    {
+      id: "ORD125",
+      offer: "Fresh Bread Bundle",
+      customer: "John Doe",
+      amount: "$5.99",
+      status: "Completed",
+    },
+  ]);
 
-    checkAuth();
-  }, [navigate]);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    originalPrice: 0,
+    discountPrice: 0,
+    quantity: 0,
+    expiresIn: 0,
+  });
 
-  const loadProfileData = async (token) => {
-    // Use only localStorage to avoid connection issues
-    const storedProfile = localStorage.getItem('businessProfile');
-    if (storedProfile) {
-      const businessData = JSON.parse(storedProfile);
-      console.log('Using localStorage business data:', businessData);
-      setProfileData({ data: { vendor: businessData } });
-    } else {
-      console.log('No business profile data found in localStorage');
-      setProfileData(null);
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: name === "originalPrice" || name === "discountPrice" || name === "quantity" || name === "expiresIn" ? parseFloat(value) : value,
+    }));
+  };
+
+  const handleCreateOffer = () => {
+    if (formData.title && formData.description) {
+      const newOffer = {
+        id: offers.length + 1,
+        ...formData,
+        status: "Active",
+      };
+      setOffers([...offers, newOffer]);
+      setFormData({
+        title: "",
+        description: "",
+        originalPrice: 0,
+        discountPrice: 0,
+        quantity: 0,
+        expiresIn: 0,
+      });
+      setShowModal(false);
     }
   };
 
-  const loadVendorOffers = async (token) => {
-    // Skip API calls to avoid CORS issues - use empty array for now
-    console.log('Skipping vendor offers API call to avoid CORS issues');
-    setVendorOffers([]);
+  const handleDeleteOffer = (id) => {
+    setOffers(offers.filter((offer) => offer.id !== id));
   };
-
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    localStorage.removeItem('userRole');
-    navigate('/signin');
-  };
-
-  if (isLoading) {
-    return (
-      <div className="business-page">
-        <div className="business-container">
-          <div className="loading-state">
-            <div className="loading-spinner"></div>
-            <p>Loading business dashboard...</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Get vendor data from different possible paths
-  const vendor = profileData?.data?.vendor || profileData?.vendor || profileData?.data?.user?.vendor || profileData?.user?.vendor;
-  
-  if (!vendor || !vendor.business_name) {
-    return (
-      <div className="business-page">
-        <div className="business-container">
-          <div className="business-header">
-            <h2>Business Dashboard</h2>
-            <p>Welcome to your business management portal</p>
-          </div>
-          <div className="business-content">
-            <div className="no-offers">
-              <h3>Please complete your business profile first</h3>
-              <p>Your vendor information is not yet available. Please complete your business profile to access the dashboard.</p>
-            </div>
-          </div>
-          <div className="business-footer">
-            <button className="logout-button" onClick={handleLogout}>
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="business-page">
+    <>
+      <Navigation />
+
       <div className="business-container">
-        {/* Header */}
-        <div className="business-header">
-          <h2>Welcome back, {vendor.business_name || 'Business'}! 👋</h2>
-          <p>Manage your surplus food offers and reduce waste</p>
+
+        {/* ── WELCOME SECTION ───────────────────────────────────────────── */}
+        <div className="welcome-section">
+          <div>
+            <h1 className="welcome-title">Welcome back, Artisan Bakery! 👋</h1>
+            <p className="welcome-subtitle">Manage your surplus food offers and reduce waste</p>
+          </div>
+          <div className="impact-card">
+            <p className="impact-label">Your impact this month</p>
+            <h2 className="impact-value">142 kg food saved</h2>
+          </div>
         </div>
 
-        {/* Content */}
-        <div className="business-content">
-          {/* Impact Section */}
-          <div className="impact-section">
-            <h3>Your impact this month</h3>
-            <div className="impact-stats">
-              <div className="impact-card">
-                <div className="impact-icon">🌱</div>
-                <div className="impact-content">
-                  <div className="impact-number">142 kg</div>
-                  <div className="impact-label">food saved</div>
-                </div>
-              </div>
+        {/* ── BUSINESS DASHBOARD ───────────────────────────────────────── */}
+        <div className="dashboard-section">
+          <div className="dashboard-header">
+            <div>
+              <h2 className="dashboard-title">Business Dashboard</h2>
+              <p className="dashboard-subtitle">Manage your offers and track orders</p>
             </div>
+            <button 
+              className="btn-add-offer"
+              onClick={() => setShowModal(true)}
+            >
+              + Add New Offer
+            </button>
           </div>
 
-          {/* Dashboard Section */}
-          <div className="dashboard-section">
-            <h3>Business Dashboard</h3>
-            <p>Manage your offers and track orders</p>
-            
-            <div className="dashboard-cards">
-              <div className="dashboard-card">
-                <div className="card-icon">➕</div>
-                <div className="card-content">
-                  <div className="card-title">Add New Offer</div>
-                </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="card-icon">📦</div>
-                <div className="card-content">
-                  <div className="card-title">Active Offers</div>
-                  <div className="card-number">1</div>
-                </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="card-icon">📋</div>
-                <div className="card-content">
-                  <div className="card-title">Total Orders</div>
-                  <div className="card-number">24</div>
-                </div>
-              </div>
-              
-              <div className="dashboard-card">
-                <div className="card-icon">💰</div>
-                <div className="card-content">
-                  <div className="card-title">Today's Revenue</div>
-                  <div className="card-number">$287.50</div>
-                </div>
-              </div>
+          {/* ── DASHBOARD CARDS ───────────────────────────────────────── */}
+          <div className="dashboard-cards">
+            <div className="dashboard-card">
+              <p className="card-label">Active Offers</p>
+              <h3 className="card-value">
+                {offers.filter((o) => o.status === "Active").length}
+              </h3>
+              <div className="card-icon icon-green">📦</div>
             </div>
-          </div>
 
-          {/* My Offers Section */}
-          <div className="offers-section">
-            <h3>My Offers</h3>
-            
-            <div className="offers-list">
-              <div className="offer-card">
-                <div className="offer-header">
-                  <div className="offer-title">Fresh Bread & Pastries Box</div>
-                  <div className="offer-status active">Active</div>
-                </div>
-                <div className="offer-description">Assorted fresh bread and pastries from today</div>
-                <div className="offer-details">
-                  <div className="offer-prices">
-                    <span className="offer-price-current">$5.99</span>
-                    <span className="offer-price-original">$15.99</span>
-                  </div>
-                  <div className="offer-meta">
-                    <span className="offer-quantity">Quantity: 8</span>
-                    <span className="offer-expiry">Expires in 2h 30m</span>
-                  </div>
-                </div>
-                <div className="offer-actions">
-                  <button className="btn-edit">Edit</button>
-                  <button className="btn-delete">Delete</button>
-                </div>
-              </div>
-              
-              <div className="offer-card">
-                <div className="offer-header">
-                  <div className="offer-title">Croissant Bundle</div>
-                  <div className="offer-status expired">Expired</div>
-                </div>
-                <div className="offer-description">6 butter croissants</div>
-                <div className="offer-details">
-                  <div className="offer-prices">
-                    <span className="offer-price-current">$4.99</span>
-                    <span className="offer-price-original">$12.00</span>
-                  </div>
-                  <div className="offer-meta">
-                    <span className="offer-quantity">Quantity: 0</span>
-                    <span className="offer-expiry">Expired</span>
-                  </div>
-                </div>
-                <div className="offer-actions">
-                  <button className="btn-edit">Edit</button>
-                  <button className="btn-delete">Delete</button>
-                </div>
-              </div>
+            <div className="dashboard-card">
+              <p className="card-label">Total Orders</p>
+              <h3 className="card-value">{orders.length}</h3>
+              <div className="card-icon icon-blue">🛒</div>
             </div>
-          </div>
 
-          {/* Recent Orders Section */}
-          <div className="orders-section">
-            <h3>Recent Orders</h3>
-            
-            <div className="orders-table">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Order ID</th>
-                    <th>Offer</th>
-                    <th>Customer</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr>
-                    <td>ORD123</td>
-                    <td>Fresh Bread Bundle</td>
-                    <td>John Doe</td>
-                    <td>$5.99</td>
-                    <td><span className="status-completed">Completed</span></td>
-                  </tr>
-                  <tr>
-                    <td>ORD124</td>
-                    <td>Fresh Bread Bundle</td>
-                    <td>John Doe</td>
-                    <td>$5.99</td>
-                    <td><span className="status-completed">Completed</span></td>
-                  </tr>
-                  <tr>
-                    <td>ORD125</td>
-                    <td>Fresh Bread Bundle</td>
-                    <td>John Doe</td>
-                    <td>$5.99</td>
-                    <td><span className="status-completed">Completed</span></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div className="dashboard-card">
+              <p className="card-label">Today's Revenue</p>
+              <h3 className="card-value">$287.50</h3>
+              <div className="card-icon icon-orange">🎯</div>
             </div>
           </div>
         </div>
 
-        {/* Footer Actions */}
-        <div className="business-footer">
-          <button className="logout-button" onClick={handleLogout}>
-            Logout
-          </button>
+        {/* ── MY OFFERS ─────────────────────────────────────────────────── */}
+        <div className="offers-section">
+          <h2 className="section-title">My Offers</h2>
+
+          {offers.map((offer) => (
+            <div key={offer.id} className="offer-card">
+              <div className="offer-header">
+                <div>
+                  <h3 className="offer-title">{offer.title}</h3>
+                  <p className="offer-description">{offer.description}</p>
+                </div>
+                <span
+                  className={`offer-status ${
+                    offer.status === "Active" ? "status-active" : "status-expired"
+                  }`}
+                >
+                  {offer.status === "Active" ? "✓" : "○"} {offer.status}
+                </span>
+              </div>
+
+              <div className="offer-details">
+                <div>
+                  <span className="price-discount">${offer.discountPrice.toFixed(2)}</span>
+                  <span className="price-original">${offer.originalPrice.toFixed(2)}</span>
+                </div>
+                <span className="quantity-text">Quantity: {offer.quantity}</span>
+                <span className="expires-text">
+                  ⏱ Expires in {offer.expiresIn}
+                </span>
+              </div>
+
+              <div className="offer-actions">
+                <button className="btn-edit">✏️ Edit</button>
+                <button 
+                  className="btn-delete"
+                  onClick={() => handleDeleteOffer(offer.id)}
+                >
+                  🗑 Delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
+
+        {/* ── RECENT ORDERS ─────────────────────────────────────────────── */}
+        <div className="orders-section">
+          <h2 className="section-title">Recent Orders</h2>
+
+          <div className="orders-table-wrapper">
+            <table className="orders-table">
+              <thead>
+                <tr>
+                  <th>ORDER ID</th>
+                  <th>OFFER</th>
+                  <th>CUSTOMER</th>
+                  <th>AMOUNT</th>
+                  <th>STATUS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td className="table-id">{order.id}</td>
+                    <td>{order.offer}</td>
+                    <td>{order.customer}</td>
+                    <td className="table-amount">{order.amount}</td>
+                    <td>
+                      <span className="status-badge status-completed">
+                        {order.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
-    </div>
+
+      {/* ── ADD OFFER MODAL ────────────────────────────────────────────── */}
+      {showModal && (
+        <div className="modal-overlay">
+          <div className="modal">
+            <h2 className="modal-title">Add New Offer</h2>
+
+            <div className="form-group">
+              <label>Title</label>
+              <input
+                type="text"
+                name="title"
+                placeholder="e.g., Fresh Bread Bundle"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Description</label>
+              <textarea
+                name="description"
+                placeholder="Describe your offer..."
+                value={formData.description}
+                onChange={handleInputChange}
+                className="form-textarea"
+              />
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Original Price</label>
+                <div className="form-input-prefix">
+                  $
+                  <input
+                    type="number"
+                    name="originalPrice"
+                    placeholder="0.00"
+                    value={formData.originalPrice}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label>Discount Price</label>
+                <div className="form-input-prefix">
+                  $
+                  <input
+                    type="number"
+                    name="discountPrice"
+                    placeholder="0.00"
+                    value={formData.discountPrice}
+                    onChange={handleInputChange}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="form-row">
+              <div className="form-group">
+                <label>Quantity</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  placeholder="0"
+                  value={formData.quantity}
+                  onChange={handleInputChange}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group">
+                <label>Expires In (hours)</label>
+                <input
+                  type="number"
+                  name="expiresIn"
+                  placeholder="0"
+                  value={formData.expiresIn}
+                  onChange={handleInputChange}
+                  className="form-input"
+                />
+              </div>
+            </div>
+
+            <div className="modal-actions">
+              <button 
+                className="btn-cancel"
+                onClick={() => setShowModal(false)}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn-create"
+                onClick={handleCreateOffer}
+              >
+                Create Offer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </>
   );
-}
+};
 
 export default Business;

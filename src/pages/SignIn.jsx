@@ -74,7 +74,7 @@ function SignIn() {
         } else if (responseData.user.role === 'admin') {
           navigate('/admin');
         } else {
-          navigate('/');
+          navigate('/home');
         }
       } else {
         // Handle errors

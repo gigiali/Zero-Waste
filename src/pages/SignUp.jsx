@@ -121,7 +121,7 @@ function SignUp() {
             navigate('/business-setup'); // Vendor goes to Business Setup first
           } else {
             console.log('Redirecting customer to home');
-            navigate('/'); // Customer goes to home
+            navigate('/home'); // Customer goes to home page
           }
         } else {
           // Handle errors

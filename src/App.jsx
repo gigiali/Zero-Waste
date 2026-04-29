@@ -6,6 +6,10 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import BusinessSetup from "./pages/BusinessSetup";
 import Business from "./pages/Business";
+import Navigation from "./Components/Navigation";
+import HomePage from "./pages/HomePage";
+import Admin from "./pages/Admin";
+import ReportsIssues from "./pages/ReportsIssues";
 
 function App() {
   return (
@@ -20,6 +24,9 @@ function App() {
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/business-setup" element={<BusinessSetup />} />
         <Route path="/business" element={<Business />} />
+        <Route path="/home" element={<><Navigation /><HomePage /></>} />
+        <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/reports-issues" element={<ReportsIssues />} />
 
       </Routes>
 
