@@ -10,6 +10,9 @@ import Navigation from "./Components/Navigation";
 import HomePage from "./pages/HomePage";
 import Admin from "./pages/Admin";
 import ReportsIssues from "./pages/ReportsIssues";
+import ManageBusinesses from "./Pages/ManageBusinesses";
+import UserManagement from "./Pages/UserManagement";
+
 
 function App() {
   return (
@@ -27,6 +30,8 @@ function App() {
         <Route path="/home" element={<><Navigation /><HomePage /></>} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/reports-issues" element={<ReportsIssues />} />
+        <Route path="/admin/businesses" element={<ManageBusinesses />} />
+        <Route path="/admin/users" element={<UserManagement />} />
 
       </Routes>
 

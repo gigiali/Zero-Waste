@@ -44,7 +44,7 @@ const Admin = () => {
 
   return (
     <>
-      <Navigation borderBottomColor="#ffe4e4" showShadow={false} />
+      <Navigation />
 
       <section className="admin-header">
         <div className="admin-header__left">
@@ -65,27 +65,15 @@ const Admin = () => {
             <span className="stats-group__value">4</span>
           </div>
         </div>
-    </section>
+      </section>
 
-      <div className="container admin-page">
+      <div className="admin-content">
 
-        <section
-          className="platform-analytics-section"
-          style={{ marginTop: "32px", marginBottom: "36px" }}
-        >
+        {/* Platform Analytics Section */}
+        <section className="platform-analytics-section">
           <div className="section-title">
             <h2 className="section-title__main">Platform Analytics</h2>
-            <p
-              className="section-title__sub"
-              style={{
-                color: "#64748b",
-                fontWeight: 400,
-                marginTop: "4px",
-                marginBottom: "16px",
-              }}
-            >
-              Real-time insights and system health monitoring
-            </p>
+            <p className="section-title__sub">Real-time insights and system health monitoring</p>
           </div>
 
           <div className="cards-container">
@@ -103,7 +91,11 @@ const Admin = () => {
               </div>
             </button>
 
-            <article className="analytics-card">
+            <button
+              type="button"
+              className="analytics-card analytics-card--button"
+              onClick={() => navigate("/admin/users")}
+            >
               <div className="icon-box icon-box--blue">
                 <Users size={22} color="#3b82f6" />
               </div>
@@ -111,7 +103,7 @@ const Admin = () => {
                 <h3 className="analytics-card__title">User Management</h3>
                 <p className="analytics-card__subtitle">View all customers</p>
               </div>
-            </article>
+            </button>
 
             <button
               type="button"
@@ -185,7 +177,7 @@ const Admin = () => {
           </div>
         </div>
 
-        {/* ── 1. WEEKLY PERFORMANCE ─────────────────────────────────────── */}
+        {/* WEEKLY PERFORMANCE */}
         <div className="card p-4 shadow-sm mt-4">
           <h6 className="fw-bold mb-4">Weekly Performance</h6>
           <ResponsiveContainer width="100%" height={280}>
@@ -218,8 +210,8 @@ const Admin = () => {
           </ResponsiveContainer>
         </div>
 
-        {/* ── 2. BUSINESS DISTRIBUTION ──────────────────────────────────── */}
-        <div className="card p-4 shadow-sm mt-4">
+        {/* BUSINESS DISTRIBUTION */}
+        <div className="card p-4 shadow-sm mt-4 mb-5">
           <h6 className="fw-bold mb-4">Business Distribution</h6>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
