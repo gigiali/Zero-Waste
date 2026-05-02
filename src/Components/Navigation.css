@@ -1,70 +1,188 @@
+/* ══════════════════════════════════════════════════════════ */
+/* ─ NAVBAR — Unified Professional Design ────────────────── */
+/* ══════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap');
+
+/* ── Base ── */
 .navbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: white;
+  padding: 0 2rem;
+  height: 66px;
+  background: #ffffff;
   border-bottom: 1px solid #e5e7eb;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  box-shadow: 0 1px 10px rgba(0, 0, 0, 0.06);
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
+/* ── Logo ── */
 .logo {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 10px;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .logo-icon {
   color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .logo h1 {
   color: #10b981;
-  font-size: 1.5rem;
-  font-weight: bold;
+  font-size: 1.4rem;
+  font-weight: 800;
   margin: 0;
+  letter-spacing: -0.6px;
+  line-height: 1;
 }
 
+/* ── Nav Items Container ── */
 .nav-items {
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: 4px;
 }
 
+/* ── Generic Nav Item (icon + text buttons) ── */
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 6px;
   position: relative;
   cursor: pointer;
-  color: #374151;
-  transition: color 0.2s;
+  color: #4b5563;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: 9px;
+  border: none;
+  background: none;
+  font-family: 'DM Sans', inherit;
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
 }
 
 .nav-item:hover {
   color: #10b981;
+  background: #f0fdf4;
 }
 
+.nav-item.active,
+.nav-item:active {
+  color: #059669;
+  background: #d1fae5;
+}
+
+/* ── Notification / Cart Badge ── */
 .badge {
   position: absolute;
-  top: -8px;
-  right: -8px;
+  top: 3px;
+  right: 3px;
   background: #ef4444;
   color: white;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
+  border-radius: 10px;
+  min-width: 17px;
+  height: 17px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.75rem;
-  font-weight: bold;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0 4px;
+  line-height: 1;
+  box-shadow: 0 0 0 2px #fff;
 }
 
 .green-badge {
   background: #10b981;
 }
 
+/* ── Location Selector ── */
+.nav-location {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 13px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 9px;
+  font-size: 0.87rem;
+  font-weight: 500;
+  color: #374151;
+  cursor: pointer;
+  font-family: 'DM Sans', inherit;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.nav-location:hover {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+  color: #059669;
+}
+
+/* ── Profile Button ── */
+.nav-profile-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 15px;
+  background: #f0fdf4;
+  border: 1.5px solid #a7f3d0;
+  border-radius: 10px;
+  color: #059669;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', inherit;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.nav-profile-btn:hover {
+  background: #d1fae5;
+  border-color: #10b981;
+  transform: translateY(-1px);
+}
+
+/* ── Sign In / CTA Button ── */
+.nav-signin-btn {
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'DM Sans', inherit;
+  letter-spacing: 0.2px;
+  transition: opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.nav-signin-btn:hover {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+}
+
+/* ── Divider between groups ── */
+.nav-divider {
+  width: 1px;
+  height: 22px;
+  background: #e5e7eb;
+  margin: 0 6px;
+}
+
+/* ── Language Switcher ── */
 .language-switcher {
   position: relative;
   cursor: pointer;
@@ -72,24 +190,34 @@
 
 .language-dropdown {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 10px);
   right: 0;
-  margin-top: 0.5rem;
   background: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0,0,0,0.06);
   border: 1px solid #e5e7eb;
-  min-width: 150px;
-  z-index: 1000;
+  min-width: 164px;
+  z-index: 1100;
+  overflow: hidden;
+  animation: navDropIn 0.16s ease;
+}
+
+@keyframes navDropIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)  scale(1);    }
 }
 
 .language-option {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.75rem 1rem;
+  padding: 11px 16px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  font-size: 0.87rem;
+  font-weight: 500;
+  color: #374151;
+  font-family: 'DM Sans', inherit;
+  transition: background 0.12s, color 0.12s;
   border-bottom: 1px solid #f3f4f6;
 }
 
@@ -98,17 +226,45 @@
 }
 
 .language-option:hover {
-  background-color: #f9fafb;
+  background: #f9fafb;
+  color: #10b981;
 }
 
 .language-option.active {
-  background-color: #f0fdf4;
+  background: #f0fdf4;
+  color: #059669;
+  font-weight: 700;
 }
 
 .active-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   background: #10b981;
   border-radius: 50%;
   display: inline-block;
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 0 1rem;
+    height: 58px;
+  }
+
+  .logo h1 {
+    font-size: 1.2rem;
+  }
+
+  .nav-item span:not(.badge) {
+    display: none;
+  }
+
+  .nav-item {
+    padding: 8px;
+  }
+
+  .nav-profile-btn span {
+    display: none;
+  }
 }

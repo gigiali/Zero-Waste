@@ -1,700 +1,232 @@
 import React, { useState, useEffect } from "react";
-import {
-  Search,
-  Filter,
-  ChevronDown,
-  Heart,
-  Clock,
-  MapPin,
-  AlertCircle,
-  Package,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import "./HomePage.css";
+import { Search, ChevronDown, Clock, MapPin, AlertCircle, Package, Utensils, Coffee, ShoppingCart, Hotel, Store } from "lucide-react";
+import { useCart } from "../Context/CartContext";
+
+function CountdownTimer({ pickupTime }) {
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [isUrgent, setIsUrgent] = useState(false);
+
+  useEffect(() => {
+    const calculateTime = () => {
+      let targetTime;
+      if (pickupTime && pickupTime.includes(":")) {
+        const now = new Date();
+        const timePart = pickupTime.replace("Today ", "").replace("today ", "");
+        const [time, period] = timePart.split(" ");
+        let [hours, minutes] = time.split(":").map(Number);
+        if (period === "PM" && hours !== 12) hours += 12;
+        if (period === "AM" && hours === 12) hours = 0;
+        targetTime = new Date(now);
+        targetTime.setHours(hours, minutes || 0, 0, 0);
+        if (targetTime <= now) targetTime.setDate(targetTime.getDate() + 1);
+      } else {
+        targetTime = new Date(Date.now() + Math.random() * 18000000 + 3600000);
+      }
+      const diff = targetTime - new Date();
+      if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setIsUrgent(h === 0 && m < 60);
+      return { hours: h, minutes: m, seconds: s };
+    };
+    setTimeLeft(calculateTime());
+    const interval = setInterval(() => setTimeLeft(calculateTime()), 1000);
+    return () => clearInterval(interval);
+  }, [pickupTime]);
+
+  const pad = (n) => String(n).padStart(2, "0");
+  return (
+    <div className={`countdown-timer ${isUrgent ? "urgent" : ""}`}>
+      <Clock size={13} />
+      <span className="countdown-text">{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}</span>
+    </div>
+  );
+}
+
+const categoryIcons = {
+  All: <Store size={16} />,
+  Restaurant: <Utensils size={16} />,
+  Bakery: <Coffee size={16} />,
+  Supermarket: <ShoppingCart size={16} />,
+  Hotel: <Hotel size={16} />,
+};
+
+const sortOptions = [
+  { label: "Highest Discount", value: "highest_discount" },
+  { label: "Distance",         value: "nearest"          },
+  { label: "Rating",           value: "rating"           },
+];
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const { addToCart } = useCart();
+
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOption, setSortOption] = useState("highest_discount");
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (isDropdownOpen && !e.target.closest(".dropdown-container")) setIsDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDropdownOpen]);
 
   const categories = ["All", "Restaurant", "Bakery", "Supermarket", "Hotel"];
 
-  // Fetch offers from API
   useEffect(() => {
-    const fetchOffers = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const token =
-          localStorage.getItem("token") || sessionStorage.getItem("token");
-
-        // For demo/testing purposes, use mock data if no token
-        if (!token) {
-          // Mock data for testing
-          const mockOffers = [
-            {
-              id: 1,
-              title: "Fresh Pasta Special",
-              description:
-                "Delicious homemade pasta with tomato sauce and basil",
-              image: "/images/e.png",
-              discount: 60,
-              originalPrice: 25.99,
-              discountedPrice: 10.39,
-              quantity: 5,
-              pickupTime: "Today 6:00 PM",
-              location: "Downtown Restaurant",
-              isLiked: false,
-            },
-            {
-              id: 2,
-              title: "Bakery Fresh Croissants",
-              description: "Buttery croissants baked fresh this morning",
-              image: "/images/e.png",
-              discount: 63,
-              originalPrice: 18.99,
-              discountedPrice: 7.02,
-              quantity: 12,
-              pickupTime: "Today 5:30 PM",
-              location: "City Center Bakery",
-              isLiked: true,
-            },
-            {
-              id: 3,
-              title: "Pizza Deal Combo",
-              description: "Large pizza with 2 toppings and garlic bread",
-              image: "/images/e.png",
-              discount: 45,
-              originalPrice: 32.99,
-              discountedPrice: 18.14,
-              quantity: 8,
-              pickupTime: "Today 7:00 PM",
-              location: "Main Street Pizzeria",
-              isLiked: false,
-            },
-            {
-              id: 4,
-              title: "Cake & Coffee Set",
-              description: "Fresh cake with premium coffee beans",
-              image: "/images/e.png",
-              discount: 70,
-              originalPrice: 45.99,
-              discountedPrice: 13.8,
-              quantity: 3,
-              pickupTime: "Today 4:00 PM",
-              location: "Sweet Corner Cafe",
-              isLiked: false,
-            },
-          ];
-
-          setOffers(mockOffers);
-          return;
-        }
-
-        const res = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/vendor/myoffers", {
-          method: "GET",
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error("Please login to view offers");
-          } else if (res.status === 403) {
-            throw new Error("Access denied. Vendor privileges required.");
-          } else {
-            throw new Error("Failed to fetch offers");
-          }
-        }
-
-        const data = await res.json();
-        setOffers(data?.data || []);
-      } catch (error) {
-        console.error("Offers fetch error:", error);
-        setError(error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOffers();
+    setOffers([
+      { id: 1, title: "Fresh Pasta Special", description: "Delicious homemade pasta with tomato sauce and basil", image: "/assets/images/e.png", discount: 50, originalPrice: 189.99, discountedPrice: 94.99, quantity: 5, pickupTime: "Today 6:00 PM", location: "Downtown Restaurant", distance: 0.8, rating: 4.8, category: "Restaurant" },
+      { id: 2, title: "Bakery Fresh Croissants", description: "Buttery croissants baked fresh this morning", image: "/assets/images/e.png", discount: 25, originalPrice: 115.99, discountedPrice: 86.99, quantity: 12, pickupTime: "Today 5:30 PM", location: "City Center Bakery", distance: 1.2, rating: 4.5, category: "Bakery" },
+      { id: 3, title: "Pizza Deal Combo", description: "Large pizza with 2 toppings and garlic bread", image: "/assets/images/e.png", discount: 40, originalPrice: 229.99, discountedPrice: 137.99, quantity: 8, pickupTime: "Today 7:00 PM", location: "Main Street Pizzeria", distance: 2.5, rating: 4.2, category: "Restaurant" },
+      { id: 4, title: "Cake & Coffee Set", description: "Fresh cake with premium coffee beans", image: "/assets/images/e.png", discount: 35, originalPrice: 139.99, discountedPrice: 90.99, quantity: 3, pickupTime: "Today 4:00 PM", location: "Sweet Corner Cafe", distance: 0.4, rating: 4.9, category: "Bakery" },
+    ]);
   }, []);
 
-  // Handle like/favorite for offers
-  const toggleLike = (offerId) => {
-    setOffers((prev) =>
-      prev.map((offer) =>
-        offer.id === offerId ? { ...offer, isLiked: !offer.isLiked } : offer,
-      ),
-    );
-  };
+  const filteredOffers = offers
+    .filter((offer) => {
+      const matchesCategory = selectedCategory === "All" || offer.category === selectedCategory;
+      const matchesSearch = !searchQuery ||
+        offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    })
+    .sort((a, b) => {
+      switch (sortOption) {
+        case "highest_discount": return b.discount - a.discount;
+        case "nearest":          return (a.distance || 0) - (b.distance || 0);
+        case "rating":           return (b.rating || 0) - (a.rating || 0);
+        default:                 return 0;
+      }
+    });
+
+  const currentSortLabel = sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
 
   return (
-    <div style={{ backgroundColor: "#f9fafb", minHeight: "100vh" }}>
-      {/* Hero Section */}
-      <section
-        style={{
-          background: "linear-gradient(135deg, #d4f4dd 0%, #e8f5e8 100%)",
-          padding: "3rem 2rem",
-          textAlign: "center",
-        }}
-      >
-        <h1
-          style={{
-            fontSize: "2.5rem",
-            fontWeight: "bold",
-            color: "#1f2937",
-            marginBottom: "1rem",
-          }}
-        >
-          Save Food, Save Money
-        </h1>
-        <p
-          style={{
-            fontSize: "1.1rem",
-            color: "#6b7280",
-            marginBottom: "2rem",
-            maxWidth: "600px",
-            margin: "0 auto 2rem",
-          }}
-        >
-          Discover surplus food from local businesses at discounted prices
-        </p>
-
-        <div
-          style={{
-            position: "relative",
-            maxWidth: "600px",
-            margin: "0 auto",
-          }}
-        >
-          <Search
-            size={20}
-            style={{
-              position: "absolute",
-              left: "1rem",
-              top: "50%",
-              transform: "translateY(-50%)",
-              color: "#9ca3af",
-            }}
-          />
-          <input
-            type="text"
-            placeholder="Search for food..."
-            style={{
-              width: "100%",
-              padding: "1rem 1rem 1rem 3rem",
-              border: "1px solid #e5e7eb",
-              borderRadius: "50px",
-              fontSize: "1rem",
-              outline: "none",
-            }}
-          />
+    <div className="homepage-container">
+      {/* Hero */}
+      <section className="hero-section">
+        <div className="hero-bg-shapes">
+          <div className="shape shape-1" /><div className="shape shape-2" /><div className="shape shape-3" />
+        </div>
+        <div className="hero-content">
+          <div className="hero-badge">🌱 Zero Waste, Maximum Taste</div>
+          <h1 className="hero-title">Save Food,<br /><span className="hero-title-accent">Save Money</span></h1>
+          <p className="hero-subtitle">Discover amazing food deals from local restaurants and reduce food waste</p>
+          <div className="search-wrapper">
+            <div className="search-icon-left"><Search size={20} /></div>
+            <input type="text" placeholder="Search food, restaurants, or deals..." className="search-input"
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <button className="search-btn">Search</button>
+          </div>
         </div>
       </section>
 
-      {/* Filter Section */}
-      <section
-        style={{
-          backgroundColor: "white",
-          padding: "1.5rem 2rem",
-          borderBottom: "1px solid #e5e7eb",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: "1200px",
-            margin: "0 auto",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            flexWrap: "wrap",
-            gap: "1rem",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "2rem",
-              flexWrap: "wrap",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "#6b7280",
-                fontSize: "0.9rem",
-              }}
-            >
-              <Filter size={16} />
-              <span>Filter:</span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                gap: "0.5rem",
-                flexWrap: "wrap",
-              }}
-            >
+      {/* Filter bar */}
+      <section className="filter-section" style={{ overflow: "visible" }}>
+        <div className="filter-inner" style={{ overflow: "visible" }}>
+          <div className="filter-left">
+            {/* ✅ "Filter :" label */}
+            <h2 className="filter-title">Filter :</h2>
+            <div className="categories-container">
               {categories.map((category) => (
-                <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  style={{
-                    padding: "0.5rem 1rem",
-                    border: "1px solid #e5e7eb",
-                    borderRadius: "20px",
-                    fontSize: "0.9rem",
-                    cursor: "pointer",
-                    backgroundColor:
-                      selectedCategory === category ? "#10b981" : "white",
-                    color: selectedCategory === category ? "white" : "#6b7280",
-                    borderColor:
-                      selectedCategory === category ? "#10b981" : "#e5e7eb",
-                    transition: "all 0.2s",
-                  }}
-                >
+                <button key={category} className={`category-button ${selectedCategory === category ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(category)}>
+                  <span className="cat-icon">{categoryIcons[category]}</span>
                   {category}
                 </button>
               ))}
             </div>
           </div>
-
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "1.5rem",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                color: "#6b7280",
-                fontSize: "0.9rem",
-              }}
-            >
-              <span>Sort by:</span>
-              <button
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.25rem",
-                  backgroundColor: "white",
-                  border: "1px solid #e5e7eb",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "8px",
-                  cursor: "pointer",
-                  fontSize: "0.9rem",
-                }}
-              >
-                Distance
-                <ChevronDown size={16} />
+          <div className="filter-right">
+            <div className="sort-text">Sort by:</div>
+            <div className="dropdown-container">
+              <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+                <span>{currentSortLabel}</span>
+                <ChevronDown size={16} style={{ transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s" }} />
               </button>
+              {isDropdownOpen && (
+                <div className="dropdown-menu">
+                  {sortOptions.map((opt) => (
+                    <div key={opt.value}
+                      className={`dropdown-item ${sortOption === opt.value ? "dropdown-item-active" : ""}`}
+                      onClick={() => { setSortOption(opt.value); setIsDropdownOpen(false); }}>
+                      {opt.label}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Offers Section */}
-      <section style={{ padding: "2rem" }}>
-        <h2
-          style={{
-            fontSize: "1.5rem",
-            fontWeight: "bold",
-            color: "#1f2937",
-            marginBottom: "1.5rem",
-          }}
-        >
-          My Offers
-        </h2>
+      {/* Offers */}
+      <section className="offers-section">
+        <div className="offers-header">
+          <h2 className="offers-title">{selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}</h2>
+          <span className="offers-count">{filteredOffers.length} available</span>
+        </div>
 
-        {/* Loading State */}
-        {loading && (
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "200px",
-              backgroundColor: "white",
-              borderRadius: "12px",
-              border: "1px solid #e5e7eb",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: "1rem",
-              }}
-            >
-              <div
-                style={{
-                  width: "40px",
-                  height: "40px",
-                  border: "4px solid #e5e7eb",
-                  borderTop: "4px solid #10b981",
-                  borderRadius: "50%",
-                  animation: "spin 1s linear infinite",
-                }}
-              ></div>
-              <p style={{ color: "#6b7280" }}>Loading offers...</p>
-            </div>
-          </div>
-        )}
+        {loading && <div className="loading-container"><div className="loading-spinner" /><p className="loading-text">Loading offers...</p></div>}
 
-        {/* Error State */}
         {error && !loading && (
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "2rem",
-              borderRadius: "12px",
-              border: "1px solid #e5e7eb",
-              textAlign: "center",
-            }}
-          >
-            <AlertCircle
-              size={48}
-              style={{ color: "#ef4444", marginBottom: "1rem" }}
-            />
-            <h3 style={{ color: "#1f2937", marginBottom: "1rem" }}>
-              Error Loading Offers
-            </h3>
-            <p style={{ color: "#6b7280", marginBottom: "1rem" }}>{error}</p>
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                backgroundColor: "#10b981",
-                color: "white",
-                border: "none",
-                padding: "0.75rem 1.5rem",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Retry
-            </button>
+          <div className="error-container">
+            <AlertCircle size={48} className="error-icon" />
+            <h3 className="error-title">Error Loading Offers</h3>
+            <p className="error-message">{error}</p>
+            <button className="retry-button" onClick={() => window.location.reload()}>Retry</button>
           </div>
         )}
 
-        {/* Empty State */}
-        {!loading && !error && offers.length === 0 && (
-          <div
-            style={{
-              backgroundColor: "white",
-              padding: "3rem",
-              borderRadius: "12px",
-              border: "1px solid #e5e7eb",
-              textAlign: "center",
-            }}
-          >
-            <Package
-              size={64}
-              style={{ color: "#d1d5db", marginBottom: "1rem" }}
-            />
-            <h3 style={{ color: "#1f2937", marginBottom: "1rem" }}>
-              No Offers Yet
-            </h3>
-            <p style={{ color: "#6b7280", marginBottom: "2rem" }}>
-              You haven't created any offers yet. Start by adding your first
-              offer!
-            </p>
-            <button
-              style={{
-                backgroundColor: "#10b981",
-                color: "white",
-                border: "none",
-                padding: "0.75rem 1.5rem",
-                borderRadius: "8px",
-                cursor: "pointer",
-              }}
-            >
-              Create Your First Offer
-            </button>
+        {!loading && !error && filteredOffers.length === 0 && (
+          <div className="empty-container">
+            <Package size={64} className="empty-icon" />
+            <h3 className="empty-title">No Offers Found</h3>
+            <p className="empty-message">{searchQuery ? "Try a different search term." : "No offers available right now."}</p>
           </div>
         )}
 
-        {/* Offers Grid */}
-        {!loading && !error && offers.length > 0 && (
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-              gap: "1.5rem",
-            }}
-          >
-            {offers.map((offer) => (
-              <div
-                key={offer.id}
-                style={{
-                  backgroundColor: "white",
-                  borderRadius: "12px",
-                  overflow: "hidden",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                  border: "1px solid #e5e7eb",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                }}
-                onMouseEnter={(e) => {
-                  e.target.style.transform = "translateY(-4px)";
-                  e.target.style.boxShadow = "0 8px 16px rgba(0,0,0,0.15)";
-                }}
-                onMouseLeave={(e) => {
-                  e.target.style.transform = "translateY(0)";
-                  e.target.style.boxShadow = "0 2px 8px rgba(0,0,0,0.1)";
-                }}
-              >
-                {/* Offer Image */}
-                <div
-                  style={{
-                    position: "relative",
-                    height: "180px",
-                    backgroundColor: "#f3f4f6",
-                    overflow: "hidden",
-                  }}
-                >
-                  {offer.image ? (
-                    <img
-                      src={offer.image}
-                      alt={offer.title}
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <div
-                      style={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "3rem",
-                        color: "#9ca3af",
-                      }}
-                    >
-                      🍽️
-                    </div>
-                  )}
-
-                  {/* Like Button */}
-                  <button
-                    onClick={() => toggleLike(offer.id)}
-                    style={{
-                      position: "absolute",
-                      top: "10px",
-                      right: "10px",
-                      backgroundColor: "white",
-                      border: "none",
-                      borderRadius: "50%",
-                      width: "36px",
-                      height: "36px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      cursor: "pointer",
-                      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      transition: "transform 0.2s",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.target.style.transform = "scale(1.1)")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.target.style.transform = "scale(1)")
-                    }
-                  >
-                    <Heart
-                      size={18}
-                      style={{
-                        color: offer.isLiked ? "#ef4444" : "#9ca3af",
-                        fill: offer.isLiked ? "#ef4444" : "none",
-                      }}
-                    />
-                  </button>
-
-                  {/* Discount Badge */}
-                  {offer.discount && (
-                    <div
-                      style={{
-                        position: "absolute",
-                        top: "10px",
-                        left: "10px",
-                        backgroundColor: "#10b981",
-                        color: "white",
-                        padding: "0.25rem 0.75rem",
-                        borderRadius: "20px",
-                        fontSize: "0.875rem",
-                        fontWeight: "bold",
-                      }}
-                    >
-                      -{offer.discount}%
-                    </div>
-                  )}
-                </div>
-
-                {/* Offer Content */}
-                <div style={{ padding: "1.25rem" }}>
-                  <h3
-                    style={{
-                      fontSize: "1.125rem",
-                      fontWeight: "600",
-                      color: "#1f2937",
-                      marginBottom: "0.5rem",
-                      lineHeight: "1.4",
-                    }}
-                  >
-                    {offer.title || "Untitled Offer"}
-                  </h3>
-
-                  <p
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#6b7280",
-                      marginBottom: "1rem",
-                      lineHeight: "1.5",
-                    }}
-                  >
-                    {offer.description || "No description available"}
-                  </p>
-
-                  {/* Offer Details */}
-                  <div
-                    style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "0.5rem",
-                      marginBottom: "1rem",
-                    }}
-                  >
-                    {offer.originalPrice && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          fontSize: "0.875rem",
-                        }}
-                      >
-                        <span
-                          style={{
-                            color: "#9ca3af",
-                            textDecoration: "line-through",
-                          }}
-                        >
-                          ${offer.originalPrice}
-                        </span>
-                        <span style={{ color: "#10b981", fontWeight: "600" }}>
-                          ${offer.discountedPrice || offer.price}
-                        </span>
-                      </div>
-                    )}
-
-                    {offer.quantity && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          fontSize: "0.875rem",
-                          color: "#6b7280",
-                        }}
-                      >
-                        <Package size={14} />
-                        <span>{offer.quantity} items available</span>
-                      </div>
-                    )}
-
-                    {offer.pickupTime && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          fontSize: "0.875rem",
-                          color: "#6b7280",
-                        }}
-                      >
-                        <Clock size={14} />
-                        <span>Pickup: {offer.pickupTime}</span>
-                      </div>
-                    )}
-
-                    {offer.location && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
-                          fontSize: "0.875rem",
-                          color: "#6b7280",
-                        }}
-                      >
-                        <MapPin size={14} />
-                        <span>{offer.location}</span>
-                      </div>
-                    )}
+        {!loading && !error && filteredOffers.length > 0 && (
+          <div className="offers-grid">
+            {filteredOffers.map((offer) => (
+              <div key={offer.id} className="offer-card" onClick={() => navigate(`/offer/${offer.id}`)} style={{ cursor: "pointer" }}>
+                <div className="offer-image-container">
+                  {offer.image
+                    ? <img src={offer.image} alt={offer.title} className="offer-image" />
+                    : <div className="offer-image-placeholder">🍽️</div>}
+                  {offer.discount && <div className="discount-badge">-{offer.discount}%</div>}
+                  <div className="image-bottom-bar">
+                    <CountdownTimer pickupTime={offer.pickupTime} />
+                    {offer.quantity && <div className="quantity-badge"><Package size={12} /><span>{offer.quantity} left</span></div>}
                   </div>
-
-                  {/* Action Buttons */}
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "0.5rem",
-                    }}
-                  >
+                </div>
+                <div className="offer-content">
+                  <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
+                  {offer.location && (
+                    <div className="offer-location">
+                      <MapPin size={13} /><span>{offer.location}</span>
+                      {offer.distance && <span className="offer-distance">· {offer.distance} km</span>}
+                    </div>
+                  )}
+                  <p className="offer-description">{offer.description || "No description available"}</p>
+                  <div className="offer-footer">
+                    <div className="price-container">
+                      <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
+                      {offer.originalPrice && <span className="original-price">EGP {offer.originalPrice}</span>}
+                    </div>
                     <button
-                      style={{
-                        flex: 1,
-                        backgroundColor: "#10b981",
-                        color: "white",
-                        border: "none",
-                        padding: "0.75rem",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        fontWeight: "500",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.target.style.backgroundColor = "#059669")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.style.backgroundColor = "#10b981")
-                      }
-                    >
-                      Edit Offer
-                    </button>
-                    <button
-                      style={{
-                        backgroundColor: "#f3f4f6",
-                        color: "#6b7280",
-                        border: "1px solid #e5e7eb",
-                        padding: "0.75rem",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        fontSize: "0.875rem",
-                        transition: "background-color 0.2s",
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.target.style.backgroundColor = "#e5e7eb")
-                      }
-                      onMouseLeave={(e) =>
-                        (e.target.style.backgroundColor = "#f3f4f6")
-                      }
-                    >
-                      View Details
+                      onClick={(e) => { e.stopPropagation(); addToCart(offer, 1); }}
+                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
+                      + Add
                     </button>
                   </div>
                 </div>

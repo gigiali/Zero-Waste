@@ -1,217 +1,26 @@
-/* Page Background */
-.signup-page {
-  background-color: #f0f9f4;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
+/* SignUp.css — page-specific styles only.
+   All design tokens live in auth-theme.css   */
+
+/* Wider card for sign-up (more fields) */
+.su-card { max-width: 460px; }
+
+.su-role-section {
+  margin-bottom: 20px;
 }
 
-/* Main Container */
-.signup-container {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  max-width: 450px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Green Header Section */
-.signup-header-section {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-  padding: 32px 24px;
-  text-align: center;
-}
-
-.header-content h2 {
-  color: white;
-  font-size: 24px;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.header-content p {
-  color: rgba(255, 255, 255, 0.9);
-  font-size: 14px;
-  margin: 0;
-  line-height: 1.4;
-}
-
-/* White Form Section */
-.signup-form-section {
-  padding: 32px 24px;
-  background: white;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Role Selection Section */
-.role-selection {
-  text-align: center;
-  margin-bottom: 24px;
-}
-
-.role-selection-title {
-  color: #2c3e50;
-  font-size: 18px;
-  font-weight: 600;
-  margin: 0 0 16px 0;
-}
-
-.role-buttons {
-  display: flex;
-  background-color: #f8f9fa;
-  border: 2px solid #e9ecef;
-  border-radius: 12px;
-  overflow: hidden;
-  justify-content: center;
-  max-width: 280px;
-  margin: 0 auto;
-}
-
-.role-select-btn {
-  flex: 1;
-  padding: 14px 20px;
-  border: none;
-  background-color: #f8f9fa;
-  font-size: 15px;
-  font-weight: 500;
-  color: #495057;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  text-transform: none;
-  letter-spacing: 0.5px;
-  position: relative;
-}
-
-.role-select-btn.active-business {
-  background-color: #28a745;
-  color: white;
-}
-
-.role-select-btn.active-customer {
-  background-color: #28a745;
-  color: white;
-}
-
-.role-select-btn:hover:not(.active-business):not(.active-customer) {
-  background-color: #e9ecef;
-  color: #343a40;
-}
-
-/* Form */
-.signup-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-group label {
-  color: #2c3e50;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.form-input {
-  padding: 12px 16px;
-  border: 1px solid #dee2e6;
-  border-radius: 8px;
-  font-size: 14px;
-  transition: border-color 0.2s ease;
-  background: #ffffff;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #28a745;
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
-}
-
-.form-options {
-  display: flex;
-  justify-content: flex-start;
-  align-items: flex-start;
+.su-role-label {
+  display: block;
   margin-bottom: 8px;
 }
 
-.checkbox-label {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 13px;
-  color: #2c3e50;
-  cursor: pointer;
-  line-height: 1.4;
+.su-terms {
+  margin-bottom: 20px;
 }
 
-.checkbox-label input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-}
-
-/* Button */
-.signup-btn {
-  width: 100%;
-  margin-top: 8px;
-}
-
-/* Error Text */
-.error-text {
-  color: #dc3545;
-  font-size: 0.875rem;
-  margin-top: 5px;
-  display: block;
-}
-
-.general-error {
-  background-color: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-  border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 15px;
-  font-weight: 500;
-  text-align: center;
-}
-
-/* Terms and Privacy Links */
-.terms-link,
-.privacy-link {
-  color: #28a745;
+.su-link {
+  color: var(--c-forest-mid);
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 700;
 }
 
-.terms-link:hover,
-.privacy-link:hover {
-  text-decoration: underline;
-}
-
-/* Sign In Prompt */
-.signin-prompt {
-  text-align: center;
-  margin-top: 24px;
-  font-size: 13px;
-  color: #6c757d;
-}
-
-.signin-prompt a {
-  color: #28a745;
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.signin-prompt a:hover {
-  text-decoration: underline;
-}
+.su-link:hover { text-decoration: underline; }

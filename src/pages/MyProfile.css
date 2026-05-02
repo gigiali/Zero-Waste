@@ -1,0 +1,387 @@
+/* ===== MyProfile — with dark mode support ===== */
+
+/* ── CSS Variables ── */
+:root {
+  --pg-bg:          #f5f5f5;
+  --pg-card:        #ffffff;
+  --pg-hero:        #1a7a4a;
+  --pg-title:       #111111;
+  --pg-subtitle:    #6b7280;
+  --pg-label:       #6b7280;
+  --pg-value:       #111111;
+  --pg-border:      #f0f0f0;
+  --pg-input-bg:    #ffffff;
+  --pg-input-border:#d1d5db;
+  --pg-row-hover:   #fafafa;
+  --pg-btn-cancel-bg: #f3f4f6;
+  --pg-btn-cancel-color: #555;
+  --pg-icon:        #9ca3af;
+  --pg-setting-color: #111;
+  --pg-shadow:      0 1px 4px rgba(0,0,0,0.06);
+  --border-color:   #f0f0f0;
+}
+
+[data-theme="dark"] {
+  --pg-bg:          #0f172a;
+  --pg-card:        #1e293b;
+  --pg-hero:        #0f4d2e;
+  --pg-title:       #f1f5f9;
+  --pg-subtitle:    #94a3b8;
+  --pg-label:       #94a3b8;
+  --pg-value:       #e2e8f0;
+  --pg-border:      #2d3748;
+  --pg-input-bg:    #273549;
+  --pg-input-border:#374151;
+  --pg-row-hover:   #243044;
+  --pg-btn-cancel-bg: #2d3748;
+  --pg-btn-cancel-color: #cbd5e1;
+  --pg-icon:        #64748b;
+  --pg-setting-color: #e2e8f0;
+  --pg-shadow:      0 1px 4px rgba(0,0,0,0.3);
+  --border-color:   #2d3748;
+}
+
+/* ── Page ── */
+.profile-page {
+  min-height: 100vh;
+  background: var(--pg-bg);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  transition: background 0.2s;
+}
+
+/* ── Hero ── */
+.profile-hero {
+  background: var(--pg-hero);
+  padding: 48px 0 52px;
+  transition: background 0.2s;
+}
+
+.hero-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hero-title {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 6px;
+}
+
+.hero-subtitle {
+  font-size: 1rem;
+  color: rgba(255,255,255,0.75);
+  margin: 0;
+}
+
+.hero-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  padding: 10px 22px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #222;
+  cursor: pointer;
+  transition: box-shadow 0.18s, border-color 0.18s;
+}
+
+.hero-edit-btn:hover {
+  border-color: #aaa;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+}
+
+/* ── Body ── */
+.profile-body {
+  max-width: 900px;
+  margin: 32px auto 48px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Card ── */
+.profile-card {
+  background: var(--pg-card);
+  border-radius: 16px;
+  padding: 32px 36px;
+  box-shadow: var(--pg-shadow);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.card-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--pg-title);
+  margin: 0 0 24px;
+}
+
+/* ── Info Rows ── */
+.info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.info-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--pg-border);
+  transition: border-color 0.2s;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-icon {
+  color: var(--pg-icon);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.info-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--pg-label);
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+}
+
+.info-value {
+  font-size: 1rem;
+  color: var(--pg-value);
+}
+
+.info-input {
+  font-size: 1rem;
+  color: var(--pg-value);
+  background: var(--pg-input-bg);
+  border: 1.5px solid var(--pg-input-border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  outline: none;
+  transition: border-color 0.15s, background 0.2s;
+  width: 100%;
+  max-width: 400px;
+}
+
+.info-input:focus {
+  border-color: #10b981;
+}
+
+/* ── Edit Actions ── */
+.edit-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.btn-save {
+  background: #10b981;
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-save:hover {
+  background: #059669;
+}
+
+.btn-cancel {
+  background: var(--pg-btn-cancel-bg);
+  color: var(--pg-btn-cancel-color);
+  border: none;
+  border-radius: 9px;
+  padding: 10px 24px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-cancel:hover {
+  background: var(--pg-border);
+}
+
+/* ── Settings List ── */
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--pg-border);
+  padding: 18px 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--pg-setting-color);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s, border-color 0.2s;
+  border-radius: 0;
+}
+
+.settings-list .setting-row:last-child {
+  border-bottom: none;
+}
+
+.setting-row:hover {
+  background: var(--pg-row-hover);
+}
+
+/* Dark mode toggle row — not a button, just a div-like row */
+.setting-row--toggle {
+  cursor: default;
+}
+.setting-row--toggle:hover {
+  background: transparent;
+}
+
+.setting-label {
+  flex: 1;
+}
+
+.chevron {
+  color: var(--pg-icon);
+}
+
+/* Red row — Log Out */
+.setting-red {
+  color: #ef4444;
+  background: #fff5f5;
+  border-radius: 10px;
+  border-bottom: none !important;
+  margin-top: 4px;
+  padding: 16px 14px;
+}
+
+.setting-red:hover {
+  background: #fee2e2;
+}
+
+[data-theme="dark"] .setting-red {
+  background: rgba(239,68,68,0.1);
+}
+
+[data-theme="dark"] .setting-red:hover {
+  background: rgba(239,68,68,0.18);
+}
+
+/* ── Logout confirm box ── */
+.logout-confirm-box {
+  background: var(--pg-card);
+  border-radius: 14px;
+  padding: 2rem;
+  max-width: 360px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  text-align: center;
+  color: var(--pg-title);
+}
+
+/* ── Global dark mode for other pages ── */
+[data-theme="dark"] body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .nav-wrapper,
+[data-theme="dark"] nav {
+  background: #1e293b !important;
+  border-color: #2d3748 !important;
+}
+
+/* Navigation dark mode */
+[data-theme="dark"] .biz-root {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+[data-theme="dark"] .biz-main {
+  background: #0f172a;
+}
+
+[data-theme="dark"] .biz-card,
+[data-theme="dark"] .biz-kpi-card,
+[data-theme="dark"] .biz-chart-card,
+[data-theme="dark"] .biz-section,
+[data-theme="dark"] .biz-offer-row,
+[data-theme="dark"] .biz-drawer {
+  background: #1e293b !important;
+  border-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .biz-welcome {
+  background: linear-gradient(135deg, #1e3a5f 0%, #0f2d1e 55%, #2d2a0f 100%) !important;
+}
+
+[data-theme="dark"] .biz-welcome-title,
+[data-theme="dark"] .biz-impact-value {
+  color: #93c5fd !important;
+}
+
+[data-theme="dark"] .biz-table thead {
+  background: #273549 !important;
+}
+
+[data-theme="dark"] .biz-table th,
+[data-theme="dark"] .biz-table td {
+  border-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+}
+
+[data-theme="dark"] .biz-table tbody tr:hover {
+  background: #243044 !important;
+}
+
+[data-theme="dark"] .biz-offer-row:hover {
+  background: #243044 !important;
+}
+
+/* ── Responsive ── */
+@media (max-width: 600px) {
+  .hero-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+
+  .profile-card {
+    padding: 24px 18px;
+  }
+
+  .info-input {
+    max-width: 100%;
+  }
+}
