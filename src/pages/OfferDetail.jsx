@@ -2,21 +2,16 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, MapPin, Heart, Share2, Phone, Mail, ShoppingCart, Check } from 'lucide-react';
 import { useState } from 'react';
 import { useCart } from '../Context/CartContext';
+import { useFavorites } from '../Context/FavoritesContext';
 import './OfferDetail.css';
 
 export default function OfferDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isLiked, setIsLiked] = useState(false);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
-
-  const handleAddToCart = () => {
-    addToCart(offer, qty);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
-  };
+  const { toggleFavorite, isFavorite } = useFavorites();
 
   const offersData = {
     1: {
@@ -98,6 +93,13 @@ export default function OfferDetail() {
   };
 
   const offer = offersData[id];
+  const liked = isFavorite(id);
+
+  const handleAddToCart = () => {
+    addToCart(offer, qty);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  };
 
   if (!offer) {
     return (
@@ -136,11 +138,22 @@ export default function OfferDetail() {
               <span className="hero-rating">⭐ {offer.restaurantRating}</span>
             </div>
           </div>
+
+          {/* Heart button — now connected to FavoritesContext */}
           <button
-            onClick={() => setIsLiked(!isLiked)}
-            className={`detail-like-btn ${isLiked ? 'liked' : ''}`}
+            onClick={() => toggleFavorite(offer)}
+            className={`detail-like-btn ${liked ? 'liked' : ''}`}
+            title={liked ? "Remove from favorites" : "Add to favorites"}
+            style={{
+              transform: liked ? "scale(1.1)" : "scale(1)",
+              transition: "transform 0.2s, background 0.2s",
+            }}
           >
-            <Heart size={20} fill={isLiked ? 'currentColor' : 'none'} />
+            <Heart
+              size={20}
+              fill={liked ? 'currentColor' : 'none'}
+              style={{ transition: "fill 0.2s" }}
+            />
           </button>
         </div>
       </div>
@@ -220,8 +233,6 @@ export default function OfferDetail() {
 
         {/* Right — Sidebar */}
         <div className="detail-sidebar">
-
-          {/* Restaurant Info */}
           <div className="sidebar-card">
             <h3>Restaurant Info</h3>
             <div className="sidebar-row">
@@ -241,13 +252,8 @@ export default function OfferDetail() {
               <span className="sidebar-value">{offer.distance}</span>
             </div>
           </div>
-
-
-
         </div>
       </div>
-
-
 
     </div>
   );

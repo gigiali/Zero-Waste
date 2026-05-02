@@ -1,11 +1,12 @@
 import {
-  ShoppingCart, User, MapPin, Globe, X, Search, LogIn,
+  ShoppingCart, User, MapPin, Globe, X, Search, LogIn, Heart,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/AuthContext";
 import { NotificationsBell } from "./NotificationsDropdown";
+import { useFavorites } from "../Context/FavoritesContext";
 
 export default function Navigation({
   borderBottomColor = "#e5e7eb",
@@ -17,6 +18,7 @@ export default function Navigation({
   const navigate = useNavigate();
   const { totalItems } = useCart();
   const { isLoggedIn, logout } = useAuth();
+  const { favorites, toggleFavorite } = useFavorites();
 
   const [isLangDropdownOpen, setIsLangDropdownOpen]   = useState(false);
   const [selectedLanguage, setSelectedLanguage]       = useState("EN");
@@ -24,6 +26,7 @@ export default function Navigation({
   const [showLogoutConfirm, setShowLogoutConfirm]     = useState(false);
   const [showNotifications, setShowNotifications]     = useState(false);
   const [showProfileMenu, setShowProfileMenu]         = useState(false);
+  const [showFavorites, setShowFavorites]             = useState(false);
   const [selectedLocation, setSelectedLocation]       = useState(() => localStorage.getItem("userLocationName") || null);
   const [areaNotAvailable, setAreaNotAvailable]       = useState(false);
   const [mapSearchQuery, setMapSearchQuery]           = useState("");
@@ -35,6 +38,7 @@ export default function Navigation({
   const mapInstanceRef      = useRef(null);
   const notifRef            = useRef(null);
   const profileMenuRef      = useRef(null);
+  const favoritesRef        = useRef(null);
 
   // Close notifications when clicking outside
   useEffect(() => {
@@ -67,6 +71,17 @@ export default function Navigation({
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [isLangDropdownOpen]);
+
+  // Close favorites when clicking outside
+  useEffect(() => {
+    if (!showFavorites) return;
+    const handler = (e) => {
+      if (favoritesRef.current && !favoritesRef.current.contains(e.target))
+        setShowFavorites(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showFavorites]);
 
   const isCairoArea = (address) => {
     const names = ["cairo","giza","nasr city","maadi","helwan","6th of october","shubra","ain shams","matariya","dokki","mohandessin","agouza","zamalek","heliopolis","misr el gdeda","obour","shorouk","new cairo","madinaty","rehab","tagamo3","katameya"];
@@ -143,17 +158,10 @@ export default function Navigation({
     navigate("/home");
   };
 
-  /* ── Shared profile avatar style: white bg + green border + green icon ── */
   const avatarStyle = {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    background: "white",
-    border: "2px solid #10b981",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
+    width: "36px", height: "36px", borderRadius: "50%", background: "white",
+    border: "2px solid #10b981", display: "flex", alignItems: "center",
+    justifyContent: "center", cursor: "pointer",
     boxShadow: "0 2px 8px rgba(16,185,129,0.2)",
     transition: "transform 0.15s, box-shadow 0.15s",
   };
@@ -206,6 +214,110 @@ export default function Navigation({
             </div>
           )}
 
+          {/* ── Favorites Heart ── */}
+          <div ref={favoritesRef} style={{ position: "relative" }}>
+            <div
+              onClick={() => setShowFavorites((v) => !v)}
+              title="Favorites"
+              style={{ cursor: "pointer", position: "relative", display: "flex", alignItems: "center" }}
+            >
+              <Heart
+                size={22}
+                color={favorites.length > 0 ? "#ef4444" : "#374151"}
+                fill={favorites.length > 0 ? "#ef4444" : "none"}
+                style={{ transition: "all 0.2s" }}
+              />
+              {favorites.length > 0 && (
+                <span style={{
+                  position: "absolute", top: "-8px", right: "-8px",
+                  background: "#ef4444", color: "white", borderRadius: "50%",
+                  width: "18px", height: "18px", display: "flex", alignItems: "center",
+                  justifyContent: "center", fontSize: "0.7rem", fontWeight: "bold",
+                }}>{favorites.length > 99 ? "99+" : favorites.length}</span>
+              )}
+            </div>
+
+            {/* Favorites Dropdown */}
+            {showFavorites && (
+              <div style={{
+                position: "absolute", top: "calc(100% + 12px)", right: 0,
+                background: "white", borderRadius: "12px",
+                boxShadow: "0 8px 30px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb",
+                width: "320px", zIndex: 1000, overflow: "hidden",
+              }}>
+                {/* Header */}
+                <div style={{
+                  padding: "0.85rem 1rem", borderBottom: "1px solid #f3f4f6",
+                  display: "flex", alignItems: "center", justifyContent: "space-between",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <Heart size={16} color="#ef4444" fill="#ef4444" />
+                    <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "#1f2937" }}>
+                      Favorites
+                    </span>
+                    <span style={{
+                      background: "#fef2f2", color: "#ef4444", fontSize: "0.75rem",
+                      fontWeight: 600, borderRadius: "20px", padding: "1px 8px",
+                    }}>{favorites.length}</span>
+                  </div>
+                  <X size={16} color="#9ca3af" style={{ cursor: "pointer" }} onClick={() => setShowFavorites(false)} />
+                </div>
+
+                {/* List */}
+                <div style={{ maxHeight: "340px", overflowY: "auto" }}>
+                  {favorites.length === 0 ? (
+                    <div style={{ padding: "2rem 1rem", textAlign: "center", color: "#9ca3af" }}>
+                      <Heart size={32} style={{ marginBottom: "0.5rem", opacity: 0.3 }} />
+                      <p style={{ margin: 0, fontSize: "0.9rem" }}>No favorites yet</p>
+                      <p style={{ margin: "0.25rem 0 0", fontSize: "0.8rem" }}>Tap the heart on any offer to save it</p>
+                    </div>
+                  ) : (
+                    favorites.map((fav) => (
+                      <div
+                        key={fav.id}
+                        style={{
+                          display: "flex", alignItems: "center", gap: "0.75rem",
+                          padding: "0.75rem 1rem", cursor: "pointer",
+                          borderBottom: "1px solid #f9fafb", transition: "background 0.15s",
+                        }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "#fafafa"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = "white"}
+                        onClick={() => { navigate(`/offer/${fav.id}`); setShowFavorites(false); }}
+                      >
+                        <img
+                          src={fav.image}
+                          alt={fav.title}
+                          style={{ width: "48px", height: "48px", borderRadius: "8px", objectFit: "cover", flexShrink: 0 }}
+                        />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#1f2937", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {fav.restaurantName}
+                          </div>
+                          <div style={{ fontSize: "0.78rem", color: "#6b7280", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                            {fav.title}
+                          </div>
+                          <div style={{ fontSize: "0.78rem", color: "#10b981", fontWeight: 600, marginTop: "2px" }}>
+                            EGP {fav.discountedPrice} <span style={{ color: "#9ca3af", fontWeight: 400, textDecoration: "line-through" }}>EGP {fav.originalPrice}</span>
+                          </div>
+                        </div>
+                        {/* Remove from favorites */}
+                        <div
+                          onClick={(e) => { e.stopPropagation(); toggleFavorite(fav); }}
+                          title="Remove from favorites"
+                          style={{ padding: "4px", borderRadius: "50%", flexShrink: 0 }}
+                          onMouseEnter={(e) => e.currentTarget.style.background = "#fef2f2"}
+                          onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                        >
+                          <Heart size={16} color="#ef4444" fill="#ef4444" />
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Notifications bell */}
           <NotificationsBell
             show={showNotifications}
@@ -239,30 +351,17 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Profile avatar — white bg + green border on ALL pages */}
+          {/* Profile */}
           {hideProfile ? (
-            /* Admin nav */
             <div ref={profileMenuRef} style={{ position: "relative" }}>
-              <div
-                onClick={() => navigate("/profile")}
-                title="My Profile"
-                style={avatarStyle}
-                onMouseEnter={avatarHoverIn}
-                onMouseLeave={avatarHoverOut}
-              >
+              <div onClick={() => navigate("/profile")} title="My Profile" style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
                 <User size={18} color="#10b981" />
               </div>
             </div>
           ) : (
             isLoggedIn ? (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div
-                  onClick={() => navigate("/profile")}
-                  title="My Profile"
-                  style={avatarStyle}
-                  onMouseEnter={avatarHoverIn}
-                  onMouseLeave={avatarHoverOut}
-                >
+                <div onClick={() => navigate("/profile")} title="My Profile" style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
                   <User size={18} color="#10b981" />
                 </div>
                 <button onClick={() => setShowLogoutConfirm(true)}
