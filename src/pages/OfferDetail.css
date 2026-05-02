@@ -169,7 +169,11 @@
   margin: 0 auto;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  divide-x: 1px solid var(--gray-200);
+
+}
+
+.info-strip-item:not(:last-child) {
+  border-right: 1px solid var(--gray-200);
 }
 
 .info-strip-item {
