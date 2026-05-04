@@ -143,7 +143,7 @@ export default function CartPage() {
             )}
           </div>
 
-          <button className="continue-btn" onClick={() => navigate("/")}>
+          <button className="continue-btn" onClick={() => navigate("/home")}>
             Continue Shopping
           </button>
         </div>

@@ -8,8 +8,8 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer, BarChart, Bar,
 } from "recharts";
-import { NotificationsPanel } from "../components/NotificationsDropdown";
-import { useNotifications } from "../Context/NotificationsContext";
+import { NotificationsPanel } from "../Components/Notificationsdropdown";
+import { useNotifications } from "../Context/Notificationscontext";
 import "./Business.css";
 
 const salesData = [
@@ -24,7 +24,7 @@ const salesData = [
 
 const EMPTY_FORM = {
   title: "", description: "", originalPrice: "",
-  discountPrice: "", quantity: "", expiresIn: "", image: "",
+  discountPrice: "", quantityAvailable: "", expiresIn: "", image: null, status: "active",
 };
 
 export default function Business() {
@@ -41,6 +41,12 @@ export default function Business() {
   const [showAllOffers, setShowAllOffers]         = useState(false);
   const [showAllOrders, setShowAllOrders]         = useState(false);
   const [form, setForm]                           = useState(EMPTY_FORM);
+  const [isSubmitting, setIsSubmitting]           = useState(false);
+  const [submitError, setSubmitError]             = useState("");
+  const [branches]                                = useState([
+    { id: 1, name: "Maadi Branch" },
+    { id: 2, name: "Nasr City Branch" },
+  ]);
 
   const [offers, setOffers] = useState([
     { id: 1, title: "Fresh Bread & Pastries Box", description: "Assorted fresh bread and pastries from today", originalPrice: 15.99, discountPrice: 5.99, quantity: 8, expiresIn: "2h 30m", status: "Active", branch: "Maadi Branch", image: "" },
@@ -50,13 +56,14 @@ export default function Business() {
     { id: 5, title: "Blueberry Muffin Box", description: "Fresh muffins from today", originalPrice: 10.0, discountPrice: 4.5, quantity: 6, expiresIn: "2h", status: "Active", branch: "Nasr City Branch", image: "" },
   ]);
 
-  const [orders] = useState([
-    { id: "ORD123", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "Completed", branch: "Maadi Branch" },
-    { id: "ORD124", offer: "Fresh Bread Bundle",   customer: "Sara Ali",     amount: "EGP 7.99", status: "Pending",   branch: "Maadi Branch" },
-    { id: "ORD127", offer: "Pastry Sampler",       customer: "Ahmed Hassan", amount: "EGP 6.50", status: "Completed", branch: "Maadi Branch" },
-    { id: "ORD125", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "Completed", branch: "Nasr City Branch" },
-    { id: "ORD126", offer: "Blueberry Muffin Box", customer: "Jane Smith",   amount: "EGP 4.50", status: "Completed", branch: "Nasr City Branch" },
+  const [orders, setOrders] = useState([
+    { id: "ORD123", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "completed", branch: "Maadi Branch" },
+    { id: "ORD124", offer: "Fresh Bread Bundle",   customer: "Sara Ali",     amount: "EGP 7.99", status: "processing",   branch: "Maadi Branch" },
+    { id: "ORD127", offer: "Pastry Sampler",       customer: "Ahmed Hassan", amount: "EGP 6.50", status: "delivered", branch: "Maadi Branch" },
+    { id: "ORD125", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "completed", branch: "Nasr City Branch" },
+    { id: "ORD126", offer: "Blueberry Muffin Box", customer: "Jane Smith",   amount: "EGP 4.50", status: "cancelled", branch: "Nasr City Branch" },
   ]);
+  const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const filteredOffers = offers.filter(o => o.branch === selectedBranch);
   const filteredOrders = orders.filter(o => o.branch === selectedBranch);
@@ -76,39 +83,194 @@ export default function Business() {
   const openAdd  = () => { setEditingId(null); setForm(EMPTY_FORM); setDrawerOpen(true); };
   const openEdit = (offer) => {
     setEditingId(offer.id);
+    // Calculate expiration date from expiresIn string (e.g., "2h 30m")
+    const hoursMatch = offer.expiresIn?.match(/(\d+)h/);
+    const minsMatch = offer.expiresIn?.match(/(\d+)m/);
+    const hours = hoursMatch ? parseInt(hoursMatch[1]) : 0;
+    const mins = minsMatch ? parseInt(minsMatch[1]) : 0;
+    const expDate = new Date(Date.now() + (hours * 60 + mins) * 60 * 1000);
+    const expDateStr = expDate.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:mm
+
     setForm({
       title: offer.title, description: offer.description,
       originalPrice: String(offer.originalPrice), discountPrice: String(offer.discountPrice),
-      quantity: String(offer.quantity), expiresIn: offer.expiresIn.replace(/h.*/, ""),
-      image: offer.image || "",
+      quantityAvailable: String(offer.quantity), expiresIn: "",
+      image: null,
+      status: offer.status?.toLowerCase() || "active",
+      expirationDate: expDateStr,
     });
     setDrawerOpen(true);
   };
-  const closeDrawer  = () => { setDrawerOpen(false); setEditingId(null); setForm(EMPTY_FORM); };
+  const closeDrawer  = () => { setDrawerOpen(false); setEditingId(null); setForm(EMPTY_FORM); setSubmitError(""); };
   const handleChange = (e) => { const { name, value } = e.target; setForm(prev => ({ ...prev, [name]: value })); };
   const handleImage  = (e) => {
     const file = e.target.files[0]; if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => setForm(prev => ({ ...prev, image: reader.result }));
-    reader.readAsDataURL(file);
+    setForm(prev => ({ ...prev, image: file }));
   };
 
-  const handleSave = () => {
-    if (!form.title.trim() || !form.description.trim()) { alert("Please fill in title and description"); return; }
-    const data = {
-      title: form.title, description: form.description,
-      originalPrice: parseFloat(form.originalPrice) || 0,
-      discountPrice: parseFloat(form.discountPrice) || 0,
-      quantity: parseInt(form.quantity) || 0,
-      expiresIn: form.expiresIn + "h", branch: selectedBranch, image: form.image, status: "Active",
-    };
-    if (editingId) { setOffers(prev => prev.map(o => o.id === editingId ? { ...o, ...data } : o)); }
-    else           { setOffers(prev => [{ id: Date.now(), ...data }, ...prev]); }
-    closeDrawer();
+  const handleSave = async () => {
+    if (!form.title.trim() || !form.description.trim()) {
+      setSubmitError("Please fill in title and description");
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        setSubmitError("Please login to continue");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const submitData = new FormData();
+      submitData.append("title", form.title.trim());
+      submitData.append("description", form.description.trim());
+      submitData.append("quantity_available", parseInt(form.quantityAvailable) || 1);
+      submitData.append("original_price", parseFloat(form.originalPrice) || 0);
+      submitData.append("discount_price", parseFloat(form.discountPrice) || 0);
+      submitData.append("status", form.status || "active");
+
+      // Handle expiration time
+      if (!editingId) {
+        // Find branch ID from selected branch (only for new offers)
+        const branchId = branches.find(b => b.name === selectedBranch)?.id;
+        if (!branchId) {
+          setSubmitError("Please select a valid branch");
+          setIsSubmitting(false);
+          return;
+        }
+        submitData.append("branch_id", branchId);
+
+        // Calculate expiration time from hours input for new offers
+        const expiresInHours = parseInt(form.expiresIn) || 2;
+        const expirationTime = new Date(Date.now() + expiresInHours * 60 * 60 * 1000).toISOString();
+        submitData.append("expiration_time", expirationTime);
+      } else {
+        // For editing, use the selected expiration date
+        if (form.expirationDate) {
+          submitData.append("expiration_time", new Date(form.expirationDate).toISOString());
+        }
+      }
+
+      if (form.image && typeof form.image === 'object') {
+        submitData.append("image", form.image);
+      }
+
+      const url = editingId
+        ? `https://stagnate-deferred-pork.ngrok-free.dev/api/offers/${editingId}`
+        : "https://stagnate-deferred-pork.ngrok-free.dev/api/offers";
+
+      const method = editingId ? "PUT" : "POST";
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: submitData,
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        if (editingId) {
+          // Update existing offer in local state
+          setOffers(prev => prev.map(o => o.id === editingId ? {
+            ...o,
+            title: form.title,
+            description: form.description,
+            originalPrice: parseFloat(form.originalPrice) || 0,
+            discountPrice: parseFloat(form.discountPrice) || 0,
+            quantity: parseInt(form.quantityAvailable) || 1,
+            status: form.status.charAt(0).toUpperCase() + form.status.slice(1),
+            image: data.offer?.image_url || o.image,
+          } : o));
+        } else {
+          // Add new offer to local state
+          const newOffer = {
+            id: data.offer?.id || Date.now(),
+            title: form.title,
+            description: form.description,
+            originalPrice: parseFloat(form.originalPrice) || 0,
+            discountPrice: parseFloat(form.discountPrice) || 0,
+            quantity: parseInt(form.quantityAvailable) || 1,
+            expiresIn: form.expiresIn + "h",
+            status: "Active",
+            branch: selectedBranch,
+            image: data.offer?.image_url || "",
+          };
+          setOffers(prev => [newOffer, ...prev]);
+        }
+        closeDrawer();
+      } else {
+        if (response.status === 422 && data.errors) {
+          const errorMessages = Object.values(data.errors).flat().join("\n");
+          setSubmitError(errorMessages || "Please fix the errors below");
+        } else if (response.status === 401) {
+          setSubmitError("Please login to continue");
+        } else {
+          setSubmitError(data.message || `Failed to ${editingId ? 'update' : 'create'} offer. Please try again.`);
+        }
+      }
+    } catch (error) {
+      console.error("Submit error:", error);
+      setSubmitError("Network error. Please check your connection and try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleDelete = (id) => setOffers(prev => prev.filter(o => o.id !== id));
   const scrollTo     = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+
+  const handleOrderStatusUpdate = async (orderId, newStatus) => {
+    setUpdatingOrderId(orderId);
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        alert("Please login to continue");
+        setUpdatingOrderId(null);
+        return;
+      }
+
+      const response = await fetch(
+        `https://stagnate-deferred-pork.ngrok-free.dev/api/orders/${orderId}/status`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ status: newStatus }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (response.ok) {
+        // Update local state
+        setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
+      } else {
+        if (response.status === 422 && data.errors) {
+          alert(Object.values(data.errors).flat().join("\n"));
+        } else if (response.status === 401) {
+          alert("Please login to continue");
+        } else {
+          alert(data.message || "Failed to update order status.");
+        }
+      }
+    } catch (error) {
+      console.error("Status update error:", error);
+      alert("Network error. Please check your connection.");
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
   // Sidebar nav items config
   const navItems = [
@@ -129,7 +291,7 @@ export default function Business() {
       id: "profile",
       icon: User,
       label: "My Profile",
-      onClick: () => navigate("/profile"),
+      onClick: () => navigate("/business/profile"),
     },
     {
       id: "branches",
@@ -139,6 +301,7 @@ export default function Business() {
       expanded: showBranches,
       onToggle: () => setShowBranches(b => !b),
       children: ["Maadi Branch", "Nasr City Branch"],
+      hasAddBranch: true,
     },
     {
       id: "offers",
@@ -217,6 +380,12 @@ export default function Business() {
                           onClick={() => handleBranchChange(b)}
                         >{b}</button>
                       ))}
+                      {item.hasAddBranch && (
+                        <button
+                          className="biz-branch-btn biz-branch-add"
+                          onClick={() => navigate("/add-branch")}
+                        >+ Add Branch</button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -244,7 +413,7 @@ export default function Business() {
         {/* Bottom profile card */}
         <div
           className="biz-sidebar-profile"
-          onClick={() => navigate("/profile")}
+          onClick={() => navigate("/business/profile")}
           title="Go to My Profile"
         >
           <div className="biz-sidebar-avatar">
@@ -342,8 +511,10 @@ export default function Business() {
                 <h3 className="biz-drawer-title">{editingId ? "✏️ Edit Offer" : "✨ New Offer"}</h3>
                 <button className="biz-drawer-close" onClick={closeDrawer}>✕</button>
               </div>
-              {form.image && <img src={form.image} alt="preview" className="biz-img-preview" />}
+              {form.image && typeof form.image === 'string' && <img src={form.image} alt="preview" className="biz-img-preview" />}
+              {form.image && typeof form.image === 'object' && <div className="biz-img-preview">📷 {form.image.name}</div>}
               <div className="biz-drawer-body">
+                {submitError && <div className="biz-error-box" style={{color: "#ef4444", marginBottom: "12px", padding: "8px", background: "#fef2f2", borderRadius: "6px"}}>{submitError}</div>}
                 <div className="biz-field"><label>Title *</label><input name="title" value={form.title} onChange={handleChange} placeholder="e.g. Fresh Bread Bundle" /></div>
                 <div className="biz-field"><label>Description *</label><textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe your offer..." rows={3} /></div>
                 <div className="biz-field"><label>Offer Photo</label><input type="file" accept="image/*" onChange={handleImage} /></div>
@@ -352,13 +523,29 @@ export default function Business() {
                   <div className="biz-field"><label>Discount Price</label><div className="biz-prefix-input"><span>EGP</span><input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} placeholder="0.00" /></div></div>
                 </div>
                 <div className="biz-field-row">
-                  <div className="biz-field"><label>Quantity</label><input name="quantity" type="number" value={form.quantity} onChange={handleChange} placeholder="0" /></div>
-                  <div className="biz-field"><label>Expires In (hours)</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder="2" /></div>
+                  <div className="biz-field"><label>Quantity Available</label><input name="quantityAvailable" type="number" value={form.quantityAvailable} onChange={handleChange} placeholder="1" /></div>
+                  {!editingId && <div className="biz-field"><label>Expires In (hours)</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder="2" /></div>}
                 </div>
+                {editingId && (
+                  <div className="biz-field-row">
+                    <div className="biz-field">
+                      <label>Expiration Date</label>
+                      <input name="expirationDate" type="datetime-local" value={form.expirationDate} onChange={handleChange} />
+                    </div>
+                    <div className="biz-field">
+                      <label>Status</label>
+                      <select name="status" value={form.status} onChange={handleChange} className="form-input">
+                        <option value="active">Active</option>
+                        <option value="expired">Expired</option>
+                        <option value="disabled">Disabled</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="biz-drawer-footer">
-                <button className="biz-btn-cancel" onClick={closeDrawer}>Cancel</button>
-                <button className="biz-btn-save" onClick={handleSave}>{editingId ? "Save Changes" : "Create Offer"}</button>
+                <button className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>Cancel</button>
+                <button className="biz-btn-save" onClick={handleSave} disabled={isSubmitting}>{isSubmitting ? "Saving..." : (editingId ? "Save Changes" : "Create Offer")}</button>
               </div>
             </div>
           )}
@@ -405,7 +592,34 @@ export default function Business() {
                     <td>{o.offer}</td>
                     <td>{o.customer}</td>
                     <td className="biz-td-amount">{o.amount}</td>
-                    <td><span className={`biz-badge ${o.status === "Completed" ? "active" : "pending"}`}>{o.status}</span></td>
+                    <td>
+                      <select
+                        value={o.status}
+                        onChange={(e) => handleOrderStatusUpdate(o.id, e.target.value)}
+                        disabled={updatingOrderId === o.id}
+                        className={`biz-status-select biz-status-${o.status}`}
+                        style={{
+                          padding: "4px 8px",
+                          borderRadius: "6px",
+                          border: "1px solid #e5e7eb",
+                          fontSize: "0.85rem",
+                          cursor: updatingOrderId === o.id ? "wait" : "pointer",
+                          backgroundColor: o.status === "completed" ? "#dcfce7" :
+                                          o.status === "processing" ? "#dbeafe" :
+                                          o.status === "delivered" ? "#f3e8ff" :
+                                          o.status === "cancelled" ? "#fee2e2" : "#f3f4f6",
+                          color: o.status === "completed" ? "#166534" :
+                                 o.status === "processing" ? "#1e40af" :
+                                 o.status === "delivered" ? "#7c3aed" :
+                                 o.status === "cancelled" ? "#991b1b" : "#374151",
+                        }}
+                      >
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="cancelled">Cancelled</option>
+                      </select>
+                    </td>
                   </tr>
                 ))}
               </tbody>

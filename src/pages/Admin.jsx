@@ -1,5 +1,5 @@
 import React from "react";
-import Navigation from "../components/Navigation";
+import Navigation from "../Components/Navigation";
 import { Shield, BriefcaseBusiness, Users, CircleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {

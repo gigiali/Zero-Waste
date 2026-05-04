@@ -1,9 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import "./HomePage.css";
-import { Search, ChevronDown, Clock, MapPin, AlertCircle, Package, Utensils, Coffee, ShoppingCart, Hotel, Store } from "lucide-react";
+import {
+  Search, ChevronDown, Clock, MapPin, AlertCircle, Package,
+  Utensils, Coffee, ShoppingCart, Hotel, Store,
+  CheckCircle, Truck, X, Star
+} from "lucide-react";
 import { useCart } from "../Context/CartContext";
 
+// ── Countdown Timer ───────────────────────────────────────────────────────────
 function CountdownTimer({ pickupTime }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
@@ -46,6 +51,235 @@ function CountdownTimer({ pickupTime }) {
   );
 }
 
+// ── Order Tracking Strip ──────────────────────────────────────────────────────
+function OrderTrackingStrip({ order, onDismiss }) {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [showReview, setShowReview] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewImage, setReviewImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (currentStep < 4) setCurrentStep((s) => s + 1);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [currentStep]);
+
+  // Show review modal when delivered (step 4)
+  useEffect(() => {
+    if (currentStep === 4 && !submitted) {
+      const timer = setTimeout(() => setShowReview(true), 500);
+      return () => clearTimeout(timer);
+    }
+  }, [currentStep, submitted]);
+
+  const pickupSteps = [
+    { id: 1, label: "Confirmed",  icon: <CheckCircle size={14} /> },
+    { id: 2, label: "Preparing",  icon: <Package size={14} /> },
+    { id: 3, label: "Ready",      icon: <CheckCircle size={14} /> },
+    { id: 4, label: "Picked Up",  icon: <CheckCircle size={14} /> },
+  ];
+  const deliverySteps = [
+    { id: 1, label: "Confirmed",  icon: <CheckCircle size={14} /> },
+    { id: 2, label: "Preparing",  icon: <Package size={14} /> },
+    { id: 3, label: "On the Way", icon: <Truck size={14} /> },
+    { id: 4, label: "Delivered",  icon: <CheckCircle size={14} /> },
+  ];
+
+  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
+
+  const handleSubmitReview = async () => {
+    // Build review data matching backend structure
+    const reviewData = {
+      offer_id: order.offerId || 1, // TODO: pass actual offerId through order flow
+      rating,
+      comment: reviewText,
+      order_id: order.orderNumber,
+      date: new Date().toISOString(),
+      delivery_method: order.deliveryMethod,
+      // For localStorage preview (image will be base64 or URL)
+      image: reviewImage ? reviewImage.name : null,
+    };
+
+    // TODO: Replace with API call when backend is ready:
+    // const formData = new FormData();
+    // formData.append('offer_id', reviewData.offer_id);
+    // formData.append('rating', rating);
+    // formData.append('comment', reviewText);
+    // if (reviewImage) formData.append('image', reviewImage);
+    //
+    // await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/reviews", {
+    //   method: "POST",
+    //   headers: { "Authorization": `Bearer ${token}` },
+    //   body: formData
+    // });
+
+    // For now: localStorage (convert image to base64 for preview)
+    if (reviewImage) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        reviewData.imageBase64 = reader.result;
+        const existing = JSON.parse(localStorage.getItem("orderReviews") || "[]");
+        localStorage.setItem("orderReviews", JSON.stringify([...existing, reviewData]));
+        setSubmitted(true);
+        setShowReview(false);
+        removeImage();
+      };
+      reader.readAsDataURL(reviewImage);
+    } else {
+      const existing = JSON.parse(localStorage.getItem("orderReviews") || "[]");
+      localStorage.setItem("orderReviews", JSON.stringify([...existing, reviewData]));
+      setSubmitted(true);
+      setShowReview(false);
+    }
+  };
+
+  const handleStarClick = (star) => setRating(star);
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate: jpg/jpeg/png only, max 2MB
+    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      alert('Please select JPG, JPEG, or PNG image only');
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Image must be less than 2MB');
+      return;
+    }
+
+    setReviewImage(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setReviewImage(null);
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+  };
+
+  return (
+    <div className="order-strip">
+      {/* Header row: order meta + dismiss */}
+      <div className="order-strip-header">
+        <div className="order-strip-meta">
+          <div className="order-strip-icon-wrap">
+            <Package size={13} />
+          </div>
+          <span className="order-strip-number">#{order.orderNumber}</span>
+          <span className="order-strip-dot" />
+          <span className="order-strip-method-badge">
+            {order.deliveryMethod === "delivery" ? "Delivery" : "Pickup"}
+          </span>
+        </div>
+
+        <div className="order-strip-right">
+          <span className="order-strip-total">
+            EGP {Number(order.total ?? 0).toFixed(2)}
+          </span>
+          <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss">
+            <X size={12} />
+          </button>
+        </div>
+      </div>
+
+      {/* Progress track */}
+      <div className="order-strip-track">
+        {steps.map((step, idx) => {
+          const done   = step.id < currentStep;
+          const active = step.id === currentStep;
+          return (
+            <React.Fragment key={step.id}>
+              <div className={`ost-step ${done ? "done" : active ? "active" : "pending"}`}>
+                <div className="ost-node">
+                  {done ? <CheckCircle size={13} /> : step.icon}
+                </div>
+                <span className="ost-label">{step.label}</span>
+              </div>
+              {idx < steps.length - 1 && (
+                <div className={`ost-line ${done ? "done" : ""}`} />
+              )}
+            </React.Fragment>
+          );
+        })}
+      </div>
+
+      {/* Review Modal */}
+      {showReview && (
+        <div className="review-overlay" onClick={() => setShowReview(false)}>
+          <div className="review-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="review-close" onClick={() => setShowReview(false)}>
+              <X size={18} />
+            </button>
+            <div className="review-header">
+              <div className="review-icon">🎉</div>
+              <h3>Order Delivered!</h3>
+              <p>How was your experience?</p>
+            </div>
+            <div className="review-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  className={`review-star ${star <= rating ? "filled" : ""}`}
+                  onClick={() => handleStarClick(star)}
+                >
+                  <Star size={18} fill={star <= rating ? "#fbbf24" : "none"} />
+                </button>
+              ))}
+            </div>
+            <textarea
+              className="review-textarea"
+              placeholder="Write your comment... (optional, max 500 chars)"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value.slice(0, 500))}
+              rows={2}
+            />
+
+            {/* Image Upload - matching backend requirements */}
+            <div className="review-image-section">
+              {!imagePreview ? (
+                <label className="review-image-upload">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png"
+                    onChange={handleImageChange}
+                    style={{ display: 'none' }}
+                  />
+                  <span className="upload-icon">📷</span>
+                  <span className="upload-text">Add Photo (optional)</span>
+                  <span className="upload-hint">JPG, PNG - Max 2MB</span>
+                </label>
+              ) : (
+                <div className="review-image-preview">
+                  <img src={imagePreview} alt="Preview" />
+                  <button className="remove-image-btn" onClick={removeImage}>
+                    <X size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <button
+              className="review-submit-btn"
+              onClick={handleSubmitReview}
+              disabled={rating === 0}
+            >
+              Submit Review
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 const categoryIcons = {
   All: <Store size={16} />,
   Restaurant: <Utensils size={16} />,
@@ -60,17 +294,28 @@ const sortOptions = [
   { label: "Rating",           value: "rating"           },
 ];
 
+// ── HomePage ──────────────────────────────────────────────────────────────────
 export default function HomePage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart } = useCart();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [loading] = useState(false);
+  const [error] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("highest_discount");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  const [activeOrder, setActiveOrder] = useState(null);
+
+  useEffect(() => {
+    if (location.state?.trackingActive) {
+      setActiveOrder(location.state);
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -112,7 +357,7 @@ export default function HomePage() {
 
   return (
     <div className="homepage-container">
-      {/* Hero */}
+      {/* ── Hero ── */}
       <section className="hero-section">
         <div className="hero-bg-shapes">
           <div className="shape shape-1" /><div className="shape shape-2" /><div className="shape shape-3" />
@@ -123,23 +368,37 @@ export default function HomePage() {
           <p className="hero-subtitle">Discover amazing food deals from local restaurants and reduce food waste</p>
           <div className="search-wrapper">
             <div className="search-icon-left"><Search size={20} /></div>
-            <input type="text" placeholder="Search food, restaurants, or deals..." className="search-input"
-              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+            <input
+              type="text"
+              placeholder="Search food, restaurants, or deals..."
+              className="search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
             <button className="search-btn">Search</button>
           </div>
+
+          {activeOrder && (
+            <OrderTrackingStrip
+              order={activeOrder}
+              onDismiss={() => setActiveOrder(null)}
+            />
+          )}
         </div>
       </section>
 
-      {/* Filter bar */}
+      {/* ── Filter bar ── */}
       <section className="filter-section" style={{ overflow: "visible" }}>
         <div className="filter-inner" style={{ overflow: "visible" }}>
           <div className="filter-left">
-            {/* ✅ "Filter :" label */}
             <h2 className="filter-title">Filter :</h2>
             <div className="categories-container">
               {categories.map((category) => (
-                <button key={category} className={`category-button ${selectedCategory === category ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(category)}>
+                <button
+                  key={category}
+                  className={`category-button ${selectedCategory === category ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(category)}
+                >
                   <span className="cat-icon">{categoryIcons[category]}</span>
                   {category}
                 </button>
@@ -156,9 +415,11 @@ export default function HomePage() {
               {isDropdownOpen && (
                 <div className="dropdown-menu">
                   {sortOptions.map((opt) => (
-                    <div key={opt.value}
+                    <div
+                      key={opt.value}
                       className={`dropdown-item ${sortOption === opt.value ? "dropdown-item-active" : ""}`}
-                      onClick={() => { setSortOption(opt.value); setIsDropdownOpen(false); }}>
+                      onClick={() => { setSortOption(opt.value); setIsDropdownOpen(false); }}
+                    >
                       {opt.label}
                     </div>
                   ))}
@@ -169,14 +430,19 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Offers */}
+      {/* ── Offers ── */}
       <section className="offers-section">
         <div className="offers-header">
           <h2 className="offers-title">{selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}</h2>
           <span className="offers-count">{filteredOffers.length} available</span>
         </div>
 
-        {loading && <div className="loading-container"><div className="loading-spinner" /><p className="loading-text">Loading offers...</p></div>}
+        {loading && (
+          <div className="loading-container">
+            <div className="loading-spinner" />
+            <p className="loading-text">Loading offers...</p>
+          </div>
+        )}
 
         {error && !loading && (
           <div className="error-container">
@@ -198,7 +464,12 @@ export default function HomePage() {
         {!loading && !error && filteredOffers.length > 0 && (
           <div className="offers-grid">
             {filteredOffers.map((offer) => (
-              <div key={offer.id} className="offer-card" onClick={() => navigate(`/offer/${offer.id}`)} style={{ cursor: "pointer" }}>
+              <div
+                key={offer.id}
+                className="offer-card"
+                onClick={() => navigate(`/offer/${offer.id}`)}
+                style={{ cursor: "pointer" }}
+              >
                 <div className="offer-image-container">
                   {offer.image
                     ? <img src={offer.image} alt={offer.title} className="offer-image" />
@@ -206,7 +477,11 @@ export default function HomePage() {
                   {offer.discount && <div className="discount-badge">-{offer.discount}%</div>}
                   <div className="image-bottom-bar">
                     <CountdownTimer pickupTime={offer.pickupTime} />
-                    {offer.quantity && <div className="quantity-badge"><Package size={12} /><span>{offer.quantity} left</span></div>}
+                    {offer.quantity && (
+                      <div className="quantity-badge">
+                        <Package size={12} /><span>{offer.quantity} left</span>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="offer-content">
@@ -225,7 +500,8 @@ export default function HomePage() {
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); addToCart(offer, 1); }}
-                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
+                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+                    >
                       + Add
                     </button>
                   </div>

@@ -1,0 +1,78 @@
+/* ── Working Hours ─────────────────────────────────────────────── */
+.working-hours-wrapper {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  background: #f8f9fa;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 10px;
+  padding: 10px 16px;
+  transition: border-color 0.2s;
+}
+
+.working-hours-wrapper.error {
+  border-color: #e53935;
+}
+
+.working-hours-slot {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.working-hours-slot span {
+  font-size: 0.7rem;
+  color: #888;
+  margin-bottom: 4px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.working-hours-slot input[type="time"] {
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.95rem;
+  outline: none;
+  color: #1a1a1a;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+}
+
+.working-hours-divider {
+  width: 1.5px;
+  height: 36px;
+  background: #ddd;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Form Actions ──────────────────────────────────────────────── */
+.form-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.save-branch-btn {
+  flex: 2;
+  padding: 13px;
+  background: linear-gradient(135deg, #1a6b35, #2d8a4e);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.2s;
+}
+
+.save-branch-btn.disabled,
+.save-branch-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}

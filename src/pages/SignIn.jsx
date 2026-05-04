@@ -45,17 +45,17 @@ function SignIn() {
           localStorage.setItem("rememberMe", "true");
           localStorage.setItem("rememberedEmail", email);
           localStorage.setItem("rememberedPassword", password);
-          localStorage.setItem("token", data.token);
+          localStorage.setItem("auth_token", data.token);
           localStorage.setItem("userRole", data.user.role);
-          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("auth_token");
           sessionStorage.removeItem("userRole");
         } else {
           localStorage.removeItem("rememberMe");
           localStorage.removeItem("rememberedEmail");
           localStorage.removeItem("rememberedPassword");
-          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem("auth_token", data.token);
           sessionStorage.setItem("userRole", data.user.role);
-          localStorage.removeItem("token");
+          localStorage.removeItem("auth_token");
           localStorage.removeItem("userRole");
         }
         if (data.user.role === "vendor")      navigate("/business");

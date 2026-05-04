@@ -201,6 +201,18 @@
   font-weight: 600;
 }
 
+/* ─── ADD BRANCH BUTTON ─────────────────────────────────────────── */
+.biz-branch-btn.biz-branch-add {
+  border: 1px dashed rgba(16,185,129,0.4);
+  color: #10b981;
+  margin-top: 2px;
+}
+.biz-branch-btn.biz-branch-add:hover {
+  background: rgba(16,185,129,0.1);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
 /* ─── SIDEBAR PROFILE CARD (bottom) ────────────────────────────── */
 .biz-sidebar-profile {
   margin: auto 0 0;

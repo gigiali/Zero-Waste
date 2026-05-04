@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Heart, Share2, Phone, Mail, ShoppingCart, Check } from 'lucide-react';
-import { useState } from 'react';
+import { ArrowLeft, Clock, MapPin, Heart, Share2, Phone, Mail, ShoppingCart, Check, Star } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useCart } from '../Context/CartContext';
 import { useFavorites } from '../Context/FavoritesContext';
 import './OfferDetail.css';
@@ -12,6 +12,22 @@ export default function OfferDetail() {
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
   const { toggleFavorite, isFavorite } = useFavorites();
+
+  // Get reviews - TODO: Replace with API call
+  const [offerReviews, setOfferReviews] = useState([]);
+  const [loadingReviews] = useState(false);
+
+  useEffect(() => {
+    // TODO: Replace with API call:
+    // fetch(`https://stagnate-deferred-pork.ngrok-free.dev/api/offers/${id}/reviews`)
+    //   .then(r => r.json())
+    //   .then(data => setOfferReviews(data.reviews));
+
+    // For now: filter from localStorage by offer_id
+    const allReviews = JSON.parse(localStorage.getItem("orderReviews") || "[]");
+    const filtered = allReviews.filter(r => r.offer_id === Number(id));
+    setOfferReviews(filtered);
+  }, [id]);
 
   const offersData = {
     1: {
@@ -251,6 +267,64 @@ export default function OfferDetail() {
               <span className="sidebar-label">Distance</span>
               <span className="sidebar-value">{offer.distance}</span>
             </div>
+          </div>
+
+          {/* Reviews Section */}
+          <div className="sidebar-card reviews-card">
+            <h3>Customer Reviews</h3>
+            {loadingReviews ? (
+              <p className="no-reviews">Loading reviews...</p>
+            ) : offerReviews.length === 0 ? (
+              <p className="no-reviews">No reviews yet. Be the first to order and review!</p>
+            ) : (
+              <>
+                <div className="reviews-summary">
+                  <div className="avg-rating">
+                    <span className="avg-stars">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                          key={star}
+                          size={18}
+                          fill={star <= Math.round(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length) ? "#fbbf24" : "none"}
+                          color={star <= Math.round(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length) ? "#fbbf24" : "#d1d5db"}
+                        />
+                      ))}
+                    </span>
+                    <span className="avg-text">
+                      {(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length).toFixed(1)} / 5
+                    </span>
+                  </div>
+                  <span className="reviews-count">{offerReviews.length} review{offerReviews.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="reviews-list">
+                  {offerReviews.slice().reverse().map((review, idx) => (
+                    <div key={idx} className="review-item">
+                      <div className="review-header-row">
+                        <span className="review-order-id">Order {review.order_id}</span>
+                        <span className="review-date">
+                          {new Date(review.date).toLocaleDateString()}
+                        </span>
+                      </div>
+                      <div className="review-stars-row">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star
+                            key={star}
+                            size={14}
+                            fill={star <= review.rating ? "#fbbf24" : "none"}
+                            color={star <= review.rating ? "#fbbf24" : "#d1d5db"}
+                          />
+                        ))}
+                      </div>
+                      {review.comment && <p className="review-text">"{review.comment}"</p>}
+                      {review.imageBase64 && (
+                        <img src={review.imageBase64} alt="Review" className="review-image" />
+                      )}
+                      <span className="review-method">{review.delivery_method === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

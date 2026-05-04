@@ -1,16 +1,14 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Navigation from "./components/Navigation";
+import Navigation from "./Components/Navigation";
 
 // User Pages
 import HomePage from "./pages/HomePage";
 import CartPage from "./pages/CartPage";
 import PaymentMethodPage from "./pages/PaymentMethod";
-import MyProfile from "./pages/MyProfile";
+import UserProfile from "./pages/MyProfileUser";
 import OfferDetail from "./pages/OfferDetail";
-import OrderConfirmation from "./pages/OrderConfirmation";
-import OrderTracking from "./pages/OrderTracking";
 
 // Auth Pages
 import "./auth-theme.css";
@@ -25,12 +23,15 @@ import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import BusinessSetup from "./pages/BusinessSetup";
 import Business from "./pages/Business";
+import AddBranch from "./pages/AddBranch";
+import BusinessProfile from "./pages/MyProfileBusiness";
 
 // Admin
 import Admin from "./pages/Admin";
 import ReportsIssues from "./pages/ReportsIssues";
 import ManageBusinesses from "./pages/ManageBusinesses";
 import UserManagement from "./pages/UserManagement";
+import AdminProfile from "./pages/MyProfileAdmin";
 
 function App() {
   return (
@@ -38,35 +39,36 @@ function App() {
       <Routes>
 
         {/* Auth */}
-        <Route path="/" element={<SignIn />} />
-        <Route path="/signin" element={<SignIn />} />
-        <Route path="/signup" element={<SignUp />} />
+        <Route path="/"                element={<SignIn />} />
+        <Route path="/signin"          element={<SignIn />} />
+        <Route path="/signup"          element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-code" element={<VerifyCode />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/verify-code"     element={<VerifyCode />} />
+        <Route path="/reset-password"  element={<ResetPassword />} />
 
         {/* Static */}
-        <Route path="/terms" element={<TermsOfService />} />
+        <Route path="/terms"   element={<TermsOfService />} />
         <Route path="/privacy" element={<PrivacyPolicy />} />
 
         {/* User (with Navigation) */}
-        <Route path="/home" element={<><Navigation /><HomePage /></>} />
-        <Route path="/card" element={<><Navigation /><CartPage /></>} />
-        <Route path="/payment" element={<><Navigation /><PaymentMethodPage /></>} />
-        <Route path="/order-confirmation" element={<><Navigation /><OrderConfirmation /></>} />
-        <Route path="/order-tracking" element={<><Navigation /><OrderTracking /></>} />
-        <Route path="/profile" element={<><Navigation /><MyProfile /></>} />
-        <Route path="/offer/:id" element={<><Navigation /><OfferDetail /></>} />
+        <Route path="/home"       element={<><Navigation /><HomePage /></>} />
+        <Route path="/card"       element={<><Navigation /><CartPage /></>} />
+        <Route path="/payment"    element={<><Navigation /><PaymentMethodPage /></>} />
+        <Route path="/profile"    element={<><Navigation /><UserProfile /></>} />   {/* ← User profile */}
+        <Route path="/offer/:id"  element={<><Navigation /><OfferDetail /></>} />
 
         {/* Business */}
-        <Route path="/business-setup" element={<BusinessSetup />} />
-        <Route path="/business" element={<Business />} />
+        <Route path="/business-setup"    element={<BusinessSetup />} />
+        <Route path="/business"          element={<Business />} />
+        <Route path="/add-branch"        element={<AddBranch />} />
+        <Route path="/business/profile"  element={<BusinessProfile />} />           {/* ← Business profile */}
 
         {/* Admin */}
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/admin/reports-issues" element={<ReportsIssues />} />
-        <Route path="/admin/businesses" element={<ManageBusinesses />} />
-        <Route path="/admin/users" element={<UserManagement />} />
+        <Route path="/admin"                  element={<Admin />} />
+        <Route path="/admin/reports-issues"   element={<ReportsIssues />} />
+        <Route path="/admin/businesses"       element={<ManageBusinesses />} />
+        <Route path="/admin/users"            element={<UserManagement />} />
+        <Route path="/admin/profile"          element={<AdminProfile />} />          {/* ← Admin profile */}
 
       </Routes>
     </BrowserRouter>

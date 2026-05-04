@@ -1,6 +1,6 @@
-import React, { useRef, useEffect } from "react";
+import React from "react";
 import { Bell, Tag, ShoppingBag, CreditCard, Info, CheckCheck, Trash2, X } from "lucide-react";
-import { useNotifications } from "../Context/NotificationsContext";
+import { useNotifications } from "../Context/Notificationscontext";
 
 export const NOTIF_META = {
   offer:   { icon: Tag,         bg: "linear-gradient(135deg,#fff7ed,#ffedd5)", color: "#f97316", accent: "#fb923c" },

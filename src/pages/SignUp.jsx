@@ -36,37 +36,73 @@ function SignUp() {
     e.preventDefault();
     if (!validateForm()) return;
     setIsLoading(true);
+    setErrors({});
+
     try {
       const submitData = {
-        name: formData.name, email: formData.email,
-        password: formData.password, password_confirmation: formData.password,
-        address: formData.address, phone: formData.phone,
-        role: formData.role, accepted_terms: formData.accepted_terms,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+        password_confirmation: formData.password,
+        address: formData.address.trim(),
+        phone: formData.phone.trim(),
+        role: formData.role,
+        accepted_terms: formData.accepted_terms,
       };
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/register", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify(submitData),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
+
       if (response.ok) {
-        if (data.token)  localStorage.setItem("token", data.token);
+        if (data.token) localStorage.setItem("auth_token", data.token);
         if (data.user) {
           localStorage.setItem("user", JSON.stringify(data.user));
-          localStorage.setItem("userRole", data.user.role);
+          localStorage.setItem("userRole", data.user.role || formData.role);
         }
-        formData.role === "vendor" ? navigate("/business-setup") : navigate("/home");
+
+        if (formData.role === "vendor") {
+          navigate("/business-setup");
+        } else {
+          navigate("/home");
+        }
       } else {
         if (response.status === 422 && data.errors) {
           const newErrors = {};
-          Object.keys(data.errors).forEach((f) => { newErrors[f] = data.errors[f][0]; });
+          Object.keys(data.errors).forEach((f) => {
+            newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f];
+          });
           setErrors(newErrors);
+        } else if (response.status === 409) {
+          setErrors({ general: "This email is already registered. Please sign in instead." });
+        } else if (response.status === 500) {
+          setErrors({ general: "Server error. Please try again later." });
         } else {
-          setErrors({ general: data.message || "Registration failed. Please try again." });
+          setErrors({ general: data.message || data.error || "Registration failed. Please try again." });
         }
       }
-    } catch {
-      setErrors({ general: "Registration failed. Please check your connection and try again." });
+    } catch (error) {
+      console.error("Registration error:", error);
+      if (error.name === "AbortError") {
+        setErrors({ general: "Request timed out. Please check your connection and try again." });
+      } else if (error.message?.includes("fetch") || error.message?.includes("network")) {
+        setErrors({ general: "Network error. Please check your internet connection." });
+      } else {
+        setErrors({ general: "Registration failed. Please try again later." });
+      }
     } finally {
       setIsLoading(false);
     }

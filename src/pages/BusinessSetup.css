@@ -152,133 +152,6 @@ textarea.form-input {
   border-color: var(--c-forest-mid);
 }
 
-/* ── Map button ───────────────────────────────────────────────── */
-.map-button {
-  font-family: var(--font-body);
-  width: 100%;
-  padding: 11px 16px;
-  background: linear-gradient(135deg, var(--c-forest) 0%, var(--c-forest-mid) 100%);
-  color: var(--c-white);
-  border: none;
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  box-shadow: var(--shadow-btn);
-  transition: transform var(--t-mid), box-shadow var(--t-mid), filter var(--t-mid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.map-button:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-btn-hover);
-  filter: brightness(1.06);
-}
-
-.selected-location {
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: var(--c-success-bg);
-  border: 1px solid var(--c-border);
-  border-left: 3px solid var(--c-emerald);
-  border-radius: var(--r-sm);
-  color: var(--c-forest);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-/* ── Branches section ─────────────────────────────────────────── */
-.branches-section { margin-top: 4px; }
-
-.branches-title {
-  font-family: var(--font-display);
-  font-size: 1.35rem;
-  font-weight: 400;
-  color: var(--c-forest);
-  margin: 0 0 18px;
-}
-
-.branch-section {
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-lg);
-  padding: 22px 24px;
-  background: var(--c-cream);
-  margin-bottom: 18px;
-}
-
-.branch-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 18px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--c-border);
-}
-
-.branch-header h4 {
-  font-family: var(--font-display);
-  font-size: 1.05rem;
-  color: var(--c-forest-mid);
-  margin: 0;
-  font-weight: 400;
-}
-
-.remove-branch-btn {
-  font-family: var(--font-body);
-  background: #fff0f0;
-  color: #c0392b;
-  border: 1px solid rgba(192,57,43,0.2);
-  border-radius: var(--r-sm);
-  padding: 5px 12px;
-  cursor: pointer;
-  font-size: 0.8125rem;
-  font-weight: 700;
-  transition: all var(--t-mid);
-}
-
-.remove-branch-btn:hover {
-  background: #fde8e8;
-  border-color: #c0392b;
-  transform: translateY(-1px);
-}
-
-.add-branch-btn {
-  font-family: var(--font-body);
-  width: 100%;
-  padding: 13px;
-  background: var(--c-white);
-  color: var(--c-forest-mid);
-  border: 2px dashed var(--c-sage);
-  border-radius: var(--r-md);
-  cursor: pointer;
-  font-size: 0.9375rem;
-  font-weight: 700;
-  transition: all var(--t-mid);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.add-branch-btn:hover {
-  background: var(--c-success-bg);
-  border-color: var(--c-forest-mid);
-  color: var(--c-forest);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(26,107,53,0.1);
-}
-
-/* ── Time inputs ──────────────────────────────────────────────── */
-.time-inputs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-}
-
 /* ── Error text ───────────────────────────────────────────────── */
 .error-text {
   font-family: var(--font-body);
@@ -360,7 +233,102 @@ textarea.form-input {
 
 .back-prompt a:hover { color: var(--c-forest-mid); }
 
-/* ── MAP MODAL ────────────────────────────────────────────────── */
+/* ── MAP MODAL (kept for AddBranch.jsx which imports this CSS) ── */
+.map-button {
+  font-family: var(--font-body);
+  width: 100%;
+  padding: 11px 16px;
+  background: linear-gradient(135deg, var(--c-forest) 0%, var(--c-forest-mid) 100%);
+  color: var(--c-white);
+  border: none;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-btn);
+  transition: transform var(--t-mid), box-shadow var(--t-mid), filter var(--t-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.map-button:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-btn-hover);
+  filter: brightness(1.06);
+}
+
+.selected-location {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--c-success-bg);
+  border: 1px solid var(--c-border);
+  border-left: 3px solid var(--c-emerald);
+  border-radius: var(--r-sm);
+  color: var(--c-forest);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.branch-section {
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+  background: var(--c-cream);
+  margin-bottom: 18px;
+}
+
+.branch-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--c-border);
+}
+
+.branch-header h4 {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--c-forest-mid);
+  margin: 0;
+  font-weight: 400;
+}
+
+.add-branch-btn {
+  font-family: var(--font-body);
+  width: 100%;
+  padding: 13px;
+  background: var(--c-white);
+  color: var(--c-forest-mid);
+  border: 2px dashed var(--c-sage);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  transition: all var(--t-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.add-branch-btn:hover {
+  background: var(--c-success-bg);
+  border-color: var(--c-forest-mid);
+  color: var(--c-forest);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26,107,53,0.1);
+}
+
+.time-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
 .map-modal {
   position: fixed;
   inset: 0;
@@ -420,7 +388,6 @@ textarea.form-input {
 
 .close-map-btn:hover { background: rgba(255,255,255,0.28); }
 
-/* Autocomplete */
 .map-search-container {
   padding: 14px 18px 10px;
   background: var(--c-cream);
@@ -518,7 +485,6 @@ textarea.form-input {
 .map-container { height: 380px; position: relative; flex-shrink: 0; }
 .real-map      { height: 100%; width: 100%; }
 
-/* Coordinates */
 .coordinate-display {
   padding: 14px 20px;
   background: var(--c-cream);
@@ -562,8 +528,7 @@ textarea.form-input {
   .business-setup-header { padding: 28px 24px 22px; }
   .business-setup-header h2 { font-size: 1.6rem; }
   .business-setup-form-section { padding: 24px 20px; }
-  .branch-header { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .time-inputs   { grid-template-columns: 1fr; }
+  .time-inputs { grid-template-columns: 1fr; }
   .coordinate-values { flex-direction: column; gap: 10px; }
 }
 
