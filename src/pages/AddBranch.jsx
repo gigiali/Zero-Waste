@@ -27,7 +27,6 @@ export default function AddBranch() {
     lat: null,
     lng: null,
     branchName: "",
-    branchType: "",
     contactEmail: "",
     contactPhone: "",
   });
@@ -55,7 +54,6 @@ export default function AddBranch() {
   const validate = () => {
     const e = {};
     if (!branch.branchName.trim())  e.branchName   = "Branch name is required";
-    if (!branch.branchType)         e.branchType   = "Branch type is required";
     if (!branch.fullAddress.trim()) e.fullAddress  = "Branch address is required";
     if (!branch.locationPin.trim()) e.locationPin  = "Location selection is required";
     if (!branch.workingFrom || !branch.workingTo) e.workingHours = "Working hours are required";
@@ -82,7 +80,6 @@ export default function AddBranch() {
 
       const body = new FormData();
       body.append("branch_name",   branch.branchName);
-      body.append("branch_type",   branch.branchType);
       body.append("store_address", branch.fullAddress);
       body.append("location_pin",  branch.locationPin);
       body.append("opening_hours", `${branch.workingFrom} - ${branch.workingTo}`);
@@ -295,25 +292,6 @@ export default function AddBranch() {
                   onChange={e => handleChange("branchName", e.target.value)}
                 />
                 {errors.branchName && <span className="error-text">{errors.branchName}</span>}
-              </div>
-
-              {/* Branch Type */}
-              <div className="form-group">
-                <label>Branch Type</label>
-                <select
-                  className="form-input"
-                  value={branch.branchType}
-                  onChange={e => handleChange("branchType", e.target.value)}
-                >
-                  <option value="">Select branch type</option>
-                  <option value="restaurant">Restaurant</option>
-                  <option value="supermarket">Supermarket</option>
-                  <option value="coffee-shop">Coffee Shop</option>
-                  <option value="hotel">Hotel</option>
-                  <option value="bakery">Bakery</option>
-                  <option value="dessert-shop">Dessert Shop</option>
-                </select>
-                {errors.branchType && <span className="error-text">{errors.branchType}</span>}
               </div>
 
               {/* Contact Email */}

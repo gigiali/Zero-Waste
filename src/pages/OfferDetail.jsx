@@ -1,8 +1,7 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Heart, Share2, Phone, Mail, ShoppingCart, Check, Star } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Share2, Phone, Mail, ShoppingCart, Check, Star } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCart } from '../Context/CartContext';
-import { useFavorites } from '../Context/FavoritesContext';
 import './OfferDetail.css';
 
 export default function OfferDetail() {
@@ -11,7 +10,6 @@ export default function OfferDetail() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
-  const { toggleFavorite, isFavorite } = useFavorites();
 
   // Get reviews - TODO: Replace with API call
   const [offerReviews, setOfferReviews] = useState([]);
@@ -109,7 +107,6 @@ export default function OfferDetail() {
   };
 
   const offer = offersData[id];
-  const liked = isFavorite(id);
 
   const handleAddToCart = () => {
     addToCart(offer, qty);
@@ -154,23 +151,6 @@ export default function OfferDetail() {
               <span className="hero-rating">⭐ {offer.restaurantRating}</span>
             </div>
           </div>
-
-          {/* Heart button — now connected to FavoritesContext */}
-          <button
-            onClick={() => toggleFavorite(offer)}
-            className={`detail-like-btn ${liked ? 'liked' : ''}`}
-            title={liked ? "Remove from favorites" : "Add to favorites"}
-            style={{
-              transform: liked ? "scale(1.1)" : "scale(1)",
-              transition: "transform 0.2s, background 0.2s",
-            }}
-          >
-            <Heart
-              size={20}
-              fill={liked ? 'currentColor' : 'none'}
-              style={{ transition: "fill 0.2s" }}
-            />
-          </button>
         </div>
       </div>
 

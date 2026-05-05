@@ -310,11 +310,12 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
 // ── Business Profile (Main) ───────────────────────────────────────────────────
 export default function MyProfileBusiness() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { logout, businessStatus } = useAuth();
 
   const [view, setView] = useState("main");
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showPendingModal, setShowPendingModal] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
@@ -495,9 +496,14 @@ export default function MyProfileBusiness() {
               <h1 className="hero-title">Business Profile</h1>
               <p className="hero-subtitle">Manage your business information</p>
             </div>
-            <button className="hero-edit-btn" onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}>
-              <Edit2 size={16} /> {isEditing ? "Cancel Editing" : "Edit"}
-            </button>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button className="hero-edit-btn" onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}>
+                <Edit2 size={16} /> {isEditing ? "Cancel Editing" : "Edit"}
+              </button>
+              <button className="hero-edit-btn" onClick={() => setShowPendingModal(true)}>
+                Back to Business Dashboard
+              </button>
+            </div>
           </div>
         </div>
 
@@ -703,6 +709,46 @@ export default function MyProfileBusiness() {
                 Yes, Log Out
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending approval modal */}
+      {showPendingModal && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "400px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
+            <div style={{ fontSize: "3rem", marginBottom: "1rem" }}>⏳</div>
+            <h3 style={{ margin: "0 0 0.75rem", fontSize: "1.3rem", color: "#1f2937" }}>Waiting for Approval</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.95rem", margin: "0 0 1.5rem", lineHeight: "1.5" }}>
+              Your business account is currently under review.<br />
+              You'll be able to access the Business Dashboard once approved.
+            </p>
+            <div style={{
+              background: "#fef3c7",
+              border: "1px solid #fcd34d",
+              borderRadius: "8px",
+              padding: "1rem",
+              marginBottom: "1.5rem",
+              fontSize: "0.9rem",
+              color: "#92400e"
+            }}>
+              <strong>Status:</strong> {businessStatus === "pending" ? "Pending Approval" : "Under Review"}
+            </div>
+            <button
+              onClick={() => setShowPendingModal(false)}
+              style={{
+                width: "100%",
+                padding: "0.75rem",
+                border: "1.5px solid #e5e7eb",
+                borderRadius: "8px",
+                background: "white",
+                color: "#374151",
+                fontWeight: 600,
+                cursor: "pointer"
+              }}
+            >
+              Got it
+            </button>
           </div>
         </div>
       )}
