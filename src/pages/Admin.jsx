@@ -6,7 +6,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   PieChart, Pie, Cell, ResponsiveContainer,
 } from "recharts";
-import "./admin.css";
+import "./Admin.css";
 
 const PIE_COLORS = ["#ef4444", "#f97316", "#10b981", "#3b82f6"];
 
