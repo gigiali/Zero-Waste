@@ -1,8 +1,45 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Share2, Phone, Mail, ShoppingCart, Check, Star } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Share2, Phone, Mail, ShoppingCart, Check, Star, Store } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useCart } from '../Context/CartContext';
 import './OfferDetail.css';
+
+const normalizeOffer = (payload) => {
+  const source = payload?.offer || payload?.data || payload;
+  if (!source) return null;
+
+  const originalPrice = Number(source.originalPrice ?? source.original_price ?? source.price ?? 0);
+  const discountedPrice = Number(source.discountedPrice ?? source.discount_price ?? source.discountPrice ?? 0);
+  const quantity = Number(source.quantity ?? source.quantity_available ?? 0);
+  const discount = source.discount ?? (
+    originalPrice > 0 && discountedPrice > 0
+      ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
+      : 0
+  );
+  const branch = source.branch || {};
+  const vendor = source.vendor || branch.vendor || {};
+
+  return {
+    id: source.id,
+    title: source.title || "Untitled Offer",
+    description: source.description || "No description available",
+    image: source.image_url || source.image || "/images/e.png",
+    discount,
+    originalPrice,
+    discountedPrice,
+    discountPrice: discountedPrice,
+    quantity,
+    pickupTime: source.pickupTime || source.expiration_time || "Today",
+    location: branch.name || source.location || vendor.business_name || "Restaurant",
+    distance: source.distance || "",
+    category: branch.type || source.category || "Restaurant",
+    restaurantName: vendor.business_name || source.restaurantName || branch.name || "Restaurant",
+    restaurantRating: source.restaurantRating || vendor.rating || 4.5,
+    restaurantHours: source.restaurantHours || branch.opening_hours || "N/A",
+    restaurantPhone: source.restaurantPhone || branch.contact_phone || vendor.phone || "N/A",
+    restaurantEmail: source.restaurantEmail || branch.contact_email || vendor.email || "N/A",
+  };
+};
 
 export default function OfferDetail() {
   const { id } = useParams();
@@ -11,108 +48,47 @@ export default function OfferDetail() {
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
 
-  // Get reviews - TODO: Replace with API call
+  const [offer, setOffer] = useState(null);
+  const [loadingOffer, setLoadingOffer] = useState(true);
+
   const [offerReviews, setOfferReviews] = useState([]);
-  const [loadingReviews] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
-    // TODO: Replace with API call:
-    // fetch(`https://stagnate-deferred-pork.ngrok-free.dev/api/offers/${id}/reviews`)
-    //   .then(r => r.json())
-    //   .then(data => setOfferReviews(data.reviews));
-
-    // For now: filter from localStorage by offer_id
-    const allReviews = JSON.parse(localStorage.getItem("orderReviews") || "[]");
-    const filtered = allReviews.filter(r => r.offer_id === Number(id));
-    setOfferReviews(filtered);
+    fetch(`/api/offers/${id}`)
+      .then(r => r.json())
+      .then(data => {
+        setOffer(normalizeOffer(data));
+        setLoadingOffer(false);
+      })
+      .catch(() => setLoadingOffer(false));
   }, [id]);
 
-  const offersData = {
-    1: {
-      id: 1,
-      title: "Fresh Pasta Special",
-      description: "Delicious homemade pasta with tomato sauce and basil, made with fresh ingredients from local farms. Perfect for a quick and satisfying meal.",
-      image: "/src/assets/images/e.png",
-      discount: 30,
-      originalPrice: 189.99,
-      discountedPrice: 159.99,
-      quantity: 5,
-      pickupTime: "Today 6:00 PM",
-      location: "123 Main Street, Downtown Cairo",
-      category: "Restaurant",
-      restaurantName: "Downtown Restaurant",
-      restaurantPhone: "+20 2 12345678",
-      restaurantEmail: "contact@downtown.com",
-      restaurantRating: 4.5,
-      restaurantHours: "11:00 AM - 10:00 PM",
-      distance: "0.8km away",
-    },
-    2: {
-      id: 2,
-      title: "Bakery Fresh Croissants",
-      description: "Buttery croissants baked fresh this morning using traditional French techniques. Perfect with coffee or tea.",
-      image: "/src/assets/images/e.png",
-      discount: 30,
-      originalPrice: 115.99,
-      discountedPrice: 85.99,
-      quantity: 12,
-      pickupTime: "Today 5:30 PM",
-      location: "45 Bakery Street, City Center",
-      category: "Bakery",
-      restaurantName: "City Center Bakery",
-      restaurantPhone: "+20 2 87654321",
-      restaurantEmail: "hello@citybakery.com",
-      restaurantRating: 4.8,
-      restaurantHours: "6:00 AM - 8:00 PM",
-      distance: "1.2km away",
-    },
-    3: {
-      id: 3,
-      title: "Pizza Deal Combo",
-      description: "Large pizza with 2 toppings and garlic bread. Made with fresh dough and premium ingredients.",
-      image: "/src/assets/images/e.png",
-      discount: 60,
-      originalPrice: 229.99,
-      discountedPrice: 199.99,
-      quantity: 15,
-      pickupTime: "Today 7:00 PM",
-      location: "78 Pizza Avenue, Zamalek",
-      category: "Restaurant",
-      restaurantName: "Pizza Paradise",
-      restaurantPhone: "+1 (555) 123-4567",
-      restaurantEmail: "contact@pizzaparadise.com",
-      restaurantRating: 4.7,
-      restaurantHours: "8:00 AM - 10:00 PM",
-      distance: "0.5km away",
-    },
-    4: {
-      id: 4,
-      title: "Cake & Coffee Set",
-      description: "Fresh cake with premium coffee beans. Perfect for afternoon tea or dessert lovers.",
-      image: "/src/assets/images/e.png",
-      discount: 30,
-      originalPrice: 139.99,
-      discountedPrice: 109.99,
-      quantity: 3,
-      pickupTime: "Today 4:00 PM",
-      location: "22 Cafe Lane, Maadi",
-      category: "Bakery",
-      restaurantName: "Sweet Corner Cafe",
-      restaurantPhone: "+20 2 12345678",
-      restaurantEmail: "hello@sweetcorner.com",
-      restaurantRating: 4.6,
-      restaurantHours: "7:00 AM - 10:00 PM",
-      distance: "2.1km away",
-    },
-  };
-
-  const offer = offersData[id];
+  useEffect(() => {
+    setLoadingReviews(true);
+    fetch(`/api/offers/${id}/reviews`)
+      .then(r => r.json())
+      .then(data => {
+        setOfferReviews(data.reviews || []);
+        setLoadingReviews(false);
+      })
+      .catch(() => setLoadingReviews(false));
+  }, [id]);
 
   const handleAddToCart = () => {
+    if (!offer) return;
     addToCart(offer, qty);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
+
+  if (loadingOffer) {
+    return (
+      <div className="offer-detail-container">
+        <p style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</p>
+      </div>
+    );
+  }
 
   if (!offer) {
     return (
@@ -141,7 +117,7 @@ export default function OfferDetail() {
 
       {/* ── Hero ── */}
       <div className="detail-hero">
-        <img src={offer.image} alt={offer.title} className="detail-hero-image" />
+        <img src={offer.image || "/images/e.png"} alt={offer.title} className="detail-hero-image" />
         <div className="detail-hero-overlay" />
         <div className="detail-hero-content">
           <div className="detail-hero-text">
@@ -151,6 +127,39 @@ export default function OfferDetail() {
               <span className="hero-rating">⭐ {offer.restaurantRating}</span>
             </div>
           </div>
+
+          <button
+            onClick={() => navigate(`/restaurant/${id}`)}
+            className="view-restaurant-btn"
+            title="View restaurant details"
+            style={{
+              background: "rgba(255,255,255,0.15)",
+              backdropFilter: "blur(8px)",
+              border: "1px solid rgba(255,255,255,0.3)",
+              padding: "0.5rem 1rem",
+              borderRadius: "24px",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem",
+              cursor: "pointer",
+              color: "white",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              transition: "all 0.25s",
+              flexShrink: 0
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
+              e.currentTarget.style.transform = "translateY(-2px)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = "rgba(255,255,255,0.15)";
+              e.currentTarget.style.transform = "translateY(0)";
+            }}
+          >
+            <Store size={18} />
+            View Restaurant
+          </button>
         </div>
       </div>
 
@@ -189,7 +198,7 @@ export default function OfferDetail() {
           <h2>Available Offers (1)</h2>
 
           <div className="offer-card">
-            <img src={offer.image} alt={offer.title} className="offer-card-image" />
+            <img src={offer.image || "/images/e.png"} alt={offer.title} className="offer-card-image" />
             <div className="offer-card-body">
               <div className="offer-card-top">
                 <span className="offer-card-title">{offer.title}</span>
@@ -211,7 +220,7 @@ export default function OfferDetail() {
                     value={qty}
                     onChange={(e) => setQty(Number(e.target.value))}
                   >
-                    {[...Array(Math.min(offer.quantity, 10))].map((_, i) => (
+                    {[...Array(Math.max(1, Math.min(Number(offer.quantity || 0), 10)))].map((_, i) => (
                       <option key={i + 1} value={i + 1}>Qty: {i + 1}</option>
                     ))}
                   </select>

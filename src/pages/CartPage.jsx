@@ -10,7 +10,7 @@ export default function CartPage() {
   const [selectedDelivery, setSelectedDelivery] = useState(null);
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + item.discountedPrice * item.quantity,
+    (sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
     0
   );
   const deliveryFee = selectedDelivery === "delivery" ? 25 : 0;
@@ -57,10 +57,10 @@ export default function CartPage() {
                   <p className="cart-item-location">{item.location}</p>
                   <div className="cart-item-prices">
                     <span className="cart-item-price">
-                      EGP {Number(item.discountedPrice).toFixed(2)}
+                      EGP {Number(item.discountedPrice ?? item.discountPrice ?? 0).toFixed(2)}
                     </span>
                     <span className="cart-item-original-price">
-                      EGP {Number(item.originalPrice).toFixed(2)}
+                      EGP {Number(item.originalPrice ?? item.original_price ?? 0).toFixed(2)}
                     </span>
                   </div>
                   {item.pickupTime && (

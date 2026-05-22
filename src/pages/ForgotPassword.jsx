@@ -51,8 +51,9 @@ export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -70,7 +71,26 @@ export default function ForgotPassword() {
       sessionStorage.setItem("passwordResetPhone", phone);
     }
 
-    navigate("/verify-code");
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify(mode === "email" ? { email } : { phone }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/verify-code");
+      } else {
+        setError(data.message || "Failed to send verification code");
+      }
+    } catch (err) {
+      console.error("Forgot password error:", err);
+      setError("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const switchMode = (m) => { setMode(m); setError(""); setEmail(""); setPhone(""); };
@@ -110,8 +130,8 @@ export default function ForgotPassword() {
 
         {error && <p className="auth-error-text fp-error">{error}</p>}
 
-        <button type="submit" className="auth-btn-primary fp-submit">
-          Send Recovery Code
+        <button type="submit" className="auth-btn-primary fp-submit" disabled={isLoading}>
+          {isLoading ? "Sending..." : "Send Recovery Code"}
         </button>
 
         <div className="fp-back-row">

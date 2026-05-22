@@ -156,7 +156,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
                     <span className="orm-item-name">{item.title}</span>
                   </div>
                   <span className="orm-item-price">
-                    EGP {((item.discountedPrice || item.discountPrice) * item.quantity).toFixed(2)}
+                    EGP {(Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0)).toFixed(2)}
                   </span>
                 </div>
               ))}
@@ -314,7 +314,7 @@ const saveUserOrder = ({
       title: item.title,
       quantity: item.quantity,
       unitPrice: item.discountedPrice || item.discountPrice || 0,
-      price: (item.discountedPrice || item.discountPrice || 0) * item.quantity,
+      price: Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
       location: item.location,
       category: item.category,
     })),
@@ -337,7 +337,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const deliveryMethod = searchParams.get("method") || "pickup";
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + (item.discountedPrice || item.discountPrice) * item.quantity,
+    (sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
     0
   );
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
@@ -446,7 +446,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
         submitData.append("customer_long", customerLong);
       }
 
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/orders", {
+      const response = await fetch("/api/orders", {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         body: submitData,
@@ -465,7 +465,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           id: item.id,
           title: item.title,
           quantity: item.quantity,
-          price: (item.discountedPrice || item.discountPrice) * item.quantity,
+          price: Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
           location: item.location,
           category: item.category,
         }));

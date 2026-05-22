@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Navigation from "../Components/Navigation";
 import { Shield, BriefcaseBusiness, Users, CircleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,32 +8,46 @@ import {
 } from "recharts";
 import "./admin.css";
 
-const weeklyData = [
-  { day: "Mon", orders: 140, revenue: 2600 },
-  { day: "Tue", orders: 175, revenue: 3200 },
-  { day: "Wed", orders: 155, revenue: 2800 },
-  { day: "Thu", orders: 185, revenue: 3400 },
-  { day: "Fri", orders: 210, revenue: 3600 },
-  { day: "Sat", orders: 180, revenue: 3100 },
-  { day: "Sun", orders: 160, revenue: 2700 },
-];
-
-const pieData = [
-  { name: "Restaurants",  value: 45 },
-  { name: "Bakeries",     value: 30 },
-  { name: "Supermarkets", value: 15 },
-  { name: "Hotels",       value: 10 },
-];
 const PIE_COLORS = ["#ef4444", "#f97316", "#10b981", "#3b82f6"];
-
-// Dynamic stats derived from real data
-const totalOrders   = weeklyData.reduce((s, d) => s + d.orders, 0);
-const totalRevenue  = weeklyData.reduce((s, d) => s + d.revenue, 0);
-const commission    = (totalRevenue * 0.15).toFixed(2);
-const avgOrderValue = (totalRevenue / totalOrders).toFixed(2);
 
 const Admin = () => {
   const navigate = useNavigate();
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+
+  // Fetch admin analytics data
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+
+        const response = await fetch("/api/admin/analytics", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.weekly_data) setWeeklyData(data.weekly_data);
+          if (data.category_distribution) setPieData(data.category_distribution);
+        }
+      } catch (error) {
+        console.error("Error fetching analytics:", error);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  // Dynamic stats derived from real data
+  const totalOrders   = weeklyData.reduce((s, d) => s + (d.orders || 0), 0);
+  const totalRevenue  = weeklyData.reduce((s, d) => s + (d.revenue || 0), 0);
+  const commission    = totalRevenue > 0 ? (totalRevenue * 0.15).toFixed(2) : "0.00";
+  const avgOrderValue = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0.00";
 
   return (
     <>

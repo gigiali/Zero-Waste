@@ -1,63 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Navigation from "../Components/Navigation";
 import { AlertCircle, CheckCircle, Clock, Zap, X } from "lucide-react";
 import "./ReportsIssues.css";
-
-const alertsData = [
-  {
-    id: 1,
-    color: "#ef4444",
-    icon: "🚫",
-    message: "Inappropriate content reported",
-    time: "2 hours ago",
-    type: "Content",
-    severity: "high",
-    description: "User flagged offensive content in business listing",
-    reportedBy: "customer_user_42",
-    affectedEntity: "Urban Bakery",
-    status: "Open",
-  },
-  {
-    id: 2,
-    color: "#f59e0b",
-    icon: "⏳",
-    message: "Business verification pending",
-    time: "5 hours ago",
-    type: "Verification",
-    severity: "medium",
-    description: "Document review in progress for new restaurant",
-    reportedBy: "system",
-    affectedEntity: "Bella Restaurant",
-    status: "In Progress",
-  },
-  {
-    id: 3,
-    color: "#f59e0b",
-    icon: "⭐",
-    message: "Low rating alert for Pizza Corner",
-    time: "1 day ago",
-    type: "Quality",
-    severity: "medium",
-    description: "Business rating dropped below threshold",
-    reportedBy: "system",
-    affectedEntity: "Pizza Corner",
-    status: "Open",
-  },
-  {
-    id: 4,
-    color: "#3b82f6",
-    icon: "⚙️",
-    message: "System maintenance scheduled",
-    time: "2 days ago",
-    type: "System",
-    severity: "low",
-    description: "Planned maintenance on payment processing",
-    reportedBy: "admin",
-    affectedEntity: "Payment Gateway",
-    status: "Scheduled",
-  },
-];
 
 const severityConfig = {
   high:   { bg: "#fee2e2", text: "#991b1b", label: "High"   },
@@ -72,7 +17,8 @@ const statusColors = {
   Resolved:    { bg: "#d1fae5", text: "#065f46" },
 };
 
-// ✅ Fix 3: Review modal with real report data
+const fallbackSeverity = { bg: "#f3f4f6", text: "#374151", label: "Unknown" };
+
 function ReviewModal({ alert, onClose, onResolve }) {
   const [note, setNote] = useState("");
 
@@ -113,11 +59,11 @@ function ReviewModal({ alert, onClose, onResolve }) {
             <div>
               <span style={{ color: "#94a3b8" }}>Severity: </span>
               <span style={{
-                background: severityConfig[alert.severity].bg,
-                color: severityConfig[alert.severity].text,
+                background: (severityConfig[alert.severity] || fallbackSeverity).bg,
+                color: (severityConfig[alert.severity] || fallbackSeverity).text,
                 padding: "1px 8px", borderRadius: "6px", fontWeight: 600,
               }}>
-                {severityConfig[alert.severity].label}
+                {(severityConfig[alert.severity] || fallbackSeverity).label}
               </span>
             </div>
             <div><span style={{ color: "#94a3b8" }}>Reported by: </span><strong>{alert.reportedBy}</strong></div>
@@ -180,10 +126,53 @@ function ReviewModal({ alert, onClose, onResolve }) {
 
 export default function ReportsIssues() {
   const navigate = useNavigate();
-  const [selectedType,     setSelectedType]     = useState("all");
+  const [selectedType, setSelectedType] = useState("all");
   const [selectedSeverity, setSelectedSeverity] = useState("all");
-  const [alerts,           setAlerts]           = useState(alertsData);
-  const [reviewingAlert,   setReviewingAlert]   = useState(null); // ✅ Fix 3: which alert is open
+  const [alerts, setAlerts] = useState([]);
+  const [reviewingAlert, setReviewingAlert] = useState(null);
+
+  // Fetch reports from backend
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+
+        const response = await fetch("/api/admin/reports", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.reports) {
+            const transformedAlerts = data.reports.map((report) => ({
+              id: report.id,
+              color: report.severity === "high" ? "#ef4444" : report.severity === "medium" ? "#f59e0b" : "#3b82f6",
+              icon: report.type === "Content" ? "🚫" : report.type === "Verification" ? "⏳" : report.type === "Quality" ? "⭐" : "⚙️",
+              message: report.title || "Report",
+              time: report.created_at || "Unknown",
+              type: report.type || "General",
+              severity: report.severity || "medium",
+              description: report.description || "",
+              reportedBy: report.reported_by || "Unknown",
+              affectedEntity: report.affected_entity || "Unknown",
+              status: report.status || "Open",
+              adminNote: report.admin_note || "",
+            }));
+            setAlerts(transformedAlerts);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching reports:", error);
+      }
+    };
+
+    fetchReports();
+  }, []);
 
   const filteredAlerts = alerts.filter((alert) => {
     const typeMatch     = selectedType     === "all" || alert.type     === selectedType;
@@ -311,9 +300,12 @@ export default function ReportsIssues() {
                 <div className="reports-list-item__status">
                   <span
                     className="severity-badge"
-                    style={{ backgroundColor: severityConfig[alert.severity].bg, color: severityConfig[alert.severity].text }}
+                    style={{
+                      backgroundColor: (severityConfig[alert.severity] || fallbackSeverity).bg,
+                      color: (severityConfig[alert.severity] || fallbackSeverity).text,
+                    }}
                   >
-                    {severityConfig[alert.severity].label}
+                    {(severityConfig[alert.severity] || fallbackSeverity).label}
                   </span>
                 </div>
 

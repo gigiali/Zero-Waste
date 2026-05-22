@@ -68,7 +68,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
     return () => clearTimeout(timer);
   }, [currentStep]);
 
-  // Show review modal when delivered (step 4)
   useEffect(() => {
     if (currentStep === 4 && !submitted) {
       const timer = setTimeout(() => setShowReview(true), 500);
@@ -92,15 +91,13 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
   const handleSubmitReview = async () => {
-    // Build review data matching backend structure
     const reviewData = {
-      offer_id: order.offerId || 1, // TODO: pass actual offerId through order flow
+      offer_id: order.offerId || 1,
       rating,
       comment: reviewText,
       order_id: order.orderNumber,
       date: new Date().toISOString(),
       delivery_method: order.deliveryMethod,
-      // For localStorage preview (image will be base64 or URL)
       image: reviewImage ? reviewImage.name : null,
     };
 
@@ -111,13 +108,12 @@ function OrderTrackingStrip({ order, onDismiss }) {
     // formData.append('comment', reviewText);
     // if (reviewImage) formData.append('image', reviewImage);
     //
-    // await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/reviews", {
+    // await fetch("/api/reviews", {
     //   method: "POST",
     //   headers: { "Authorization": `Bearer ${token}` },
     //   body: formData
     // });
 
-    // For now: localStorage (convert image to base64 for preview)
     if (reviewImage) {
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -142,18 +138,15 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
-    // Validate: jpg/jpeg/png only, max 2MB
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+    const validTypes = ["image/jpeg", "image/jpg", "image/png"];
     if (!validTypes.includes(file.type)) {
-      alert('Please select JPG, JPEG, or PNG image only');
+      alert("Please select JPG, JPEG, or PNG image only");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      alert('Image must be less than 2MB');
+      alert("Image must be less than 2MB");
       return;
     }
-
     setReviewImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -166,7 +159,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
 
   return (
     <div className="order-strip">
-      {/* Header row: order meta + dismiss */}
+      {/* Header row */}
       <div className="order-strip-header">
         <div className="order-strip-meta">
           <div className="order-strip-icon-wrap">
@@ -178,7 +171,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
             {order.deliveryMethod === "delivery" ? "Delivery" : "Pickup"}
           </span>
         </div>
-
         <div className="order-strip-right">
           <span className="order-strip-total">
             EGP {Number(order.total ?? 0).toFixed(2)}
@@ -240,8 +232,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
               onChange={(e) => setReviewText(e.target.value.slice(0, 500))}
               rows={2}
             />
-
-            {/* Image Upload - matching backend requirements */}
             <div className="review-image-section">
               {!imagePreview ? (
                 <label className="review-image-upload">
@@ -249,7 +239,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
                     type="file"
                     accept="image/jpeg,image/jpg,image/png"
                     onChange={handleImageChange}
-                    style={{ display: 'none' }}
+                    style={{ display: "none" }}
                   />
                   <span className="upload-icon">📷</span>
                   <span className="upload-text">Add Photo (optional)</span>
@@ -264,7 +254,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
                 </div>
               )}
             </div>
-
             <button
               className="review-submit-btn"
               onClick={handleSubmitReview}
@@ -302,12 +291,11 @@ export default function HomePage() {
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
-  const [loading] = useState(false);
-  const [error] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("highest_discount");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-
   const [activeOrder, setActiveOrder] = useState(null);
 
   useEffect(() => {
@@ -328,18 +316,82 @@ export default function HomePage() {
   const categories = ["All", "Restaurant", "Bakery", "Supermarket", "Hotel"];
 
   useEffect(() => {
-    setOffers([
-      { id: 1, title: "Fresh Pasta Special", description: "Delicious homemade pasta with tomato sauce and basil", image: "/assets/images/e.png", discount: 50, originalPrice: 189.99, discountedPrice: 94.99, quantity: 5, pickupTime: "Today 6:00 PM", location: "Downtown Restaurant", distance: 0.8, rating: 4.8, category: "Restaurant" },
-      { id: 2, title: "Bakery Fresh Croissants", description: "Buttery croissants baked fresh this morning", image: "/assets/images/e.png", discount: 25, originalPrice: 115.99, discountedPrice: 86.99, quantity: 12, pickupTime: "Today 5:30 PM", location: "City Center Bakery", distance: 1.2, rating: 4.5, category: "Bakery" },
-      { id: 3, title: "Pizza Deal Combo", description: "Large pizza with 2 toppings and garlic bread", image: "/assets/images/e.png", discount: 40, originalPrice: 229.99, discountedPrice: 137.99, quantity: 8, pickupTime: "Today 7:00 PM", location: "Main Street Pizzeria", distance: 2.5, rating: 4.2, category: "Restaurant" },
-      { id: 4, title: "Cake & Coffee Set", description: "Fresh cake with premium coffee beans", image: "/assets/images/e.png", discount: 35, originalPrice: 139.99, discountedPrice: 90.99, quantity: 3, pickupTime: "Today 4:00 PM", location: "Sweet Corner Cafe", distance: 0.4, rating: 4.9, category: "Bakery" },
-    ]);
+    const fetchOffers = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+
+        // Try different endpoints for public offers
+        const endpoints = [
+          "/api/offers",
+          "/api/public/offers",
+          "/api/customer/offers",
+        ];
+
+        let offersData = null;
+
+        for (const endpoint of endpoints) {
+          try {
+            const headers = { Accept: "application/json" };
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+
+            const response = await fetch(endpoint, {
+              method: "GET",
+              headers,
+            });
+            const data = await response.json();
+
+            if (response.ok && (data.data || data.offers)) {
+              const dataToCheck = data.data || data.offers;
+              if (dataToCheck.length > 0) {
+                offersData = dataToCheck;
+                break;
+              }
+            }
+          } catch {
+            // Try the next supported offers endpoint.
+          }
+        }
+
+        if (offersData && offersData.length > 0) {
+          const transformedOffers = offersData.map((offer) => ({
+            id: offer.id,
+            title: offer.title,
+            description: offer.description,
+            image: offer.image || "/assets/images/e.png",
+            discount: offer.discount_price
+              ? Math.round(((offer.original_price - offer.discount_price) / offer.original_price) * 100)
+              : 0,
+            originalPrice: offer.original_price || 0,
+            discountedPrice: offer.discount_price || 0,
+            quantity: offer.quantity_available || 0,
+            pickupTime: offer.expiration_time || "Today",
+            location: offer.branch?.name || offer.vendor?.business_name || "Unknown",
+            distance: 0,
+            rating: 4.5,
+            category: offer.branch?.type || "Restaurant",
+          }));
+          setOffers(transformedOffers);
+        } else {
+          setError("No offers available right now");
+        }
+      } catch (err) {
+        console.error("Error fetching offers:", err);
+        setError("Failed to load offers. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffers();
   }, []);
 
   const filteredOffers = offers
     .filter((offer) => {
       const matchesCategory = selectedCategory === "All" || offer.category === selectedCategory;
-      const matchesSearch = !searchQuery ||
+      const matchesSearch =
+        !searchQuery ||
         offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesCategory && matchesSearch;
@@ -410,7 +462,10 @@ export default function HomePage() {
             <div className="dropdown-container">
               <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                 <span>{currentSortLabel}</span>
-                <ChevronDown size={16} style={{ transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s" }} />
+                <ChevronDown
+                  size={16}
+                  style={{ transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s" }}
+                />
               </button>
               {isDropdownOpen && (
                 <div className="dropdown-menu">
@@ -433,7 +488,9 @@ export default function HomePage() {
       {/* ── Offers ── */}
       <section className="offers-section">
         <div className="offers-header">
-          <h2 className="offers-title">{selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}</h2>
+          <h2 className="offers-title">
+            {selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}
+          </h2>
           <span className="offers-count">{filteredOffers.length} available</span>
         </div>
 
@@ -457,7 +514,9 @@ export default function HomePage() {
           <div className="empty-container">
             <Package size={64} className="empty-icon" />
             <h3 className="empty-title">No Offers Found</h3>
-            <p className="empty-message">{searchQuery ? "Try a different search term." : "No offers available right now."}</p>
+            <p className="empty-message">
+              {searchQuery ? "Try a different search term." : "No offers available right now."}
+            </p>
           </div>
         )}
 
@@ -474,10 +533,10 @@ export default function HomePage() {
                   {offer.image
                     ? <img src={offer.image} alt={offer.title} className="offer-image" />
                     : <div className="offer-image-placeholder">🍽️</div>}
-                  {offer.discount && <div className="discount-badge">-{offer.discount}%</div>}
+                  {offer.discount > 0 && <div className="discount-badge">-{offer.discount}%</div>}
                   <div className="image-bottom-bar">
                     <CountdownTimer pickupTime={offer.pickupTime} />
-                    {offer.quantity && (
+                    {offer.quantity > 0 && (
                       <div className="quantity-badge">
                         <Package size={12} /><span>{offer.quantity} left</span>
                       </div>
@@ -489,18 +548,26 @@ export default function HomePage() {
                   {offer.location && (
                     <div className="offer-location">
                       <MapPin size={13} /><span>{offer.location}</span>
-                      {offer.distance && <span className="offer-distance">· {offer.distance} km</span>}
+                      {offer.distance > 0 && (
+                        <span className="offer-distance">· {offer.distance} km</span>
+                      )}
                     </div>
                   )}
                   <p className="offer-description">{offer.description || "No description available"}</p>
                   <div className="offer-footer">
                     <div className="price-container">
                       <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
-                      {offer.originalPrice && <span className="original-price">EGP {offer.originalPrice}</span>}
+                      {offer.originalPrice > 0 && (
+                        <span className="original-price">EGP {offer.originalPrice}</span>
+                      )}
                     </div>
                     <button
                       onClick={(e) => { e.stopPropagation(); addToCart(offer, 1); }}
-                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}
+                      style={{
+                        background: "#10b981", color: "white", border: "none",
+                        borderRadius: "8px", padding: "0.4rem 0.8rem",
+                        fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
+                      }}
                     >
                       + Add
                     </button>

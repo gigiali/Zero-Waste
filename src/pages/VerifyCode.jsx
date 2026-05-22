@@ -9,6 +9,7 @@ export default function VerifyCode() {
   const inputsRef  = useRef([]);
   const [code, setCode]       = useState(["", "", "", ""]);
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
@@ -27,10 +28,37 @@ export default function VerifyCode() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (code.some((d) => !d)) { setMessage("Enter the 4-digit verification code"); return; }
-    navigate("/reset-password");
+
+    setIsLoading(true);
+    try {
+      const email = sessionStorage.getItem("passwordResetEmail");
+      const phone = sessionStorage.getItem("passwordResetPhone");
+      const verificationCode = code.join("");
+
+      const response = await fetch("/api/verify-reset-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({
+          code: verificationCode,
+          ...(email ? { email } : { phone }),
+        }),
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        navigate("/reset-password");
+      } else {
+        setMessage(data.message || "Invalid verification code");
+      }
+    } catch (err) {
+      console.error("Verify code error:", err);
+      setMessage("Network error. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const isSent = message.includes("sent");
@@ -74,8 +102,8 @@ export default function VerifyCode() {
           </p>
         )}
 
-        <button type="submit" className="auth-btn-primary" style={{ marginTop: 6 }}>
-          Verify
+        <button type="submit" className="auth-btn-primary" style={{ marginTop: 6 }} disabled={isLoading}>
+          {isLoading ? "Verifying..." : "Verify"}
         </button>
       </form>
     </RecoveryFrame>

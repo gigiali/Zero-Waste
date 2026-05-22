@@ -7,17 +7,6 @@ import {
 import "./MyProfileAdmin.css";
 import { useAuth } from "../Context/AuthContext";
 
-const ORDERS_STORAGE_KEY = "zw_user_orders";
-
-const readStoredOrders = () => {
-  try {
-    const stored = JSON.parse(localStorage.getItem(ORDERS_STORAGE_KEY) || "[]");
-    return Array.isArray(stored) ? stored : [];
-  } catch {
-    return [];
-  }
-};
-
 function SettingsDrawer({ title, children, onClose }) {
   return (
     <div className="profile-drawer-overlay" onClick={onClose}>
@@ -56,7 +45,7 @@ function ChangePassword({ onDone }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/change-password", {
+      const response = await fetch("/api/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -141,7 +130,7 @@ function NotificationSettings({ onDone }) {
     setMessage("");
     try {
       const token = localStorage.getItem("auth_token");
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/notification-preferences", {
+      const response = await fetch("/api/notification-preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -267,13 +256,14 @@ export default function UserProfile() {
       if (!token) return;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/user/profile", {
+      const response = await fetch("/api/user/profile", {
         method: "GET",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
       const data = await response.json();
+
       if (response.ok && data.user) {
         const u = {
           name: data.user.name || "",
@@ -289,21 +279,31 @@ export default function UserProfile() {
     }
   };
 
-  useEffect(() => {
-    fetchUserData();
-    setOrders(readStoredOrders());
-  }, []);
+  const fetchUserOrders = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) return;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const response = await fetch("/api/user/orders", {
+        method: "GET",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (response.ok && data.orders) {
+        setOrders(data.orders);
+      }
+    } catch (error) {
+      console.error("Fetch user orders error:", error);
+    }
+  };
 
   useEffect(() => {
-    const refreshOrders = () => setOrders(readStoredOrders());
-    window.addEventListener("storage", refreshOrders);
-    window.addEventListener("focus", refreshOrders);
-    window.addEventListener("zw-user-orders-updated", refreshOrders);
-    return () => {
-      window.removeEventListener("storage", refreshOrders);
-      window.removeEventListener("focus", refreshOrders);
-      window.removeEventListener("zw-user-orders-updated", refreshOrders);
-    };
+    fetchUserData();
+    fetchUserOrders();
   }, []);
 
   const handleSave = async () => {
@@ -320,7 +320,7 @@ export default function UserProfile() {
       const token = localStorage.getItem("auth_token");
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/user/profile", {
+      const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

@@ -27,6 +27,7 @@ export default function AddBranch() {
     lat: null,
     lng: null,
     branchName: "",
+    branchType: "",
     contactEmail: "",
     contactPhone: "",
   });
@@ -54,6 +55,7 @@ export default function AddBranch() {
   const validate = () => {
     const e = {};
     if (!branch.branchName.trim())  e.branchName   = "Branch name is required";
+    if (!branch.branchType)         e.branchType   = "Branch type is required";
     if (!branch.fullAddress.trim()) e.fullAddress  = "Branch address is required";
     if (!branch.locationPin.trim()) e.locationPin  = "Location selection is required";
     if (!branch.workingFrom || !branch.workingTo) e.workingHours = "Working hours are required";
@@ -80,6 +82,7 @@ export default function AddBranch() {
 
       const body = new FormData();
       body.append("branch_name",   branch.branchName);
+      body.append("branch_type",   branch.branchType);
       body.append("store_address", branch.fullAddress);
       body.append("location_pin",  branch.locationPin);
       body.append("opening_hours", `${branch.workingFrom} - ${branch.workingTo}`);
@@ -89,7 +92,7 @@ export default function AddBranch() {
       if (branch.lng !== null) body.append("long", branch.lng);
 
       const response = await fetch(
-        "https://stagnate-deferred-pork.ngrok-free.dev/api/vendor/complete-setup",
+        "/api/vendor/complete-setup",
         {
           method: "POST",
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
@@ -294,6 +297,25 @@ export default function AddBranch() {
                 {errors.branchName && <span className="error-text">{errors.branchName}</span>}
               </div>
 
+              {/* Branch Type */}
+              <div className="form-group">
+                <label>Branch Type</label>
+                <select
+                  className="form-input"
+                  value={branch.branchType}
+                  onChange={e => handleChange("branchType", e.target.value)}
+                >
+                  <option value="">Select branch type</option>
+                  <option value="restaurant">Restaurant</option>
+                  <option value="supermarket">Supermarket</option>
+                  <option value="coffee-shop">Coffee Shop</option>
+                  <option value="hotel">Hotel</option>
+                  <option value="bakery">Bakery</option>
+                  <option value="dessert-shop">Dessert Shop</option>
+                </select>
+                {errors.branchType && <span className="error-text">{errors.branchType}</span>}
+              </div>
+
               {/* Contact Email */}
               <div className="form-group">
                 <label>Contact Email</label>
@@ -342,6 +364,53 @@ export default function AddBranch() {
                   onClick={() => setShowMap(true)}
                 >
                   📍 Select on Map
+                </button>
+                <button
+                  type="button"
+                  className="map-button"
+                  onClick={() => {
+                    if (navigator.geolocation) {
+                      navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                          const { latitude, longitude } = position.coords;
+                          if (!isWithinCairo(latitude, longitude)) {
+                            setLocationError("We are not available in this area yet.");
+                            return;
+                          }
+                          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
+                            .then(res => res.json())
+                            .then(data => {
+                              const address = data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                              setBranch(prev => ({
+                                ...prev,
+                                lat: latitude,
+                                lng: longitude,
+                                locationPin: address,
+                              }));
+                              setSelectedCoordinates({ lat: latitude, long: longitude });
+                              setLocationError("");
+                            })
+                            .catch(() => {
+                              setBranch(prev => ({
+                                ...prev,
+                                lat: latitude,
+                                lng: longitude,
+                                locationPin: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
+                              }));
+                              setSelectedCoordinates({ lat: latitude, long: longitude });
+                              setLocationError("");
+                            });
+                        },
+                        () => {
+                          setLocationError("Unable to get your location. Please enable location services.");
+                        }
+                      );
+                    } else {
+                      setLocationError("Geolocation is not supported by your browser.");
+                    }
+                  }}
+                >
+                  📍 Use My Current Location
                 </button>
                 {branch.locationPin && (
                   <div className="selected-location">

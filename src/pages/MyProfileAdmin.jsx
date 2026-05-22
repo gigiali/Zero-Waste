@@ -31,7 +31,7 @@ function ChangePassword({ onCancel }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/change-password", {
+      const response = await fetch("/api/change-password", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -151,7 +151,7 @@ function NotificationSettings({ onCancel }) {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/notification-preferences", {
+      const response = await fetch("/api/notification-preferences", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -252,7 +252,7 @@ export default function UserProfile() {
       if (!token) return;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/user/profile", {
+      const response = await fetch("/api/user/profile", {
         method: "GET",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         signal: controller.signal,
@@ -290,7 +290,7 @@ export default function UserProfile() {
       const token = localStorage.getItem("auth_token");
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/user/profile", {
+      const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

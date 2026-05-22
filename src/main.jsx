@@ -4,16 +4,17 @@ import App from "./App";
 import { CartProvider } from "./Context/CartContext";
 import { AuthProvider } from "./Context/AuthContext";
 import { NotificationsProvider } from "./Context/Notificationscontext";
+import { installApiFetch } from "./utils/api";
 import "./index.css";
 
+installApiFetch();
+
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-    <AuthProvider>
-      <CartProvider>
-        <NotificationsProvider>
-          <App />
-        </NotificationsProvider>
-      </CartProvider>
-    </AuthProvider>
-  </React.StrictMode>
+  <AuthProvider>
+    <CartProvider>
+      <NotificationsProvider>
+        <App />
+      </NotificationsProvider>
+    </CartProvider>
+  </AuthProvider>
 );

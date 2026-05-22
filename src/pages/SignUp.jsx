@@ -1,12 +1,14 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Button from "../Components/Button";
+import { useAuth } from "../Context/AuthContext";
 import "../auth-theme.css";
 import "./SignUp.css";
 
 function SignUp() {
   const [activeRole, setActiveRole] = useState("customer");
   const navigate = useNavigate();
+  const { setBusinessStatus } = useAuth();
   const [formData, setFormData] = useState({
     name: "", email: "", password: "", phone: "", address: "",
     accepted_terms: false, role: "customer",
@@ -53,7 +55,7 @@ function SignUp() {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/register", {
+      const response = await fetch("/api/register", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -75,7 +77,10 @@ function SignUp() {
         }
 
         if (formData.role === "vendor") {
-          navigate("/business-setup");
+          // Set business status to pending and redirect to profile
+          setBusinessStatus("pending");
+          localStorage.setItem("businessStatus", "pending");
+          navigate("/business/profile");
         } else {
           navigate("/home");
         }

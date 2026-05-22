@@ -13,6 +13,11 @@ export function AuthProvider({ children }) {
     return null;
   });
 
+  // Business approval status
+  const [businessStatus, setBusinessStatus] = useState(() => {
+    return localStorage.getItem("businessStatus") || null;
+  });
+
   const login = (userData, token, remember = false) => {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem("token", token);
@@ -27,16 +32,18 @@ export function AuthProvider({ children }) {
     localStorage.removeItem("rememberMe");
     localStorage.removeItem("rememberedEmail");
     localStorage.removeItem("rememberedPassword");
+    localStorage.removeItem("businessStatus");
     sessionStorage.removeItem("token");
     sessionStorage.removeItem("user");
     sessionStorage.removeItem("userRole");
     setUser(null);
+    setBusinessStatus(null);
   };
 
   const isLoggedIn = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isLoggedIn }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoggedIn, businessStatus, setBusinessStatus }}>
       {children}
     </AuthContext.Provider>
   );

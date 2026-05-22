@@ -4,15 +4,6 @@ import Navigation from "../Components/Navigation";
 import { Search, MoreVertical, Eye, Edit, Trash2, CheckCircle, XCircle } from "lucide-react";
 import "./ManageBusinesses.css";
 
-const businessesData = [
-  { id: 1, name: "Urban Bakery",      category: "Bakery",      status: "Approved",     rating: 4.8, users: 245, joined: "2024-01-15", revenue: 12450  },
-  { id: 2, name: "Green Market",      category: "Supermarket", status: "Pending",      rating: 4.5, users: 189, joined: "2024-02-20", revenue: 8920   },
-  { id: 3, name: "Bella Restaurant",  category: "Restaurant",  status: "Approved",     rating: 4.9, users: 512, joined: "2024-01-05", revenue: 24680  },
-  { id: 4, name: "Sunrise Hotel",     category: "Hotel",       status: "Under Review", rating: 4.3, users: 156, joined: "2024-03-10", revenue: 15240  },
-  { id: 5, name: "Fresh Bakehouse",   category: "Bakery",      status: "Approved",     rating: 4.7, users: 320, joined: "2024-02-01", revenue: 18900  },
-  { id: 6, name: "Quick Bites Cafe",  category: "Cafe",        status: "Approved",     rating: 4.6, users: 278, joined: "2024-01-28", revenue: 14560  },
-];
-
 const statusConfig = {
   Approved:      { bg: "#d1fae5", text: "#065f46", icon: "✓"  },
   Pending:       { bg: "#fef9c3", text: "#854d0e", icon: "⏳" },
@@ -20,7 +11,8 @@ const statusConfig = {
   Rejected:      { bg: "#fee2e2", text: "#991b1b", icon: "✗"  },
 };
 
-const totalRevenue = businessesData.reduce((sum, b) => sum + b.revenue, 0);
+const fallbackStatus = { bg: "#f3f4f6", text: "#374151", icon: "*" };
+
 const formatEGP = (n) =>
   n >= 1000 ? `EGP ${(n / 1000).toFixed(1)}K` : `EGP ${n.toLocaleString()}`;
 
@@ -37,11 +29,69 @@ function ActionMenu({ business }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
+  const handleApprove = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        alert("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/businesses/${business.id}/approve`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert(`Approved: ${business.name}`);
+        window.location.reload();
+      } else {
+        alert("Failed to approve business");
+      }
+    } catch (error) {
+      console.error("Approve error:", error);
+      alert("Network error");
+    }
+  };
+
+  const handleReject = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        alert("Please login to continue");
+        return;
+      }
+
+      const response = await fetch(`/api/admin/businesses/${business.id}/reject`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        alert(`Rejected: ${business.name}`);
+        window.location.reload();
+      } else {
+        alert("Failed to reject business");
+      }
+    } catch (error) {
+      console.error("Reject error:", error);
+      alert("Network error");
+    }
+  };
+
   const actions = [
     { icon: <Eye size={15} />,       label: "View Details",  color: "#374151", onClick: () => alert(`Viewing: ${business.name}`) },
     { icon: <Edit size={15} />,      label: "Edit Business", color: "#374151", onClick: () => alert(`Editing: ${business.name}`) },
-    { icon: <CheckCircle size={15}/>,label: "Approve",       color: "#10b981", onClick: () => alert(`Approved: ${business.name}`) },
-    { icon: <XCircle size={15} />,   label: "Reject",        color: "#ef4444", onClick: () => alert(`Rejected: ${business.name}`) },
+    { icon: <CheckCircle size={15}/>,label: "Approve",       color: "#10b981", onClick: handleApprove },
+    { icon: <XCircle size={15} />,   label: "Reject",        color: "#ef4444", onClick: handleReject },
     { icon: <Trash2 size={15} />,    label: "Delete",        color: "#ef4444", onClick: () => alert(`Deleted: ${business.name}`), divider: true },
   ];
 
@@ -78,19 +128,62 @@ function ActionMenu({ business }) {
 
 export default function ManageBusinesses() {
   const navigate = useNavigate();
-  const [searchTerm,      setSearchTerm]      = useState("");
-  const [filterStatus,    setFilterStatus]    = useState("all");
-  const [filterCategory,  setFilterCategory]  = useState("all");
+  const [businesses, setBusinesses] = useState([]);
 
-  const filteredBusinesses = businessesData.filter((business) => {
-    const searchMatch   = business.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const statusMatch   = filterStatus   === "all" || business.status   === filterStatus;
+  // Fetch businesses from backend
+  useEffect(() => {
+    const fetchBusinesses = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+
+        const response = await fetch("/api/admin/businesses", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.businesses) {
+            const transformedBusinesses = data.businesses.map((business) => ({
+              id: business.id,
+              name: business.business_name || "Unknown",
+              category: business.category || "Restaurant",
+              status: business.status || "Pending",
+              rating: business.rating || 4.5,
+              users: business.users_count || 0,
+              joined: business.created_at || "N/A",
+              revenue: business.revenue || 0,
+            }));
+            setBusinesses(transformedBusinesses);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching businesses:", error);
+      }
+    };
+
+    fetchBusinesses();
+  }, []);
+
+  const totalRevenue = businesses.reduce((sum, b) => sum + (b.revenue || 0), 0);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
+
+  const filteredBusinesses = businesses.filter((business) => {
+    const searchMatch = business.name.toLowerCase().includes(searchTerm.toLowerCase());
+    const statusMatch = filterStatus === "all" || business.status === filterStatus;
     const categoryMatch = filterCategory === "all" || business.category === filterCategory;
     return searchMatch && statusMatch && categoryMatch;
   });
 
-  const categories = [...new Set(businessesData.map((b) => b.category))];
-  const statuses   = [...new Set(businessesData.map((b) => b.status))];
+  const categories = [...new Set(businesses.map((b) => b.category))];
+  const statuses = [...new Set(businesses.map((b) => b.status))];
 
   return (
     <>
@@ -112,16 +205,16 @@ export default function ManageBusinesses() {
         <div className="businesses-stats">
           <div className="biz-stat">
             <p className="biz-stat__label">Total Businesses</p>
-            <p className="biz-stat__value">{businessesData.length}</p>
+            <p className="biz-stat__value">{businesses.length}</p>
           </div>
           <div className="biz-stat">
             <p className="biz-stat__label">Approved</p>
-            <p className="biz-stat__value">{businessesData.filter((b) => b.status === "Approved").length}</p>
+            <p className="biz-stat__value">{businesses.filter((b) => b.status === "Approved").length}</p>
           </div>
           <div className="biz-stat">
             <p className="biz-stat__label">Pending Review</p>
             <p className="biz-stat__value">
-              {businessesData.filter((b) => b.status === "Pending" || b.status === "Under Review").length}
+              {businesses.filter((b) => b.status === "Pending" || b.status === "Under Review").length}
             </p>
           </div>
           <div className="biz-stat">
@@ -170,14 +263,14 @@ export default function ManageBusinesses() {
                     <td>{business.category}</td>
                     <td>
                       <span className="status-badge"
-                        style={{ backgroundColor: statusConfig[business.status].bg, color: statusConfig[business.status].text }}>
-                        {statusConfig[business.status].icon} {business.status}
+                        style={{ backgroundColor: (statusConfig[business.status] || fallbackStatus).bg, color: (statusConfig[business.status] || fallbackStatus).text }}>
+                        {(statusConfig[business.status] || fallbackStatus).icon} {business.status || "Unknown"}
                       </span>
                     </td>
                     <td><span className="stars">★ {business.rating}</span></td>
-                    <td>{business.users.toLocaleString()}</td>
-                    <td>{new Date(business.joined).toLocaleDateString()}</td>
-                    <td className="table-revenue">EGP {business.revenue.toLocaleString()}</td>
+                    <td>{Number(business.users || 0).toLocaleString()}</td>
+                    <td>{business.joined && business.joined !== "N/A" ? new Date(business.joined).toLocaleDateString() : "N/A"}</td>
+                    <td className="table-revenue">EGP {Number(business.revenue || 0).toLocaleString()}</td>
                     <td>
                       <ActionMenu business={business} />
                     </td>

@@ -33,7 +33,7 @@ function SignIn() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("https://stagnate-deferred-pork.ngrok-free.dev/api/login", {
+      const response = await fetch("/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
         body: new URLSearchParams({ email, password }).toString(),
@@ -46,19 +46,27 @@ function SignIn() {
           localStorage.setItem("rememberedEmail", email);
           localStorage.setItem("rememberedPassword", password);
           localStorage.setItem("auth_token", data.token);
+          localStorage.setItem("token", data.token);
+          localStorage.setItem("user", JSON.stringify(data.user));
           localStorage.setItem("userRole", data.user.role);
           sessionStorage.removeItem("auth_token");
+          sessionStorage.removeItem("token");
+          sessionStorage.removeItem("user");
           sessionStorage.removeItem("userRole");
         } else {
           localStorage.removeItem("rememberMe");
           localStorage.removeItem("rememberedEmail");
           localStorage.removeItem("rememberedPassword");
           sessionStorage.setItem("auth_token", data.token);
+          sessionStorage.setItem("token", data.token);
+          sessionStorage.setItem("user", JSON.stringify(data.user));
           sessionStorage.setItem("userRole", data.user.role);
           localStorage.removeItem("auth_token");
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
           localStorage.removeItem("userRole");
         }
-        if (data.user.role === "vendor")      navigate("/business");
+        if (data.user.role === "vendor")      navigate("/business/profile");
         else if (data.user.role === "admin")  navigate("/admin");
         else                                  navigate("/home");
       } else {

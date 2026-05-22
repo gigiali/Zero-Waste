@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Bell, User, Globe, GitBranch, Package, ShoppingCart,
@@ -43,26 +43,135 @@ export default function Business() {
   const [form, setForm]                           = useState(EMPTY_FORM);
   const [isSubmitting, setIsSubmitting]           = useState(false);
   const [submitError, setSubmitError]             = useState("");
-  const [branches]                                = useState([
-    { id: 1, name: "Maadi Branch" },
-    { id: 2, name: "Nasr City Branch" },
-  ]);
+  const [branches, setBranches]                   = useState([]);
+  const [businessName, setBusinessName]           = useState("");
 
-  const [offers, setOffers] = useState([
-    { id: 1, title: "Fresh Bread & Pastries Box", description: "Assorted fresh bread and pastries from today", originalPrice: 15.99, discountPrice: 5.99, quantity: 8, expiresIn: "2h 30m", status: "Active", branch: "Maadi Branch", image: "" },
-    { id: 2, title: "Special Baguette Pack", description: "4 fresh baguettes ready for takeaway", originalPrice: 8.5, discountPrice: 3.49, quantity: 12, expiresIn: "2h 30m", status: "Active", branch: "Maadi Branch", image: "" },
-    { id: 3, title: "Mini Croissant Set", description: "A mix of sweet and savory croissants", originalPrice: 14.0, discountPrice: 4.99, quantity: 0, expiresIn: "1h 15m", status: "Expired", branch: "Maadi Branch", image: "" },
-    { id: 4, title: "Croissant Bundle", description: "6 butter croissants", originalPrice: 12.0, discountPrice: 4.99, quantity: 0, expiresIn: "3h", status: "Expired", branch: "Nasr City Branch", image: "" },
-    { id: 5, title: "Blueberry Muffin Box", description: "Fresh muffins from today", originalPrice: 10.0, discountPrice: 4.5, quantity: 6, expiresIn: "2h", status: "Active", branch: "Nasr City Branch", image: "" },
-  ]);
+  // Check if vendor has branches, redirect to Add Branch if not
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) {
+          navigate("/signin");
+          return;
+        }
 
-  const [orders, setOrders] = useState([
-    { id: "ORD123", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "completed", branch: "Maadi Branch" },
-    { id: "ORD124", offer: "Fresh Bread Bundle",   customer: "Sara Ali",     amount: "EGP 7.99", status: "processing",   branch: "Maadi Branch" },
-    { id: "ORD127", offer: "Pastry Sampler",       customer: "Ahmed Hassan", amount: "EGP 6.50", status: "delivered", branch: "Maadi Branch" },
-    { id: "ORD125", offer: "Fresh Bread Bundle",   customer: "John Doe",     amount: "EGP 5.99", status: "completed", branch: "Nasr City Branch" },
-    { id: "ORD126", offer: "Blueberry Muffin Box", customer: "Jane Smith",   amount: "EGP 4.50", status: "cancelled", branch: "Nasr City Branch" },
-  ]);
+        // Fetch vendor profile
+        const profileResponse = await fetch("/api/vendor/profile", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (profileResponse.ok) {
+          const profileData = await profileResponse.json();
+          if (profileData.vendor?.business_name) {
+            setBusinessName(profileData.vendor.business_name);
+          }
+        }
+
+        // Fetch branches
+        const branchesResponse = await fetch("/api/vendor/branches", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        const branchesData = await branchesResponse.json();
+
+        if (branchesResponse.ok && branchesData.branches) {
+          setBranches(branchesData.branches);
+
+          // If no branches, redirect to Add Branch
+          if (branchesData.branches.length === 0) {
+            navigate("/add-branch");
+            return;
+          }
+
+          // Set first branch as selected
+          setSelectedBranch(branchesData.branches[0].name);
+          setLocation(branchesData.branches[0].location || branchesData.branches[0].name);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, [navigate]);
+
+  const [offers, setOffers] = useState([]);
+  const [orders, setOrders] = useState([]);
+
+  // Fetch vendor offers and orders
+  useEffect(() => {
+    const fetchVendorData = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+
+        // Fetch vendor offers
+        const offersResponse = await fetch("/api/vendor/offers", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (offersResponse.ok) {
+          const offersData = await offersResponse.json();
+          if (offersData.offers) {
+            const transformedOffers = offersData.offers.map((offer) => ({
+              id: offer.id,
+              title: offer.title,
+              description: offer.description,
+              originalPrice: offer.original_price || 0,
+              discountPrice: offer.discount_price || 0,
+              quantity: offer.quantity_available || 0,
+              expiresIn: offer.expiration_time || "N/A",
+              status: offer.status || "Active",
+              branch: offer.branch?.name || "Unknown",
+              image: offer.image || "",
+            }));
+            setOffers(transformedOffers);
+          }
+        }
+
+        // Fetch vendor orders
+        const ordersResponse = await fetch("/api/vendor/orders", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (ordersResponse.ok) {
+          const ordersData = await ordersResponse.json();
+          if (ordersData.orders) {
+            const transformedOrders = ordersData.orders.map((order) => ({
+              id: order.id,
+              offer: order.offer?.title || "Unknown",
+              customer: order.user?.name || "Unknown",
+              amount: `EGP ${order.total || 0}`,
+              status: order.status || "pending",
+              branch: order.branch?.name || "Unknown",
+            }));
+            setOrders(transformedOrders);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching vendor data:", error);
+      }
+    };
+
+    fetchVendorData();
+  }, []);
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
 
   const filteredOffers = offers.filter(o => o.branch === selectedBranch);
@@ -160,8 +269,8 @@ export default function Business() {
       }
 
       const url = editingId
-        ? `https://stagnate-deferred-pork.ngrok-free.dev/api/offers/${editingId}`
-        : "https://stagnate-deferred-pork.ngrok-free.dev/api/offers";
+        ? `/api/offers/${editingId}`
+        : "/api/offers";
 
       const method = editingId ? "PUT" : "POST";
 
@@ -238,7 +347,7 @@ export default function Business() {
       }
 
       const response = await fetch(
-        `https://stagnate-deferred-pork.ngrok-free.dev/api/orders/${orderId}/status`,
+        `/api/orders/${orderId}/status`,
         {
           method: "PUT",
           headers: {
@@ -421,7 +530,7 @@ export default function Business() {
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              Artisan Bakery
+              {businessName || "Your Business"}
             </p>
             <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               Business Account
@@ -441,7 +550,7 @@ export default function Business() {
 
         <div className="biz-welcome">
           <div>
-            <h1 className="biz-welcome-title">Welcome back, Artisan Bakery! 👋</h1>
+            <h1 className="biz-welcome-title">Welcome back, {businessName || "Your Business"}! 👋</h1>
             <p className="biz-welcome-sub">Manage your surplus food offers and reduce waste</p>
           </div>
           <div className="biz-impact">

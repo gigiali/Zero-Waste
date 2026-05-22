@@ -58,7 +58,7 @@ function BusinessSetup() {
         }
 
         const response = await fetch(
-          "https://stagnate-deferred-pork.ngrok-free.dev/api/vendor/complete-setup",
+          "/api/vendor/complete-setup",
           {
             method: "POST",
             headers: {

@@ -4,26 +4,22 @@ import Navigation from "../Components/Navigation";
 import { Search, MoreVertical, Mail, Eye, Edit, UserX, UserCheck, Trash2 } from "lucide-react";
 import "./UserManagement.css";
 
-const usersData = [
-  { id: 1, name: "John Doe",    email: "john@example.com",  userType: "Business Owner", status: "Active",   joined: "2024-01-10", orders: 45, lastActive: "2 hours ago"    },
-  { id: 2, name: "Sarah Smith", email: "sarah@example.com", userType: "Customer",       status: "Active",   joined: "2024-01-15", orders: 12, lastActive: "30 minutes ago" },
-  { id: 3, name: "Mike Johnson",email: "mike@example.com",  userType: "Business Owner", status: "Active",   joined: "2024-02-05", orders: 78, lastActive: "1 hour ago"     },
-  { id: 4, name: "Emma Wilson", email: "emma@example.com",  userType: "Customer",       status: "Inactive", joined: "2024-01-20", orders: 5,  lastActive: "1 week ago"     },
-  { id: 5, name: "David Brown", email: "david@example.com", userType: "Business Owner", status: "Active",   joined: "2024-02-15", orders: 34, lastActive: "3 hours ago"    },
-  { id: 6, name: "Lisa Garcia", email: "lisa@example.com",  userType: "Customer",       status: "Active",   joined: "2024-03-01", orders: 8,  lastActive: "15 minutes ago" },
-];
-
 const statusConfig = {
   Active:    { bg: "#d1fae5", text: "#065f46", icon: "●" },
   Inactive:  { bg: "#f3f4f6", text: "#4b5563", icon: "●" },
   Suspended: { bg: "#fee2e2", text: "#991b1b", icon: "●" },
 };
 
+const fallbackStatus = { bg: "#f3f4f6", text: "#374151", icon: "*" };
+
 const userTypeConfig = {
   "Business Owner": { bg: "#f3e8ff", text: "#6b21a8", icon: "🏢" },
   "Customer":       { bg: "#eff6ff", text: "#0c4a6e", icon: "👤" },
   "Admin":          { bg: "#fef3c7", text: "#92400e", icon: "👑" },
+  "Vendor":         { bg: "#f3e8ff", text: "#6b21a8", icon: "🏢" },
 };
+
+const fallbackUserType = { bg: "#f3f4f6", text: "#374151", icon: "*" };
 
 function ActionMenu({ user }) {
   const [open, setOpen] = useState(false);
@@ -79,25 +75,65 @@ function ActionMenu({ user }) {
 
 export default function UserManagement() {
   const navigate = useNavigate();
-  const [searchTerm,   setSearchTerm]   = useState("");
+  const [users, setUsers] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
-  const [filterType,   setFilterType]   = useState("all");
+  const [filterType, setFilterType] = useState("all");
 
-  const filteredUsers = usersData.filter((user) => {
-    const searchMatch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                        user.email.toLowerCase().includes(searchTerm.toLowerCase());
-    const statusMatch = filterStatus === "all" || user.status   === filterStatus;
-    const typeMatch   = filterType   === "all" || user.userType === filterType;
+  // Fetch users from backend
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        if (!token) return;
+
+        const response = await fetch("/api/admin/users", {
+          method: "GET",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.users) {
+            const transformedUsers = data.users.map((user) => ({
+              id: user.id,
+              name: user.name || "Unknown",
+              email: user.email || "",
+              userType: user.role === "vendor" ? "Business Owner" : user.role === "admin" ? "Admin" : "Customer",
+              status: user.status || "Active",
+              joined: user.created_at || "N/A",
+              orders: user.orders_count || 0,
+              lastActive: user.last_active || "Unknown",
+            }));
+            setUsers(transformedUsers);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchUsers();
+  }, []);
+
+  const filteredUsers = users.filter((user) => {
+    const searchMatch = user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+    const statusMatch = filterStatus === "all" || user.status === filterStatus;
+    const typeMatch = filterType === "all" || user.userType === filterType;
     return searchMatch && statusMatch && typeMatch;
   });
 
-  const userTypes = [...new Set(usersData.map((u) => u.userType))];
-  const statuses  = [...new Set(usersData.map((u) => u.status))];
+  const userTypes = [...new Set(users.map((u) => u.userType))];
+  const statuses = [...new Set(users.map((u) => u.status))];
 
-  const totalUsers        = usersData.length;
-  const activeUsers       = usersData.filter((u) => u.status === "Active").length;
-  const businessOwners    = usersData.filter((u) => u.userType === "Business Owner").length;
-  const totalTransactions = usersData.reduce((sum, u) => sum + u.orders, 0);
+  const totalUsers = users.length;
+  const activeUsers = users.filter((u) => u.status === "Active").length;
+  const businessOwners = users.filter((u) => u.userType === "Business Owner").length;
+  const totalTransactions = users.reduce((sum, u) => sum + u.orders, 0);
 
   return (
     <>
@@ -142,8 +178,8 @@ export default function UserManagement() {
             <input
               type="text"
               placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <div className="filters">
@@ -179,18 +215,18 @@ export default function UserManagement() {
                     </td>
                     <td>
                       <span className="type-badge"
-                        style={{ backgroundColor: userTypeConfig[user.userType].bg, color: userTypeConfig[user.userType].text }}>
-                        {userTypeConfig[user.userType].icon} {user.userType}
+                        style={{ backgroundColor: (userTypeConfig[user.userType] || fallbackUserType).bg, color: (userTypeConfig[user.userType] || fallbackUserType).text }}>
+                        {(userTypeConfig[user.userType] || fallbackUserType).icon} {user.userType || "Unknown"}
                       </span>
                     </td>
                     <td>
                       <span className="status-badge"
-                        style={{ backgroundColor: statusConfig[user.status].bg, color: statusConfig[user.status].text }}>
-                        {statusConfig[user.status].icon} {user.status}
+                        style={{ backgroundColor: (statusConfig[user.status] || fallbackStatus).bg, color: (statusConfig[user.status] || fallbackStatus).text }}>
+                        {(statusConfig[user.status] || fallbackStatus).icon} {user.status || "Unknown"}
                       </span>
                     </td>
-                    <td>{new Date(user.joined).toLocaleDateString()}</td>
-                    <td className="table-orders"><strong>{user.orders}</strong></td>
+                    <td>{user.joined && user.joined !== "N/A" ? new Date(user.joined).toLocaleDateString() : "N/A"}</td>
+                    <td className="table-orders"><strong>{Number(user.orders || 0)}</strong></td>
                     <td className="table-lastactive">{user.lastActive}</td>
                     <td><ActionMenu user={user} /></td>
                   </tr>
