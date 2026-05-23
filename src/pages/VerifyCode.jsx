@@ -5,10 +5,10 @@ import "../auth-theme.css";
 import "./ForgotPassword.css";
 
 export default function VerifyCode() {
-  const navigate   = useNavigate();
-  const inputsRef  = useRef([]);
-  const [code, setCode]       = useState(["", "", "", ""]);
-  const [message, setMessage] = useState("");
+  const navigate  = useNavigate();
+  const inputsRef = useRef([]);
+  const [code, setCode]         = useState(["", "", "", "", "", ""]);
+  const [message, setMessage]   = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (index, value) => {
@@ -28,9 +28,27 @@ export default function VerifyCode() {
     }
   };
 
+  const handleResend = async () => {
+    const email = sessionStorage.getItem("passwordResetEmail");
+    try {
+      const response = await fetch("/api/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      if (response.ok) {
+        setMessage("A new verification code has been sent.");
+      } else {
+        setMessage("Failed to resend code. Please try again.");
+      }
+    } catch {
+      setMessage("Network error. Please try again.");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (code.some((d) => !d)) { setMessage("Enter the 4-digit verification code"); return; }
+    if (code.some((d) => !d)) { setMessage("Enter the 6-digit verification code"); return; }
 
     setIsLoading(true);
     try {
@@ -89,15 +107,16 @@ export default function VerifyCode() {
 
         <p className="auth-resend-row" style={{ marginTop: 14 }}>
           Didn't receive a code?{" "}
-          <button type="button" className="auth-btn-ghost"
-            onClick={() => setMessage("A new verification code has been sent.")}>
+          <button type="button" className="auth-btn-ghost" onClick={handleResend}>
             Resend
           </button>
         </p>
 
         {message && (
-          <p className={isSent ? "auth-success-text" : "auth-error-text"}
-             style={{ marginBottom: 12, textAlign: "center" }}>
+          <p
+            className={isSent ? "auth-success-text" : "auth-error-text"}
+            style={{ marginBottom: 12, textAlign: "center" }}
+          >
             {message}
           </p>
         )}

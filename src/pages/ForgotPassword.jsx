@@ -97,36 +97,14 @@ export default function ForgotPassword() {
 
   return (
     <RecoveryFrame title="Forgot Password">
-      <div className="auth-tabs" role="tablist" aria-label="Recovery method">
-        <button type="button" role="tab" aria-selected={mode === "email"}
-          className={`auth-tab ${mode === "email" ? "auth-tab--active" : ""}`}
-          onClick={() => switchMode("email")}>
-          Email
-        </button>
-        <button type="button" role="tab" aria-selected={mode === "phone"}
-          className={`auth-tab ${mode === "phone" ? "auth-tab--active" : ""}`}
-          onClick={() => switchMode("phone")}>
-          Phone Number
-        </button>
-      </div>
 
       <form onSubmit={handleSubmit} noValidate>
-        {mode === "email" ? (
-          <div className="auth-field">
+      <div className="auth-field">
             <label className="auth-label" htmlFor="fp-email">Email Address</label>
             <input id="fp-email" className="auth-input" type="email"
               placeholder="you@example.com" value={email}
               onChange={(e) => { setEmail(e.target.value); setError(""); }} />
           </div>
-        ) : (
-          <div className="auth-field">
-            <label className="auth-label" htmlFor="fp-phone">Phone Number</label>
-            <input id="fp-phone" className="auth-input" type="tel"
-              placeholder="+20 10 1234 5678" value={phone}
-              onChange={(e) => { setPhone(e.target.value); setError(""); }} />
-            <span className="auth-hint">We'll send a verification code to this number</span>
-          </div>
-        )}
 
         {error && <p className="auth-error-text fp-error">{error}</p>}
 

@@ -1,21 +1,39 @@
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Share2, Phone, Mail, ShoppingCart, Check, Star, Store } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useCart } from '../Context/CartContext';
-import './OfferDetail.css';
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  ArrowLeft,
+  Clock,
+  MapPin,
+  Share2,
+  Phone,
+  Mail,
+  ShoppingCart,
+  Check,
+  Star,
+  Store,
+} from "lucide-react";
+import { useState, useEffect } from "react";
+import { useCart } from "../Context/CartContext";
+import "./OfferDetail.css";
 
 const normalizeOffer = (payload) => {
   const source = payload?.offer || payload?.data || payload;
   if (!source) return null;
 
-  const originalPrice = Number(source.originalPrice ?? source.original_price ?? source.price ?? 0);
-  const discountedPrice = Number(source.discountedPrice ?? source.discount_price ?? source.discountPrice ?? 0);
-  const quantity = Number(source.quantity ?? source.quantity_available ?? 0);
-  const discount = source.discount ?? (
-    originalPrice > 0 && discountedPrice > 0
-      ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
-      : 0
+  const originalPrice = Number(
+    source.originalPrice ?? source.original_price ?? source.price ?? 0,
   );
+  const discountedPrice = Number(
+    source.discountedPrice ??
+      source.discount_price ??
+      source.discountPrice ??
+      0,
+  );
+  const quantity = Number(source.quantity ?? source.quantity_available ?? 0);
+  const discount =
+    source.discount ??
+    (originalPrice > 0 && discountedPrice > 0
+      ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
+      : 0);
   const branch = source.branch || {};
   const vendor = source.vendor || branch.vendor || {};
 
@@ -30,14 +48,24 @@ const normalizeOffer = (payload) => {
     discountPrice: discountedPrice,
     quantity,
     pickupTime: source.pickupTime || source.expiration_time || "Today",
-    location: branch.name || source.location || vendor.business_name || "Restaurant",
+    location:
+    branch.branch_name || 
+    branch.store_address || 
+    source.location || 
+    vendor.business_name || "Restaurant",
     distance: source.distance || "",
     category: branch.type || source.category || "Restaurant",
-    restaurantName: vendor.business_name || source.restaurantName || branch.name || "Restaurant",
+    restaurantName:
+      vendor.business_name ||
+      source.restaurantName ||
+      branch.name ||
+      "Restaurant",
     restaurantRating: source.restaurantRating || vendor.rating || 4.5,
     restaurantHours: source.restaurantHours || branch.opening_hours || "N/A",
-    restaurantPhone: source.restaurantPhone || branch.contact_phone || vendor.phone || "N/A",
-    restaurantEmail: source.restaurantEmail || branch.contact_email || vendor.email || "N/A",
+    restaurantPhone:
+      source.restaurantPhone || branch.contact_phone || vendor.phone || "N/A",
+    restaurantEmail:
+      source.restaurantEmail || branch.contact_email || vendor.email || "N/A",
   };
 };
 
@@ -50,29 +78,99 @@ export default function OfferDetail() {
 
   const [offer, setOffer] = useState(null);
   const [loadingOffer, setLoadingOffer] = useState(true);
+  const [rawResponse, setRawResponse] = useState(null);
 
   const [offerReviews, setOfferReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
   useEffect(() => {
-    fetch(`/api/offers/${id}`)
-      .then(r => r.json())
-      .then(data => {
-        setOffer(normalizeOffer(data));
-        setLoadingOffer(false);
-      })
-      .catch(() => setLoadingOffer(false));
+    let mounted = true;
+
+    (async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") ||
+          sessionStorage.getItem("token");
+        const headers = { Accept: "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const tryUrls = [`/api/offers/${id}`, `/offers/${id}`];
+        let data = null;
+
+        for (const url of tryUrls) {
+          const res = await fetch(url, { headers });
+          if (!mounted) return;
+          if (res.ok) {
+            data = await res.json();
+            break;
+          }
+          // try next url on 404; for other statuses, stop and throw
+          if (res.status !== 404) throw new Error("Fetch error");
+        }
+
+        if (data) {
+          setRawResponse(data);
+          setOffer(normalizeOffer(data));
+        } else {
+          setOffer(null);
+        }
+      } catch {
+        setOffer(null);
+      } finally {
+        if (mounted) setLoadingOffer(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   useEffect(() => {
+    let mounted = true;
     setLoadingReviews(true);
-    fetch(`/api/offers/${id}/reviews`)
-      .then(r => r.json())
-      .then(data => {
-        setOfferReviews(data.reviews || []);
-        setLoadingReviews(false);
-      })
-      .catch(() => setLoadingReviews(false));
+
+    (async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") ||
+          sessionStorage.getItem("token");
+        const headers = { Accept: "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+
+        const tryUrls = [`/api/offers/${id}/reviews`, `/offers/${id}/reviews`];
+        let data = null;
+
+        for (const url of tryUrls) {
+          const res = await fetch(url, { headers });
+          if (!mounted) return;
+          if (res.ok) {
+            data = await res.json();
+            break;
+          }
+          if (res.status !== 404) throw new Error("Fetch error");
+        }
+
+        if (data) {
+          setRawResponse((prev) => prev || data);
+          setOfferReviews(data.reviews || []);
+        } else {
+          setOfferReviews([]);
+        }
+      } catch {
+        setOfferReviews([]);
+      } finally {
+        if (mounted) setLoadingReviews(false);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+    };
   }, [id]);
 
   const handleAddToCart = () => {
@@ -85,7 +183,7 @@ export default function OfferDetail() {
   if (loadingOffer) {
     return (
       <div className="offer-detail-container">
-        <p style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</p>
+        <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading...</p>
       </div>
     );
   }
@@ -95,7 +193,17 @@ export default function OfferDetail() {
       <div className="offer-detail-container">
         <div className="not-found">
           <h2>Offer not found</h2>
-          <button onClick={() => navigate('/')} className="back-btn">← Back to Home</button>
+          <button onClick={() => navigate("/")} className="back-btn">
+            ← Back to Home
+          </button>
+          {rawResponse && (
+            <details style={{ marginTop: "1rem", textAlign: "left" }}>
+              <summary>Debug: raw response</summary>
+              <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                {JSON.stringify(rawResponse, null, 2)}
+              </pre>
+            </details>
+          )}
         </div>
       </div>
     );
@@ -103,7 +211,6 @@ export default function OfferDetail() {
 
   return (
     <div className="offer-detail-container">
-
       {/* ── Back Bar ── */}
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-btn">
@@ -117,13 +224,19 @@ export default function OfferDetail() {
 
       {/* ── Hero ── */}
       <div className="detail-hero">
-        <img src={offer.image || "/images/e.png"} alt={offer.title} className="detail-hero-image" />
+        <img
+          src={offer.image || "/images/e.png"}
+          alt={offer.title}
+          className="detail-hero-image"
+        />
         <div className="detail-hero-overlay" />
         <div className="detail-hero-content">
           <div className="detail-hero-text">
             <h1>{offer.restaurantName}</h1>
             <div className="detail-hero-meta">
-              <span><MapPin size={14} /> {offer.location} · {offer.distance}</span>
+              <span>
+                <MapPin size={14} /> {offer.location} · {offer.distance}
+              </span>
               <span className="hero-rating">⭐ {offer.restaurantRating}</span>
             </div>
           </div>
@@ -146,7 +259,7 @@ export default function OfferDetail() {
               fontWeight: 600,
               fontSize: "0.9rem",
               transition: "all 0.25s",
-              flexShrink: 0
+              flexShrink: 0,
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = "rgba(255,255,255,0.25)";
@@ -167,21 +280,27 @@ export default function OfferDetail() {
       <div className="detail-info-strip">
         <div className="detail-info-strip-inner">
           <div className="info-strip-item">
-            <div className="info-strip-icon"><Clock size={18} /></div>
+            <div className="info-strip-icon">
+              <Clock size={18} />
+            </div>
             <div>
               <div className="info-strip-label">Open Hours</div>
               <div className="info-strip-value">{offer.restaurantHours}</div>
             </div>
           </div>
           <div className="info-strip-item">
-            <div className="info-strip-icon"><Phone size={18} /></div>
+            <div className="info-strip-icon">
+              <Phone size={18} />
+            </div>
             <div>
               <div className="info-strip-label">Phone</div>
               <div className="info-strip-value">{offer.restaurantPhone}</div>
             </div>
           </div>
           <div className="info-strip-item">
-            <div className="info-strip-icon"><Mail size={18} /></div>
+            <div className="info-strip-icon">
+              <Mail size={18} />
+            </div>
             <div>
               <div className="info-strip-label">Email</div>
               <div className="info-strip-value">{offer.restaurantEmail}</div>
@@ -192,13 +311,16 @@ export default function OfferDetail() {
 
       {/* ── Body ── */}
       <div className="detail-body">
-
         {/* Left — Offers */}
         <div className="offers-section">
           <h2>Available Offers (1)</h2>
 
           <div className="offer-card">
-            <img src={offer.image || "/images/e.png"} alt={offer.title} className="offer-card-image" />
+            <img
+              src={offer.image || "/images/e.png"}
+              alt={offer.title}
+              className="offer-card-image"
+            />
             <div className="offer-card-body">
               <div className="offer-card-top">
                 <span className="offer-card-title">{offer.title}</span>
@@ -212,7 +334,9 @@ export default function OfferDetail() {
               <div className="offer-card-footer">
                 <div className="offer-meta">
                   <span>📦 {offer.quantity} left in stock</span>
-                  <span><Clock size={13} /> Pickup: {offer.pickupTime}</span>
+                  <span>
+                    <Clock size={13} /> Pickup: {offer.pickupTime}
+                  </span>
                 </div>
                 <div className="offer-card-actions">
                   <select
@@ -220,15 +344,29 @@ export default function OfferDetail() {
                     value={qty}
                     onChange={(e) => setQty(Number(e.target.value))}
                   >
-                    {[...Array(Math.max(1, Math.min(Number(offer.quantity || 0), 10)))].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>Qty: {i + 1}</option>
+                    {[
+                      ...Array(
+                        Math.max(1, Math.min(Number(offer.quantity || 0), 10)),
+                      ),
+                    ].map((_, i) => (
+                      <option key={i + 1} value={i + 1}>
+                        Qty: {i + 1}
+                      </option>
                     ))}
                   </select>
                   <button
-                    className={`reserve-btn ${added ? 'reserve-btn-added' : ''}`}
+                    className={`reserve-btn ${added ? "reserve-btn-added" : ""}`}
                     onClick={handleAddToCart}
                   >
-                    {added ? <><Check size={15} /> Added!</> : <><ShoppingCart size={15} /> Add to Cart</>}
+                    {added ? (
+                      <>
+                        <Check size={15} /> Added!
+                      </>
+                    ) : (
+                      <>
+                        <ShoppingCart size={15} /> Add to Cart
+                      </>
+                    )}
                   </button>
                 </div>
               </div>
@@ -250,7 +388,9 @@ export default function OfferDetail() {
             </div>
             <div className="sidebar-row">
               <span className="sidebar-label">Rating</span>
-              <span className="sidebar-value">⭐ {offer.restaurantRating} / 5.0</span>
+              <span className="sidebar-value">
+                ⭐ {offer.restaurantRating} / 5.0
+              </span>
             </div>
             <div className="sidebar-row">
               <span className="sidebar-label">Distance</span>
@@ -264,7 +404,9 @@ export default function OfferDetail() {
             {loadingReviews ? (
               <p className="no-reviews">Loading reviews...</p>
             ) : offerReviews.length === 0 ? (
-              <p className="no-reviews">No reviews yet. Be the first to order and review!</p>
+              <p className="no-reviews">
+                No reviews yet. Be the first to order and review!
+              </p>
             ) : (
               <>
                 <div className="reviews-summary">
@@ -274,50 +416,89 @@ export default function OfferDetail() {
                         <Star
                           key={star}
                           size={18}
-                          fill={star <= Math.round(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length) ? "#fbbf24" : "none"}
-                          color={star <= Math.round(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length) ? "#fbbf24" : "#d1d5db"}
+                          fill={
+                            star <=
+                            Math.round(
+                              offerReviews.reduce((a, r) => a + r.rating, 0) /
+                                offerReviews.length,
+                            )
+                              ? "#fbbf24"
+                              : "none"
+                          }
+                          color={
+                            star <=
+                            Math.round(
+                              offerReviews.reduce((a, r) => a + r.rating, 0) /
+                                offerReviews.length,
+                            )
+                              ? "#fbbf24"
+                              : "#d1d5db"
+                          }
                         />
                       ))}
                     </span>
                     <span className="avg-text">
-                      {(offerReviews.reduce((a, r) => a + r.rating, 0) / offerReviews.length).toFixed(1)} / 5
+                      {(
+                        offerReviews.reduce((a, r) => a + r.rating, 0) /
+                        offerReviews.length
+                      ).toFixed(1)}{" "}
+                      / 5
                     </span>
                   </div>
-                  <span className="reviews-count">{offerReviews.length} review{offerReviews.length !== 1 ? 's' : ''}</span>
+                  <span className="reviews-count">
+                    {offerReviews.length} review
+                    {offerReviews.length !== 1 ? "s" : ""}
+                  </span>
                 </div>
                 <div className="reviews-list">
-                  {offerReviews.slice().reverse().map((review, idx) => (
-                    <div key={idx} className="review-item">
-                      <div className="review-header-row">
-                        <span className="review-order-id">Order {review.order_id}</span>
-                        <span className="review-date">
-                          {new Date(review.date).toLocaleDateString()}
+                  {offerReviews
+                    .slice()
+                    .reverse()
+                    .map((review, idx) => (
+                      <div key={idx} className="review-item">
+                        <div className="review-header-row">
+                          <span className="review-order-id">
+                            Order {review.order_id}
+                          </span>
+                          <span className="review-date">
+                            {new Date(review.date).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <div className="review-stars-row">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              size={14}
+                              fill={star <= review.rating ? "#fbbf24" : "none"}
+                              color={
+                                star <= review.rating ? "#fbbf24" : "#d1d5db"
+                              }
+                            />
+                          ))}
+                        </div>
+                        {review.comment && (
+                          <p className="review-text">"{review.comment}"</p>
+                        )}
+                        {review.imageBase64 && (
+                          <img
+                            src={review.imageBase64}
+                            alt="Review"
+                            className="review-image"
+                          />
+                        )}
+                        <span className="review-method">
+                          {review.delivery_method === "delivery"
+                            ? "🚚 Delivery"
+                            : "🏪 Pickup"}
                         </span>
                       </div>
-                      <div className="review-stars-row">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star
-                            key={star}
-                            size={14}
-                            fill={star <= review.rating ? "#fbbf24" : "none"}
-                            color={star <= review.rating ? "#fbbf24" : "#d1d5db"}
-                          />
-                        ))}
-                      </div>
-                      {review.comment && <p className="review-text">"{review.comment}"</p>}
-                      {review.imageBase64 && (
-                        <img src={review.imageBase64} alt="Review" className="review-image" />
-                      )}
-                      <span className="review-method">{review.delivery_method === 'delivery' ? '🚚 Delivery' : '🏪 Pickup'}</span>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </>
             )}
           </div>
         </div>
       </div>
-
     </div>
   );
 }

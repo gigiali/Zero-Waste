@@ -2,15 +2,31 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./HomePage.css";
 import {
-  Search, ChevronDown, Clock, MapPin, AlertCircle, Package,
-  Utensils, Coffee, ShoppingCart, Hotel, Store,
-  CheckCircle, Truck, X, Star
+  Search,
+  ChevronDown,
+  Clock,
+  MapPin,
+  AlertCircle,
+  Package,
+  Utensils,
+  Coffee,
+  ShoppingCart,
+  Hotel,
+  Store,
+  CheckCircle,
+  Truck,
+  X,
+  Star,
 } from "lucide-react";
 import { useCart } from "../Context/CartContext";
 
 // ── Countdown Timer ───────────────────────────────────────────────────────────
 function CountdownTimer({ pickupTime }) {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
@@ -46,7 +62,9 @@ function CountdownTimer({ pickupTime }) {
   return (
     <div className={`countdown-timer ${isUrgent ? "urgent" : ""}`}>
       <Clock size={13} />
-      <span className="countdown-text">{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}</span>
+      <span className="countdown-text">
+        {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+      </span>
     </div>
   );
 }
@@ -76,60 +94,54 @@ function OrderTrackingStrip({ order, onDismiss }) {
   }, [currentStep, submitted]);
 
   const pickupSteps = [
-    { id: 1, label: "Confirmed",  icon: <CheckCircle size={14} /> },
-    { id: 2, label: "Preparing",  icon: <Package size={14} /> },
-    { id: 3, label: "Ready",      icon: <CheckCircle size={14} /> },
-    { id: 4, label: "Picked Up",  icon: <CheckCircle size={14} /> },
+    { id: 1, label: "Confirmed", icon: <CheckCircle size={14} /> },
+    { id: 2, label: "Preparing", icon: <Package size={14} /> },
+    { id: 3, label: "Ready", icon: <CheckCircle size={14} /> },
+    { id: 4, label: "Picked Up", icon: <CheckCircle size={14} /> },
   ];
   const deliverySteps = [
-    { id: 1, label: "Confirmed",  icon: <CheckCircle size={14} /> },
-    { id: 2, label: "Preparing",  icon: <Package size={14} /> },
+    { id: 1, label: "Confirmed", icon: <CheckCircle size={14} /> },
+    { id: 2, label: "Preparing", icon: <Package size={14} /> },
     { id: 3, label: "On the Way", icon: <Truck size={14} /> },
-    { id: 4, label: "Delivered",  icon: <CheckCircle size={14} /> },
+    { id: 4, label: "Delivered", icon: <CheckCircle size={14} /> },
   ];
 
-  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
+  const steps =
+    order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
   const handleSubmitReview = async () => {
-    const reviewData = {
-      offer_id: order.offerId || 1,
-      rating,
-      comment: reviewText,
-      order_id: order.orderNumber,
-      date: new Date().toISOString(),
-      delivery_method: order.deliveryMethod,
-      image: reviewImage ? reviewImage.name : null,
-    };
+    const token =
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
 
-    // TODO: Replace with API call when backend is ready:
-    // const formData = new FormData();
-    // formData.append('offer_id', reviewData.offer_id);
-    // formData.append('rating', rating);
-    // formData.append('comment', reviewText);
-    // if (reviewImage) formData.append('image', reviewImage);
-    //
-    // await fetch("/api/reviews", {
-    //   method: "POST",
-    //   headers: { "Authorization": `Bearer ${token}` },
-    //   body: formData
-    // });
+    const formData = new FormData();
+    formData.append("offer_id", order.offerId || 1);
+    formData.append("rating", rating);
+    formData.append("comment", reviewText);
+    formData.append("order_id", order.orderNumber);
+    formData.append("delivery_method", order.deliveryMethod);
+    if (reviewImage) formData.append("image", reviewImage);
 
-    if (reviewImage) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        reviewData.imageBase64 = reader.result;
-        const existing = JSON.parse(localStorage.getItem("orderReviews") || "[]");
-        localStorage.setItem("orderReviews", JSON.stringify([...existing, reviewData]));
-        setSubmitted(true);
-        setShowReview(false);
-        removeImage();
-      };
-      reader.readAsDataURL(reviewImage);
-    } else {
-      const existing = JSON.parse(localStorage.getItem("orderReviews") || "[]");
-      localStorage.setItem("orderReviews", JSON.stringify([...existing, reviewData]));
+    try {
+      const headers = { Accept: "application/json" };
+      if (token) headers.Authorization = `Bearer ${token}`;
+
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers,
+        body: formData,
+      });
+
+      if (!response.ok) throw new Error("Failed to submit review");
+
       setSubmitted(true);
       setShowReview(false);
+      removeImage();
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      alert("Unable to submit your review. Please try again.");
     }
   };
 
@@ -175,7 +187,11 @@ function OrderTrackingStrip({ order, onDismiss }) {
           <span className="order-strip-total">
             EGP {Number(order.total ?? 0).toFixed(2)}
           </span>
-          <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss">
+          <button
+            className="order-strip-dismiss"
+            onClick={onDismiss}
+            title="Dismiss"
+          >
             <X size={12} />
           </button>
         </div>
@@ -184,11 +200,13 @@ function OrderTrackingStrip({ order, onDismiss }) {
       {/* Progress track */}
       <div className="order-strip-track">
         {steps.map((step, idx) => {
-          const done   = step.id < currentStep;
+          const done = step.id < currentStep;
           const active = step.id === currentStep;
           return (
             <React.Fragment key={step.id}>
-              <div className={`ost-step ${done ? "done" : active ? "active" : "pending"}`}>
+              <div
+                className={`ost-step ${done ? "done" : active ? "active" : "pending"}`}
+              >
                 <div className="ost-node">
                   {done ? <CheckCircle size={13} /> : step.icon}
                 </div>
@@ -206,7 +224,10 @@ function OrderTrackingStrip({ order, onDismiss }) {
       {showReview && (
         <div className="review-overlay" onClick={() => setShowReview(false)}>
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="review-close" onClick={() => setShowReview(false)}>
+            <button
+              className="review-close"
+              onClick={() => setShowReview(false)}
+            >
               <X size={18} />
             </button>
             <div className="review-header">
@@ -273,14 +294,16 @@ const categoryIcons = {
   All: <Store size={16} />,
   Restaurant: <Utensils size={16} />,
   Bakery: <Coffee size={16} />,
+  Cafe: <Coffee size={16} />,
   Supermarket: <ShoppingCart size={16} />,
   Hotel: <Hotel size={16} />,
+  Others: <Store size={16} />,
 };
 
 const sortOptions = [
   { label: "Highest Discount", value: "highest_discount" },
-  { label: "Distance",         value: "nearest"          },
-  { label: "Rating",           value: "rating"           },
+  { label: "Distance", value: "nearest" },
+  { label: "Rating", value: "rating" },
 ];
 
 // ── HomePage ──────────────────────────────────────────────────────────────────
@@ -307,27 +330,31 @@ export default function HomePage() {
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (isDropdownOpen && !e.target.closest(".dropdown-container")) setIsDropdownOpen(false);
+      if (isDropdownOpen && !e.target.closest(".dropdown-container"))
+        setIsDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  const categories = ["All", "Restaurant", "Bakery", "Supermarket", "Hotel"];
+const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
 
   useEffect(() => {
     const fetchOffers = async () => {
       setLoading(true);
       setError(null);
       try {
-        const token = localStorage.getItem("auth_token") || localStorage.getItem("token") || sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") ||
+          sessionStorage.getItem("token");
 
         // Try different endpoints for public offers
-        const endpoints = [
-          "/api/offers",
-          "/api/public/offers",
-          "/api/customer/offers",
-        ];
+        const vendorType = selectedCategory === "All" ? "" : selectedCategory.toLowerCase();
+const endpoints = [
+  `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
+];
 
         let offersData = null;
 
@@ -341,7 +368,7 @@ export default function HomePage() {
               headers,
             });
             const data = await response.json();
-
+            console.log("RAW API DATA:", data);
             if (response.ok && (data.data || data.offers)) {
               const dataToCheck = data.data || data.offers;
               if (dataToCheck.length > 0) {
@@ -355,23 +382,48 @@ export default function HomePage() {
         }
 
         if (offersData && offersData.length > 0) {
-          const transformedOffers = offersData.map((offer) => ({
-            id: offer.id,
-            title: offer.title,
-            description: offer.description,
-            image: offer.image || "/assets/images/e.png",
-            discount: offer.discount_price
-              ? Math.round(((offer.original_price - offer.discount_price) / offer.original_price) * 100)
-              : 0,
-            originalPrice: offer.original_price || 0,
-            discountedPrice: offer.discount_price || 0,
-            quantity: offer.quantity_available || 0,
-            pickupTime: offer.expiration_time || "Today",
-            location: offer.branch?.name || offer.vendor?.business_name || "Unknown",
-            distance: 0,
-            rating: 4.5,
-            category: offer.branch?.type || "Restaurant",
-          }));
+          const transformedOffers = offersData.map((offer, idx) => {
+            const source = offer.offer || offer;
+            const resolvedId =
+  offer.id ??
+  offer.offer_id ??
+  offer.offerId ??
+  offer._id ??
+  offer._id_str ??
+  offer.uuid ??
+  idx;
+
+const hasRealId = true;
+const safeId = resolvedId;
+
+            return {
+              id: safeId,
+              hasId: hasRealId,
+              title: source.title,
+              description: source.description,
+              image: source.image || "/assets/images/e.png",
+              discount: source.discount_price
+                ? Math.round(
+                    ((source.original_price - source.discount_price) /
+                      source.original_price) *
+                      100,
+                  )
+                : 0,
+              originalPrice: source.original_price || 0,
+              discountedPrice: source.discount_price || 0,
+              quantity: source.quantity_available || 0,
+              pickupTime: source.expiration_time || "Today",
+              location:
+              source.branch?.branch_name ||
+              source.branch?.store_address ||
+              source.vendor?.business_name || "Unknown",
+              distance: 0,
+              rating: 4.5,
+              category: source.branch?.type ||
+              source.branch?.vendor?.business_name || "Restaurant",
+            };
+          });
+
           setOffers(transformedOffers);
         } else {
           setError("No offers available right now");
@@ -385,41 +437,57 @@ export default function HomePage() {
     };
 
     fetchOffers();
-  }, []);
+  }, [selectedCategory]);
 
   const filteredOffers = offers
     .filter((offer) => {
-      const matchesCategory = selectedCategory === "All" || offer.category === selectedCategory;
       const matchesSearch =
         !searchQuery ||
         offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
+      return matchesSearch;
     })
+    
     .sort((a, b) => {
       switch (sortOption) {
-        case "highest_discount": return b.discount - a.discount;
-        case "nearest":          return (a.distance || 0) - (b.distance || 0);
-        case "rating":           return (b.rating || 0) - (a.rating || 0);
-        default:                 return 0;
+        case "highest_discount":
+          return b.discount - a.discount;
+        case "nearest":
+          return (a.distance || 0) - (b.distance || 0);
+        case "rating":
+          return (b.rating || 0) - (a.rating || 0);
+        default:
+          return 0;
       }
     });
 
-  const currentSortLabel = sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
+  const currentSortLabel =
+    sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
 
   return (
     <div className="homepage-container">
       {/* ── Hero ── */}
       <section className="hero-section">
         <div className="hero-bg-shapes">
-          <div className="shape shape-1" /><div className="shape shape-2" /><div className="shape shape-3" />
+          <div className="shape shape-1" />
+          <div className="shape shape-2" />
+          <div className="shape shape-3" />
         </div>
         <div className="hero-content">
           <div className="hero-badge">🌱 Zero Waste, Maximum Taste</div>
-          <h1 className="hero-title">Save Food,<br /><span className="hero-title-accent">Save Money</span></h1>
-          <p className="hero-subtitle">Discover amazing food deals from local restaurants and reduce food waste</p>
+          <h1 className="hero-title">
+            Save Food,
+            <br />
+            <span className="hero-title-accent">Save Money</span>
+          </h1>
+          <p className="hero-subtitle">
+            Discover amazing food deals from local restaurants and reduce food
+            waste
+          </p>
           <div className="search-wrapper">
-            <div className="search-icon-left"><Search size={20} /></div>
+            <div className="search-icon-left">
+              <Search size={20} />
+            </div>
             <input
               type="text"
               placeholder="Search food, restaurants, or deals..."
@@ -460,11 +528,17 @@ export default function HomePage() {
           <div className="filter-right">
             <div className="sort-text">Sort by:</div>
             <div className="dropdown-container">
-              <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
+              <button
+                className="dropdown-button"
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              >
                 <span>{currentSortLabel}</span>
                 <ChevronDown
                   size={16}
-                  style={{ transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s" }}
+                  style={{
+                    transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)",
+                    transition: "0.2s",
+                  }}
                 />
               </button>
               {isDropdownOpen && (
@@ -473,7 +547,10 @@ export default function HomePage() {
                     <div
                       key={opt.value}
                       className={`dropdown-item ${sortOption === opt.value ? "dropdown-item-active" : ""}`}
-                      onClick={() => { setSortOption(opt.value); setIsDropdownOpen(false); }}
+                      onClick={() => {
+                        setSortOption(opt.value);
+                        setIsDropdownOpen(false);
+                      }}
                     >
                       {opt.label}
                     </div>
@@ -489,9 +566,13 @@ export default function HomePage() {
       <section className="offers-section">
         <div className="offers-header">
           <h2 className="offers-title">
-            {selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}
+            {selectedCategory === "All"
+              ? "All Offers"
+              : selectedCategory + " Offers"}
           </h2>
-          <span className="offers-count">{filteredOffers.length} available</span>
+          <span className="offers-count">
+            {filteredOffers.length} available
+          </span>
         </div>
 
         {loading && (
@@ -506,7 +587,12 @@ export default function HomePage() {
             <AlertCircle size={48} className="error-icon" />
             <h3 className="error-title">Error Loading Offers</h3>
             <p className="error-message">{error}</p>
-            <button className="retry-button" onClick={() => window.location.reload()}>Retry</button>
+            <button
+              className="retry-button"
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </button>
           </div>
         )}
 
@@ -515,7 +601,9 @@ export default function HomePage() {
             <Package size={64} className="empty-icon" />
             <h3 className="empty-title">No Offers Found</h3>
             <p className="empty-message">
-              {searchQuery ? "Try a different search term." : "No offers available right now."}
+              {searchQuery
+                ? "Try a different search term."
+                : "No offers available right now."}
             </p>
           </div>
         )}
@@ -530,43 +618,71 @@ export default function HomePage() {
                 style={{ cursor: "pointer" }}
               >
                 <div className="offer-image-container">
-                  {offer.image
-                    ? <img src={offer.image} alt={offer.title} className="offer-image" />
-                    : <div className="offer-image-placeholder">🍽️</div>}
-                  {offer.discount > 0 && <div className="discount-badge">-{offer.discount}%</div>}
+                  {offer.image ? (
+                    <img
+                      src={offer.image}
+                      alt={offer.title}
+                      className="offer-image"
+                    />
+                  ) : (
+                    <div className="offer-image-placeholder">🍽️</div>
+                  )}
+                  {offer.discount > 0 && (
+                    <div className="discount-badge">-{offer.discount}%</div>
+                  )}
                   <div className="image-bottom-bar">
                     <CountdownTimer pickupTime={offer.pickupTime} />
                     {offer.quantity > 0 && (
                       <div className="quantity-badge">
-                        <Package size={12} /><span>{offer.quantity} left</span>
+                        <Package size={12} />
+                        <span>{offer.quantity} left</span>
                       </div>
                     )}
                   </div>
                 </div>
                 <div className="offer-content">
-                  <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
+                  <h3 className="offer-title">
+                    {offer.title || "Untitled Offer"}
+                  </h3>
                   {offer.location && (
                     <div className="offer-location">
-                      <MapPin size={13} /><span>{offer.location}</span>
+                      <MapPin size={13} />
+                      <span>{offer.location}</span>
                       {offer.distance > 0 && (
-                        <span className="offer-distance">· {offer.distance} km</span>
+                        <span className="offer-distance">
+                          · {offer.distance} km
+                        </span>
                       )}
                     </div>
                   )}
-                  <p className="offer-description">{offer.description || "No description available"}</p>
+                  <p className="offer-description">
+                    {offer.description || "No description available"}
+                  </p>
                   <div className="offer-footer">
                     <div className="price-container">
-                      <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
+                      <span className="discounted-price">
+                        EGP {offer.discountedPrice || offer.price}
+                      </span>
                       {offer.originalPrice > 0 && (
-                        <span className="original-price">EGP {offer.originalPrice}</span>
+                        <span className="original-price">
+                          EGP {offer.originalPrice}
+                        </span>
                       )}
                     </div>
                     <button
-                      onClick={(e) => { e.stopPropagation(); addToCart(offer, 1); }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        addToCart(offer, 1);
+                      }}
                       style={{
-                        background: "#10b981", color: "white", border: "none",
-                        borderRadius: "8px", padding: "0.4rem 0.8rem",
-                        fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
+                        background: "#10b981",
+                        color: "white",
+                        border: "none",
+                        borderRadius: "8px",
+                        padding: "0.4rem 0.8rem",
+                        fontSize: "0.8rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
                       }}
                     >
                       + Add
