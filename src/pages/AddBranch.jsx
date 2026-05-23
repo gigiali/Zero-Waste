@@ -41,6 +41,7 @@ export default function AddBranch() {
   const [showSuggestions, setShowSuggestions]         = useState(false);
   const [isSubmitting, setIsSubmitting]               = useState(false);
   const [submitMessage, setSubmitMessage]             = useState("");
+  const [customType, setCustomType]                   = useState("");
 
   const searchTimeoutRef = useRef(null);
   const mapRef           = useRef(null);
@@ -56,6 +57,7 @@ export default function AddBranch() {
     const e = {};
     if (!branch.branchName.trim())  e.branchName   = "Branch name is required";
     if (!branch.branchType)         e.branchType   = "Branch type is required";
+    if (branch.branchType === "others" && !customType.trim()) e.branchType = "Please specify your branch type";
     if (!branch.fullAddress.trim()) e.fullAddress  = "Branch address is required";
     if (!branch.locationPin.trim()) e.locationPin  = "Location selection is required";
     if (!branch.workingFrom || !branch.workingTo) e.workingHours = "Working hours are required";
@@ -82,7 +84,7 @@ export default function AddBranch() {
 
       const body = new FormData();
       body.append("branch_name",   branch.branchName);
-      body.append("branch_type",   branch.branchType);
+      body.append("branch_type",   branch.branchType === "others" ? customType : branch.branchType);
       body.append("store_address", branch.fullAddress);
       body.append("location_pin",  branch.locationPin);
       body.append("opening_hours", `${branch.workingFrom} - ${branch.workingTo}`);
@@ -116,7 +118,6 @@ export default function AddBranch() {
     }
   };
 
-  // ── AUTOCOMPLETE ────────────────────────────────────────────────
   const handleSearchChange = (e) => {
     const val = e.target.value;
     setSearchQuery(val);
@@ -186,7 +187,6 @@ export default function AddBranch() {
     setSelectedCoordinates({ lat, long: lon });
   };
 
-  // ── MAP INIT ─────────────────────────────────────────────────────
   useEffect(() => {
     if (showMap && mapRef.current && !mapInstanceRef.current) {
       const map = L.map(mapRef.current, {
@@ -308,11 +308,22 @@ export default function AddBranch() {
                   <option value="">Select branch type</option>
                   <option value="restaurant">Restaurant</option>
                   <option value="supermarket">Supermarket</option>
-                  <option value="coffee-shop">Coffee Shop</option>
                   <option value="hotel">Hotel</option>
                   <option value="bakery">Bakery</option>
+                  <option value="cafe">Cafe</option>
                   <option value="dessert-shop">Dessert Shop</option>
+                  <option value="others">Others</option>
                 </select>
+                {branch.branchType === "others" && (
+                  <input
+                    type="text"
+                    placeholder="Please specify your branch type"
+                    className="form-input"
+                    style={{ marginTop: "8px" }}
+                    value={customType}
+                    onChange={e => setCustomType(e.target.value)}
+                  />
+                )}
                 {errors.branchType && <span className="error-text">{errors.branchType}</span>}
               </div>
 
@@ -466,7 +477,6 @@ export default function AddBranch() {
               </div>
             )}
 
-            {/* Action buttons */}
             <div className="form-actions">
               <button
                 type="button"
@@ -485,7 +495,6 @@ export default function AddBranch() {
             </div>
           </form>
 
-          {/* ── MAP MODAL ──────────────────────────────────────────── */}
           {showMap && (
             <div className="map-modal">
               <div className="map-modal-content">

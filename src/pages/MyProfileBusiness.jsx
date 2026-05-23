@@ -5,9 +5,9 @@ import { useNavigate } from "react-router-dom";
 import {
   Edit2,
   LogOut,
+  Trash2,
   ChevronRight,
   KeyRound,
-  Bell,
   Building2,
   Hash,
   Image,
@@ -277,8 +277,11 @@ function NotificationSettings({ onCancel }) {
     setMessage("");
 
     try {
-      const token = localStorage.getItem("auth_token");
-
+      
+      const token = localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
       const controller = new AbortController();
 
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -603,6 +606,8 @@ export default function MyProfileBusiness() {
 
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
   const [showPendingModal, setShowPendingModal] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
@@ -864,6 +869,24 @@ export default function MyProfileBusiness() {
     setErrors({});
 
     setIsEditing(false);
+  };
+  const handleDeleteAccount = async () => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      const response = await fetch("/api/vendor/delete-account", {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        logout();
+        navigate("/home");
+      }
+    } catch (err) {
+      console.error("Delete account error:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -1270,20 +1293,18 @@ export default function MyProfileBusiness() {
               </button>
 
               <button
-                className="setting-row"
-                onClick={() => setView("notifications")}
-              >
-                <Bell size={18} />
-                <span className="setting-label">Notification Settings</span>
-                <ChevronRight size={18} className="chevron" />
-              </button>
-
-              <button
                 className="setting-row setting-red"
                 onClick={() => setShowLogoutConfirm(true)}
               >
                 <LogOut size={18} />
                 <span className="setting-label">Log Out</span>
+              </button>
+              <button
+                className="setting-row setting-red"
+                onClick={() => setShowDeleteConfirm(true)}
+              >
+                <Trash2 size={18} />
+                <span className="setting-label">Delete Account</span>
               </button>
             </div>
           </div>
@@ -1291,6 +1312,65 @@ export default function MyProfileBusiness() {
       </div>
 
       {/* Logout confirmation */}
+      {showDeleteConfirm && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.45)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            style={{
+              background: "white",
+              borderRadius: "14px",
+              padding: "2rem",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 20px 60px rgba(0,0,0,0.2)",
+              textAlign: "center",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🗑️</div>
+            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.2rem", color: "#1f2937" }}>
+              Delete Account?
+            </h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
+              This action is permanent and cannot be undone. All your data will be deleted.
+            </p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                style={{
+                  flex: 1, padding: "0.65rem",
+                  border: "1.5px solid #e5e7eb", borderRadius: "8px",
+                  background: "white", color: "#374151",
+                  fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                style={{
+                  flex: 1, padding: "0.65rem",
+                  border: "none", borderRadius: "8px",
+                  background: "#ef4444", color: "white",
+                  fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                Yes, Delete My Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showLogoutConfirm && (
         <div

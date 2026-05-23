@@ -60,9 +60,9 @@ export default function VerifyCode() {
         method: "POST",
         headers: { "Content-Type": "application/json", Accept: "application/json" },
         body: JSON.stringify({
-          code: verificationCode,
-          ...(email ? { email } : { phone }),
-        }),
+  reset_code: verificationCode,
+  email: email,
+}),
       });
       const data = await response.json();
 

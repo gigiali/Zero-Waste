@@ -7,9 +7,9 @@ import {
   MapPin,
   Edit2,
   LogOut,
+  Trash2,
   ChevronRight,
   KeyRound,
-  Bell,
   Package,
   CalendarDays,
   CreditCard,
@@ -62,7 +62,10 @@ function ChangePassword({ onDone }) {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
@@ -367,6 +370,7 @@ export default function UserProfile() {
   const [activeSection, setActiveSection] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [orders, setOrders] = useState([]);
@@ -508,6 +512,27 @@ export default function UserProfile() {
     setEditData({ ...userData });
     setErrors({});
     setIsEditing(false);
+  };
+  const handleDeleteAccount = async () => {
+    try {
+      const token = localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      const response = await fetch("/api/customer/delete-profile",{
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (response.ok) {
+        logout();
+        navigate("/home");
+      }
+    } catch (err) {
+      console.error("Delete account error:", err);
+    }
   };
 
   const handleLogout = () => {
@@ -670,19 +695,18 @@ export default function UserProfile() {
                   <ChevronRight size={18} className="chevron" />
                 </button>
                 <button
-                  className="setting-row"
-                  onClick={() => setActivePanel("notifications")}
-                >
-                  <Bell size={18} />
-                  <span className="setting-label">Notification Settings</span>
-                  <ChevronRight size={18} className="chevron" />
-                </button>
-                <button
                   className="setting-row setting-red"
                   onClick={() => setShowLogoutConfirm(true)}
                 >
                   <LogOut size={18} />
                   <span className="setting-label">Log Out</span>
+                </button>
+                <button
+                  className="setting-row setting-red"
+                  onClick={() => setShowDeleteConfirm(true)}
+                >
+                  <Trash2 size={18} />
+                  <span className="setting-label">Delete Account</span>
                 </button>
               </div>
             </div>
@@ -699,13 +723,36 @@ export default function UserProfile() {
         </SettingsDrawer>
       )}
 
-      {activePanel === "notifications" && (
-        <SettingsDrawer
-          title="Notification Settings"
-          onClose={() => setActivePanel(null)}
+      {showDeleteConfirm && (
+        <div
+          className="profile-drawer-overlay"
+          onClick={() => setShowDeleteConfirm(false)}
         >
-          <NotificationSettings onDone={() => setActivePanel(null)} />
-        </SettingsDrawer>
+          <div
+            className="logout-confirm-box"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="profile-logout-icon">
+              <Trash2 size={28} />
+            </div>
+            <h3>Delete Account?</h3>
+            <p>This action is permanent and cannot be undone. All your data will be deleted.</p>
+            <div className="profile-confirm-actions">
+              <button
+                className="btn-cancel"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-save profile-danger-btn"
+                onClick={handleDeleteAccount}
+              >
+                Yes, Delete My Account
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {showLogoutConfirm && (
