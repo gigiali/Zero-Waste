@@ -63,94 +63,42 @@ function ChangePassword({ onDone }) {
     setIsLoading(true);
     try {
       const token = localStorage.getItem("auth_token") ||
-      localStorage.getItem("token") ||
-      sessionStorage.getItem("auth_token") ||
-      sessionStorage.getItem("token");
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
 
-      const endpoints = [
-        "/api/profile/change-password",
-        "/profile/change-password",
-        "/api/change-password",
-        "/change-password",
-      ];
-
-      let lastData = null;
-      let response = null;
-      let data = null;
-
-      for (const endpoint of endpoints) {
-        try {
-          response = await fetch(endpoint, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({
-              current_password: form.current,
-              new_password: form.next,
-              new_password_confirmation: form.confirm,
-            }),
-            signal: controller.signal,
-          });
-
-          clearTimeout(timeoutId);
-
-          try {
-            data = await response.json();
-          } catch {
-            const text = await response.text();
-            data = {
-              message: text || `${response.status} ${response.statusText}`,
-            };
-          }
-
-          if (response.ok) {
-            alert("Password changed successfully!");
-            onDone();
-            return;
-          }
-
-          lastData = data;
-        } catch (requestError) {
-          console.warn(
-            `Password change request failed for ${endpoint}:`,
-            requestError,
-          );
-          lastData = null;
-          continue;
-        }
-      }
-
-      if (lastData) {
-        if (lastData.errors) {
-          const newErrors = {};
-          Object.keys(lastData.errors).forEach((f) => {
-            newErrors[f] = Array.isArray(lastData.errors[f])
-              ? lastData.errors[f][0]
-              : lastData.errors[f];
-          });
-          setErrors(newErrors);
-        } else {
-          setErrors({
-            general:
-              lastData.message ||
-              "Failed to change password. Please try again.",
-          });
-        }
-      } else {
-        setErrors({ general: "Network error. Please check your connection." });
-      }
-    } catch (error) {
-      setErrors({
-        general:
-          error.name === "AbortError"
-            ? "Request timed out. Please try again."
-            : "Network error. Please check your connection.",
+      const response = await fetch("/api/profile/change-password", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+       body: JSON.stringify({
+          current_password: form.current,
+          password: form.next,
+          password_confirmation: form.confirm,
+        }),
       });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setErrors({ general: "✅ Password changed successfully!" });
+        setTimeout(() => onDone(), 1500);
+      } else if (data.errors) {
+        const newErrors = {};
+        Object.keys(data.errors).forEach((f) => {
+          newErrors[f] = Array.isArray(data.errors[f])
+            ? data.errors[f][0]
+            : data.errors[f];
+        });
+        setErrors(newErrors);
+      } else {
+        setErrors({ general: data.message || "Failed to change password. Please try again." });
+      }
+    } catch (err) {
+      setErrors({ general: "Network error. Please check your connection." });
     } finally {
       setIsLoading(false);
     }
@@ -179,7 +127,9 @@ function ChangePassword({ onDone }) {
         </label>
       ))}
       {errors.general && (
-        <small className="profile-error">{errors.general}</small>
+        <small className={errors.general.includes("✅") ? "profile-success" : "profile-error"}>
+          {errors.general}
+        </small>
       )}
       <button
         type="button"
@@ -213,7 +163,10 @@ function NotificationSettings({ onDone }) {
     setIsLoading(true);
     setMessage("");
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
       const response = await fetch("/api/notification-preferences", {
         method: "POST",
         headers: {
