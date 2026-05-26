@@ -1,17 +1,19 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Navigation from "../Components/Navigation";
 import "./TermsOfService.css";
 
 function TermsOfService() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState("introduction");
 
   const sections = [
-    { id: "introduction", title: "Introduction", icon: "📜" },
-    { id: "user-responsibilities", title: "User Responsibilities", icon: "👤" },
-    { id: "prohibited-activities", title: "Prohibited Activities", icon: "🚫" },
-    { id: "account-security", title: "Account Security", icon: "🔐" },
-    { id: "liability", title: "Limitation of Liability", icon: "⚠️" },
-    { id: "changes", title: "Changes to Terms", icon: "🔄" },
+    { id: "introduction", title: t("terms.sections.introduction"), icon: "📜" },
+    { id: "user-responsibilities", title: t("terms.sections.userResponsibilities"), icon: "👤" },
+    { id: "prohibited-activities", title: t("terms.sections.prohibitedActivities"), icon: "🚫" },
+    { id: "account-security", title: t("terms.sections.accountSecurity"), icon: "🔐" },
+    { id: "liability", title: t("terms.sections.limitationOfLiability"), icon: "⚠️" },
+    { id: "changes", title: t("terms.sections.changesToTerms"), icon: "🔄" },
   ];
 
   const scrollToSection = (sectionId) => {
@@ -26,8 +28,8 @@ function TermsOfService() {
       <div className="terms-page">
         <div className="terms-header">
           <div className="header-content">
-            <h1>Terms of Service</h1>
-            <p>Our commitment to fair and transparent service terms.</p>
+            <h1>{t("terms.title")}</h1>
+            <p>{t("terms.subtitle")}</p>
           </div>
           <div className="header-decoration"></div>
         </div>
@@ -36,7 +38,7 @@ function TermsOfService() {
           {/* ── TABLE OF CONTENTS ─────────────────────────────────── */}
           <aside className="table-of-contents">
             <div className="toc-header">
-              <h3>📑 Contents</h3>
+              <h3>{t("terms.contentsHeader")}</h3>
             </div>
             <nav className="toc-nav">
               {sections.map((section) => (
@@ -51,7 +53,7 @@ function TermsOfService() {
               ))}
             </nav>
             <div className="toc-footer">
-              <p>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <p>{t("terms.lastUpdated")} {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
             </div>
           </aside>
 
@@ -60,51 +62,44 @@ function TermsOfService() {
             {/* Introduction */}
             <section id="introduction" className="terms-section">
               <h2>
-                <span className="section-icon">📜</span> Introduction
+                <span className="section-icon">📜</span> {t("terms.introduction.title")}
               </h2>
-              <p>
-                These Terms of Service ("Terms") govern your use of the Zero Waste platform and all related 
-                services, websites, and applications (collectively, the "Platform"). By accessing and using our Platform, 
-                you agree to be bound by these Terms.
-              </p>
+              <p>{t("terms.introduction.description")}</p>
               <div className="highlight-box important">
-                <p>⚖️ If you do not agree with any part of these Terms, please do not use our Platform.</p>
+                <p>{t("terms.introduction.warning")}</p>
               </div>
               <div className="info-section">
-                <h4>🎯 Our Mission</h4>
-                <p>
-                  Zero Waste connects businesses with customers to reduce food waste and promote sustainability. 
-                  We're committed to creating a transparent and trustworthy marketplace.
-                </p>
+                <h4>{t("terms.introduction.missionTitle")}</h4>
+                <p>{t("terms.introduction.missionText")}</p>
               </div>
             </section>
 
             {/* User Responsibilities */}
             <section id="user-responsibilities" className="terms-section">
               <h2>
-                <span className="section-icon">👤</span> User Responsibilities
+                <span className="section-icon">👤</span> {t("terms.userResponsibilities.title")}
               </h2>
-              <p>As a user of our Platform, you agree to:</p>
+              <p>{t("terms.userResponsibilities.description")}</p>
               <div className="responsibility-grid">
                 <div className="responsibility-item">
                   <div className="resp-icon">✍️</div>
-                  <h4>Accurate Information</h4>
-                  <p>Provide accurate information when creating an account</p>
+                  <h4>{t("terms.userResponsibilities.accurateInformation.title")}</h4>
+                  <p>{t("terms.userResponsibilities.accurateInformation.text")}</p>
                 </div>
                 <div className="responsibility-item">
                   <div className="resp-icon">🎯</div>
-                  <h4>Legitimate Use</h4>
-                  <p>Use platform for legitimate purposes only</p>
+                  <h4>{t("terms.userResponsibilities.legitimateUse.title")}</h4>
+                  <p>{t("terms.userResponsibilities.legitimateUse.text")}</p>
                 </div>
                 <div className="responsibility-item">
                   <div className="resp-icon">🤝</div>
-                  <h4>Respect Others</h4>
-                  <p>Respect rights of other users and businesses</p>
+                  <h4>{t("terms.userResponsibilities.respectOthers.title")}</h4>
+                  <p>{t("terms.userResponsibilities.respectOthers.text")}</p>
                 </div>
                 <div className="responsibility-item">
                   <div className="resp-icon">🔑</div>
-                  <h4>Secure Password</h4>
-                  <p>Keep account credentials secure and confidential</p>
+                  <h4>{t("terms.userResponsibilities.securePassword.title")}</h4>
+                  <p>{t("terms.userResponsibilities.securePassword.text")}</p>
                 </div>
               </div>
             </section>
@@ -112,50 +107,50 @@ function TermsOfService() {
             {/* Prohibited Activities */}
             <section id="prohibited-activities" className="terms-section">
               <h2>
-                <span className="section-icon">🚫</span> Prohibited Activities
+                <span className="section-icon">🚫</span> {t("terms.prohibitedActivities.title")}
               </h2>
-              <p>You may not engage in the following activities on our Platform:</p>
+              <p>{t("terms.prohibitedActivities.description")}</p>
               <div className="prohibited-list">
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>False Information</h4>
-                    <p>Posting false, misleading, or deceptive information</p>
+                    <h4>{t("terms.prohibitedActivities.falseInformation.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.falseInformation.text")}</p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>Illegal Activities</h4>
-                    <p>Violating applicable laws, regulations, or rights</p>
+                    <h4>{t("terms.prohibitedActivities.illegalActivities.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.illegalActivities.text")}</p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>Platform Interference</h4>
-                    <p>Interfering with or disrupting platform operations</p>
+                    <h4>{t("terms.prohibitedActivities.platformInterference.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.platformInterference.text")}</p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>Harmful Use</h4>
-                    <p>Using platform for harmful, threatening, or abusive purposes</p>
+                    <h4>{t("terms.prohibitedActivities.harmfulUse.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.harmfulUse.text")}</p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>Fraud</h4>
-                    <p>Engaging in fraudulent, suspicious, or unethical activities</p>
+                    <h4>{t("terms.prohibitedActivities.fraud.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.fraud.text")}</p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>IP Violations</h4>
-                    <p>Infringing upon intellectual property rights</p>
+                    <h4>{t("terms.prohibitedActivities.ipViolations.title")}</h4>
+                    <p>{t("terms.prohibitedActivities.ipViolations.text")}</p>
                   </div>
                 </div>
               </div>
@@ -164,107 +159,92 @@ function TermsOfService() {
             {/* Account Security */}
             <section id="account-security" className="terms-section">
               <h2>
-                <span className="section-icon">🔐</span> Account Security
+                <span className="section-icon">🔐</span> {t("terms.accountSecurity.title")}
               </h2>
-              <p>
-                You are solely responsible for maintaining the confidentiality of your account credentials and 
-                for all activities that occur under your account, whether authorized or not.
-              </p>
+              <p>{t("terms.accountSecurity.description")}</p>
               <div className="security-guidelines">
                 <div className="guideline">
-                  <h4>🔔 Immediate Notification</h4>
-                  <p>Notify us immediately of any unauthorized access or suspicious activity</p>
+                  <h4>{t("terms.accountSecurity.immediateNotification.title")}</h4>
+                  <p>{t("terms.accountSecurity.immediateNotification.text")}</p>
                 </div>
                 <div className="guideline">
-                  <h4>💻 Account Protection</h4>
-                  <p>Use strong, unique passwords and enable two-factor authentication if available</p>
+                  <h4>{t("terms.accountSecurity.accountProtection.title")}</h4>
+                  <p>{t("terms.accountSecurity.accountProtection.text")}</p>
                 </div>
                 <div className="guideline">
-                  <h4>📱 Device Security</h4>
-                  <p>Keep your devices and software updated with the latest security patches</p>
+                  <h4>{t("terms.accountSecurity.deviceSecurity.title")}</h4>
+                  <p>{t("terms.accountSecurity.deviceSecurity.text")}</p>
                 </div>
                 <div className="guideline">
-                  <h4>🚫 Unauthorized Access</h4>
-                  <p>Never share your account with others or allow unauthorized access</p>
+                  <h4>{t("terms.accountSecurity.unauthorizedAccess.title")}</h4>
+                  <p>{t("terms.accountSecurity.unauthorizedAccess.text")}</p>
                 </div>
               </div>
               <div className="highlight-box warning">
-                <p>⚠️ We are not liable for unauthorized access if you fail to maintain account security.</p>
+                <p>{t("terms.accountSecurity.warning")}</p>
               </div>
             </section>
 
             {/* Limitation of Liability */}
             <section id="liability" className="terms-section">
               <h2>
-                <span className="section-icon">⚠️</span> Limitation of Liability
+                <span className="section-icon">⚠️</span> {t("terms.limitationOfLiability.title")}
               </h2>
-              <p>
-                To the maximum extent permitted by applicable law, Zero Waste and its officers, directors, employees, 
-                and agents shall not be liable for:
-              </p>
+              <p>{t("terms.limitationOfLiability.description")}</p>
               <div className="liability-list">
                 <div className="liability-item">
                   <span className="icon">•</span>
-                  <p>Indirect, incidental, or consequential damages</p>
+                  <p>{t("terms.limitationOfLiability.indirectDamages")}</p>
                 </div>
                 <div className="liability-item">
                   <span className="icon">•</span>
-                  <p>Loss of profits, data, or revenue</p>
+                  <p>{t("terms.limitationOfLiability.lossOfProfits")}</p>
                 </div>
                 <div className="liability-item">
                   <span className="icon">•</span>
-                  <p>Business interruption or service outages</p>
+                  <p>{t("terms.limitationOfLiability.businessInterruption")}</p>
                 </div>
                 <div className="liability-item">
                   <span className="icon">•</span>
-                  <p>Third-party actions or content</p>
+                  <p>{t("terms.limitationOfLiability.thirdPartyActions")}</p>
                 </div>
               </div>
               <div className="liability-cap">
-                <h4>💰 Liability Cap</h4>
-                <p>
-                  Our total liability shall not exceed the amount you paid to Zero Waste in the past 12 months, 
-                  or $100, whichever is greater.
-                </p>
+                <h4>{t("terms.limitationOfLiability.capTitle")}</h4>
+                <p>{t("terms.limitationOfLiability.capDescription")}</p>
               </div>
             </section>
 
             {/* Changes to Terms */}
             <section id="changes" className="terms-section">
               <h2>
-                <span className="section-icon">🔄</span> Changes to Terms
+                <span className="section-icon">🔄</span> {t("terms.changesToTerms.title")}
               </h2>
-              <p>
-                We reserve the right to modify these Terms at any time. Changes will be effective immediately upon 
-                posting to the Platform.
-              </p>
+              <p>{t("terms.changesToTerms.description")}</p>
               <div className="changes-notice">
-                <h4>📢 Your Acknowledgment</h4>
-                <p>
-                  Your continued use of the Platform following the posting of revised Terms means that you accept 
-                  and agree to the changes.
-                </p>
+                <h4>{t("terms.changesToTerms.acknowledgmentTitle")}</h4>
+                <p>{t("terms.changesToTerms.acknowledgmentText")}</p>
               </div>
               <div className="timeline">
                 <div className="timeline-item">
                   <div className="timeline-marker"></div>
                   <div>
-                    <h4>Notification</h4>
-                    <p>We will notify you of significant changes via email</p>
+                    <h4>{t("terms.changesToTerms.notificationTitle")}</h4>
+                    <p>{t("terms.changesToTerms.notificationText")}</p>
                   </div>
                 </div>
                 <div className="timeline-item">
                   <div className="timeline-marker"></div>
                   <div>
-                    <h4>Review Period</h4>
-                    <p>You have 30 days to review changes before they become binding</p>
+                    <h4>{t("terms.changesToTerms.reviewTitle")}</h4>
+                    <p>{t("terms.changesToTerms.reviewText")}</p>
                   </div>
                 </div>
                 <div className="timeline-item">
                   <div className="timeline-marker"></div>
                   <div>
-                    <h4>Acceptance</h4>
-                    <p>Continued use after 30 days constitutes acceptance of new terms</p>
+                    <h4>{t("terms.changesToTerms.acceptanceTitle")}</h4>
+                    <p>{t("terms.changesToTerms.acceptanceText")}</p>
                   </div>
                 </div>
               </div>
@@ -272,36 +252,36 @@ function TermsOfService() {
 
             {/* Additional Terms */}
             <section className="additional-section">
-              <h2>Important Additional Terms</h2>
+              <h2>{t("terms.additionalTerms.title")}</h2>
               
               <div className="additional-grid">
                 <div className="additional-item">
-                  <h4>📋 Intellectual Property</h4>
-                  <p>All content on our Platform is our property or licensed content. You may not reproduce without permission.</p>
+                  <h4>{t("terms.additionalTerms.intellectualProperty.title")}</h4>
+                  <p>{t("terms.additionalTerms.intellectualProperty.text")}</p>
                 </div>
                 <div className="additional-item">
-                  <h4>🌍 Governing Law</h4>
-                  <p>These Terms are governed by applicable laws. Any disputes will be resolved in appropriate courts.</p>
+                  <h4>{t("terms.additionalTerms.governingLaw.title")}</h4>
+                  <p>{t("terms.additionalTerms.governingLaw.text")}</p>
                 </div>
                 <div className="additional-item">
-                  <h4>🤝 Third-Party Services</h4>
-                  <p>We are not responsible for third-party services, links, or content on our Platform.</p>
+                  <h4>{t("terms.additionalTerms.thirdPartyServices.title")}</h4>
+                  <p>{t("terms.additionalTerms.thirdPartyServices.text")}</p>
                 </div>
                 <div className="additional-item">
-                  <h4>📞 Contact & Support</h4>
-                  <p>Have questions? Contact our support team at support@zerowaste.com</p>
+                  <h4>{t("terms.additionalTerms.contactSupport.title")}</h4>
+                  <p>{t("terms.additionalTerms.contactSupport.text")}</p>
                 </div>
               </div>
             </section>
 
             {/* Contact Section */}
             <section className="contact-section">
-              <h2>Questions About These Terms?</h2>
-              <p>If you have any questions or concerns about our Terms of Service, please reach out:</p>
+              <h2>{t("terms.contact.title")}</h2>
+              <p>{t("terms.contact.description")}</p>
               <div className="contact-info">
-                <p>📧 legal@zerowaste.com</p>
-                <p>💬 Support Chat: Available 24/7</p>
-                <p>📞 Phone Support: Coming Soon</p>
+                <p>{t("terms.contact.email")}</p>
+                <p>{t("terms.contact.chat")}</p>
+                <p>{t("terms.contact.phone")}</p>
               </div>
             </section>
           </main>

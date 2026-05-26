@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   Bell, User, Globe, GitBranch, Package, ShoppingCart,
@@ -28,6 +29,7 @@ const EMPTY_FORM = {
 };
 
 export default function Business() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
 
@@ -219,7 +221,7 @@ export default function Business() {
 
   const handleSave = async () => {
     if (!form.title.trim() || !form.description.trim()) {
-      setSubmitError("Please fill in title and description");
+      setSubmitError(t("businessDashboard.errors.fillTitleDescription"));
       return;
     }
 
@@ -229,8 +231,7 @@ export default function Business() {
     try {
       const token = localStorage.getItem("auth_token");
       if (!token) {
-        setSubmitError("Please login to continue");
-        setIsSubmitting(false);
+          setSubmitError(t("businessDashboard.errors.loginToContinue"));
         return;
       }
 
@@ -247,7 +248,7 @@ export default function Business() {
         // Find branch ID from selected branch (only for new offers)
         const branchId = branches.find(b => b.name === selectedBranch)?.id;
         if (!branchId) {
-          setSubmitError("Please select a valid branch");
+          setSubmitError(t("businessDashboard.errors.selectValidBranch"));
           setIsSubmitting(false);
           return;
         }
@@ -327,7 +328,7 @@ export default function Business() {
       }
     } catch (error) {
       console.error("Submit error:", error);
-      setSubmitError("Network error. Please check your connection and try again.");
+      setSubmitError(t("businessDashboard.errors.network"));
     } finally {
       setIsSubmitting(false);
     }
@@ -341,7 +342,7 @@ export default function Business() {
     try {
       const token = localStorage.getItem("auth_token");
       if (!token) {
-        alert("Please login to continue");
+        alert(t("businessDashboard.errors.loginToContinue"));
         setUpdatingOrderId(null);
         return;
       }
@@ -368,14 +369,14 @@ export default function Business() {
         if (response.status === 422 && data.errors) {
           alert(Object.values(data.errors).flat().join("\n"));
         } else if (response.status === 401) {
-          alert("Please login to continue");
+          alert(t("businessDashboard.errors.loginToContinue"));
         } else {
-          alert(data.message || "Failed to update order status.");
+          alert(data.message || t("businessDashboard.errors.failedUpdateOrderStatus"));
         }
       }
     } catch (error) {
       console.error("Status update error:", error);
-      alert("Network error. Please check your connection.");
+      alert(t("businessDashboard.errors.network"));
     } finally {
       setUpdatingOrderId(null);
     }
@@ -386,42 +387,42 @@ export default function Business() {
     {
       id: "notifications",
       icon: Bell,
-      label: "Notifications",
+      label: t("businessDashboard.notifications"),
       badge: unreadCount > 0 ? unreadCount : null,
       onClick: () => setShowNotifications(true),
     },
     {
       id: "language",
       icon: Globe,
-      label: language === "en" ? "English" : "العربية",
-      onClick: () => setLanguage(l => l === "en" ? "ar" : "en"),
+      label: language === "en" ? t("businessDashboard.languageEnglish") : t("businessDashboard.languageArabic"),
+      onClick: () => setLanguage((l) => (l === "en" ? "ar" : "en")),
     },
     {
       id: "profile",
       icon: User,
-      label: "My Profile",
+      label: t("businessDashboard.myProfile"),
       onClick: () => navigate("/business/profile"),
     },
     {
       id: "branches",
       icon: GitBranch,
-      label: "Branches",
+      label: t("businessDashboard.branches"),
       expandable: true,
       expanded: showBranches,
-      onToggle: () => setShowBranches(b => !b),
-      children: ["Maadi Branch", "Nasr City Branch"],
+      onToggle: () => setShowBranches((b) => !b),
+      children: [t("businessDashboard.branchLocations.maadi"), t("businessDashboard.branchLocations.nasrCity")],
       hasAddBranch: true,
     },
     {
       id: "offers",
       icon: Package,
-      label: "My Offers",
+      label: t("businessDashboard.myOffers"),
       onClick: () => scrollTo("offers-section"),
     },
     {
       id: "orders",
       icon: ShoppingCart,
-      label: "Orders",
+      label: t("businessDashboard.orders"),
       onClick: () => scrollTo("orders-section"),
     },
   ];
@@ -440,10 +441,10 @@ export default function Business() {
 
         {/* Location selector */}
         <div className="biz-nav-group">
-          <p className="biz-nav-label">LOCATION</p>
-          <select className="biz-select" value={location} onChange={e => handleLocationChange(e.target.value)}>
-            <option>Maadi, Cairo</option>
-            <option>Nasr City, Cairo</option>
+          <p className="biz-nav-label">{t("businessDashboard.locationLabel")}</p>
+          <select className="biz-select" value={location} onChange={(e) => handleLocationChange(e.target.value)}>
+            <option>{t("businessDashboard.location.maadi")}</option>
+            <option>{t("businessDashboard.location.nasrCity")}</option>
           </select>
         </div>
 
@@ -523,17 +524,17 @@ export default function Business() {
         <div
           className="biz-sidebar-profile"
           onClick={() => navigate("/business/profile")}
-          title="Go to My Profile"
+          title={t("businessDashboard.goToProfile")}
         >
           <div className="biz-sidebar-avatar">
             <User size={16} color="white" />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {businessName || "Your Business"}
+              {businessName || t("businessDashboard.yourBusiness")}
             </p>
             <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              Business Account
+              {t("businessDashboard.businessAccount")}
             </p>
           </div>
           <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
@@ -550,21 +551,35 @@ export default function Business() {
 
         <div className="biz-welcome">
           <div>
-            <h1 className="biz-welcome-title">Welcome back, {businessName || "Your Business"}! 👋</h1>
-            <p className="biz-welcome-sub">Manage your surplus food offers and reduce waste</p>
+            <h1 className="biz-welcome-title">
+              {t("businessDashboard.welcomeBack", { business: businessName || t("businessDashboard.yourBusiness") })} 👋
+            </h1>
+            <p className="biz-welcome-sub">{t("businessDashboard.manageOffersSubtitle")}</p>
           </div>
           <div className="biz-impact">
-            <p className="biz-impact-label">Your impact this month</p>
-            <p className="biz-impact-value">142 kg food saved 🌱</p>
+            <p className="biz-impact-label">{t("businessDashboard.impactTitle")}</p>
+            <p className="biz-impact-value">{t("businessDashboard.foodSaved", { count: 142 })}</p>
           </div>
         </div>
 
         <div className="biz-kpis">
           {[
-            { label: "Active Offers",   value: filteredOffers.filter(o => o.status === "Active").length, icon: "📦" },
-            { label: "Total Orders",    value: filteredOrders.length, icon: "🛒" },
-            { label: "Today's Revenue", value: "EGP 287.50",          icon: "💰" },
-          ].map(k => (
+            {
+              label: t("businessDashboard.kpis.activeOffers"),
+              value: filteredOffers.filter((o) => o.status === "Active").length,
+              icon: "📦",
+            },
+            {
+              label: t("businessDashboard.kpis.totalOrders"),
+              value: filteredOrders.length,
+              icon: "🛒",
+            },
+            {
+              label: t("businessDashboard.kpis.todaysRevenue"),
+              value: "EGP 287.50",
+              icon: "💰",
+            },
+          ].map((k) => (
             <div key={k.label} className="biz-kpi-card">
               <p className="biz-kpi-label">{k.label}</p>
               <p className="biz-kpi-value">{k.value}</p>
@@ -575,26 +590,26 @@ export default function Business() {
 
         <div className="biz-charts">
           <div className="biz-chart-card">
-            <h3 className="biz-chart-title">Sales Overview</h3>
+            <h3 className="biz-chart-title">{t("businessDashboard.charts.salesOverview")}</h3>
             <ResponsiveContainer width="100%" height={240}>
               <LineChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip /><Legend />
-                <Line type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name="Sales (EGP)" />
+                <Line type="monotone" dataKey="sales" stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name={t("businessDashboard.charts.salesLabel")} />
               </LineChart>
             </ResponsiveContainer>
           </div>
           <div className="biz-chart-card">
-            <h3 className="biz-chart-title">Orders Overview</h3>
+            <h3 className="biz-chart-title">{t("businessDashboard.charts.ordersOverview")}</h3>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={salesData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                 <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip /><Legend />
-                <Bar dataKey="orders" fill="#3b82f6" name="Orders" />
+                <Bar dataKey="orders" fill="#3b82f6" name={t("businessDashboard.charts.ordersLabel")} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -603,97 +618,101 @@ export default function Business() {
         {/* Offers */}
         <div className="biz-section" id="offers-section">
           <div className="biz-section-header">
-            <h2 className="biz-section-title">My Offers</h2>
+            <h2 className="biz-section-title">{t("businessDashboard.myOffers")}</h2>
             <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
               {filteredOffers.length > 2 && (
-                <button className="biz-link-btn" onClick={() => setShowAllOffers(v => !v)}>
-                  {showAllOffers ? "Show less" : `View all ${filteredOffers.length} →`}
+                <button className="biz-link-btn" onClick={() => setShowAllOffers((v) => !v)}>
+                  {showAllOffers ? t("businessDashboard.showLess") : t("businessDashboard.viewAllOffers", { count: filteredOffers.length })}
                 </button>
               )}
-              <button className="biz-add-btn" onClick={openAdd}>+ Add Offer</button>
+              <button className="biz-add-btn" onClick={openAdd}>{t("businessDashboard.addOffer")}</button>
             </div>
           </div>
 
           {drawerOpen && (
             <div className="biz-drawer">
               <div className="biz-drawer-header">
-                <h3 className="biz-drawer-title">{editingId ? "✏️ Edit Offer" : "✨ New Offer"}</h3>
+                <h3 className="biz-drawer-title">
+                  {editingId ? t("businessDashboard.editOffer") : t("businessDashboard.newOffer")}
+                </h3>
                 <button className="biz-drawer-close" onClick={closeDrawer}>✕</button>
               </div>
-              {form.image && typeof form.image === 'string' && <img src={form.image} alt="preview" className="biz-img-preview" />}
+              {form.image && typeof form.image === 'string' && <img src={form.image} alt={t("businessDashboard.previewImageAlt")} className="biz-img-preview" />}
               {form.image && typeof form.image === 'object' && <div className="biz-img-preview">📷 {form.image.name}</div>}
               <div className="biz-drawer-body">
                 {submitError && <div className="biz-error-box" style={{color: "#ef4444", marginBottom: "12px", padding: "8px", background: "#fef2f2", borderRadius: "6px"}}>{submitError}</div>}
-                <div className="biz-field"><label>Title *</label><input name="title" value={form.title} onChange={handleChange} placeholder="e.g. Fresh Bread Bundle" /></div>
-                <div className="biz-field"><label>Description *</label><textarea name="description" value={form.description} onChange={handleChange} placeholder="Describe your offer..." rows={3} /></div>
-                <div className="biz-field"><label>Offer Photo</label><input type="file" accept="image/*" onChange={handleImage} /></div>
+                <div className="biz-field"><label>{t("businessDashboard.form.title")}</label><input name="title" value={form.title} onChange={handleChange} placeholder={t("businessDashboard.form.titlePlaceholder")} /></div>
+                <div className="biz-field"><label>{t("businessDashboard.form.description")}</label><textarea name="description" value={form.description} onChange={handleChange} placeholder={t("businessDashboard.form.descriptionPlaceholder")} rows={3} /></div>
+                <div className="biz-field"><label>{t("businessDashboard.form.offerPhoto")}</label><input type="file" accept="image/*" onChange={handleImage} /></div>
                 <div className="biz-field-row">
-                  <div className="biz-field"><label>Original Price</label><div className="biz-prefix-input"><span>EGP</span><input name="originalPrice" type="number" step="0.01" value={form.originalPrice} onChange={handleChange} placeholder="0.00" /></div></div>
-                  <div className="biz-field"><label>Discount Price</label><div className="biz-prefix-input"><span>EGP</span><input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} placeholder="0.00" /></div></div>
+                  <div className="biz-field"><label>{t("businessDashboard.form.originalPrice")}</label><div className="biz-prefix-input"><span>{t("businessDashboard.currency")}</span><input name="originalPrice" type="number" step="0.01" value={form.originalPrice} onChange={handleChange} placeholder={t("businessDashboard.form.pricePlaceholder")} /></div></div>
+                  <div className="biz-field"><label>{t("businessDashboard.form.discountPrice")}</label><div className="biz-prefix-input"><span>{t("businessDashboard.currency")}</span><input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} placeholder={t("businessDashboard.form.pricePlaceholder")} /></div></div>
                 </div>
                 <div className="biz-field-row">
-                  <div className="biz-field"><label>Quantity Available</label><input name="quantityAvailable" type="number" value={form.quantityAvailable} onChange={handleChange} placeholder="1" /></div>
-                  {!editingId && <div className="biz-field"><label>Expires In (hours)</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder="2" /></div>}
+                  <div className="biz-field"><label>{t("businessDashboard.form.quantityAvailable")}</label><input name="quantityAvailable" type="number" value={form.quantityAvailable} onChange={handleChange} placeholder={t("businessDashboard.form.quantityPlaceholder")} /></div>
+                  {!editingId && <div className="biz-field"><label>{t("businessDashboard.form.expiresIn")}</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder={t("businessDashboard.form.expiresInPlaceholder")} /></div>}
                 </div>
                 {editingId && (
                   <div className="biz-field-row">
                     <div className="biz-field">
-                      <label>Expiration Date</label>
+                      <label>{t("businessDashboard.form.expirationDate")}</label>
                       <input name="expirationDate" type="datetime-local" value={form.expirationDate} onChange={handleChange} />
                     </div>
                     <div className="biz-field">
-                      <label>Status</label>
+                      <label>{t("businessDashboard.form.status")}</label>
                       <select name="status" value={form.status} onChange={handleChange} className="form-input">
-                        <option value="active">Active</option>
-                        <option value="expired">Expired</option>
-                        <option value="disabled">Disabled</option>
+                        <option value="active">{t("businessDashboard.status.active")}</option>
+                        <option value="expired">{t("businessDashboard.status.expired")}</option>
+                        <option value="disabled">{t("businessDashboard.status.disabled")}</option>
                       </select>
                     </div>
                   </div>
                 )}
               </div>
               <div className="biz-drawer-footer">
-                <button className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>Cancel</button>
-                <button className="biz-btn-save" onClick={handleSave} disabled={isSubmitting}>{isSubmitting ? "Saving..." : (editingId ? "Save Changes" : "Create Offer")}</button>
+                <button className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>{t("businessDashboard.cancel")}</button>
+                <button className="biz-btn-save" onClick={handleSave} disabled={isSubmitting}>{isSubmitting ? t("businessDashboard.saving") : (editingId ? t("businessDashboard.saveChanges") : t("businessDashboard.createOffer"))}</button>
               </div>
             </div>
           )}
 
           <div className="biz-offers-list">
-            {filteredOffers.length === 0 && <p className="biz-empty">No offers for this branch yet. Add your first one!</p>}
-            {(showAllOffers ? filteredOffers : filteredOffers.slice(0, 2)).map(offer => (
+            {filteredOffers.length === 0 && <p className="biz-empty">{t("businessDashboard.noOffers")}</p>}
+            {(showAllOffers ? filteredOffers : filteredOffers.slice(0, 2)).map((offer) => (
               <div key={offer.id} className="biz-offer-row">
                 <div className="biz-offer-info">
                   <p className="biz-offer-title">{offer.title}</p>
                   <p className="biz-offer-desc">{offer.description}</p>
                 </div>
                 <div className="biz-offer-meta">
-                  <span className="biz-price">EGP {offer.discountPrice}</span>
-                  <span className={`biz-badge ${offer.status === "Active" ? "active" : "expired"}`}>{offer.status}</span>
+                  <span className="biz-price">{t("businessDashboard.currency")} {offer.discountPrice}</span>
+                  <span className={`biz-badge ${offer.status === "Active" ? "active" : offer.status === "Expired" ? "expired" : "disabled"}`}>
+                    {t(`businessDashboard.offerStatus.${offer.status.toLowerCase()}`, { status: offer.status })}
+                  </span>
                 </div>
                 <div className="biz-offer-actions">
-                  <button className="biz-icon-btn edit"   onClick={() => openEdit(offer)}        title="Edit">✏️</button>
-                  <button className="biz-icon-btn delete" onClick={() => handleDelete(offer.id)} title="Delete">🗑️</button>
+                  <button className="biz-icon-btn edit" onClick={() => openEdit(offer)} title={t("businessDashboard.edit")}>✏️</button>
+                  <button className="biz-icon-btn delete" onClick={() => handleDelete(offer.id)} title={t("businessDashboard.delete")}>🗑️</button>
                 </div>
               </div>
             ))}
-            {filteredOffers.length > 2 && !showAllOffers && <p className="biz-more">and {filteredOffers.length - 2} more offer(s)…</p>}
+            {filteredOffers.length > 2 && !showAllOffers && <p className="biz-more">{t("businessDashboard.moreOffers", { count: filteredOffers.length - 2 })}</p>}
           </div>
         </div>
 
         {/* Orders */}
         <div className="biz-section" id="orders-section">
           <div className="biz-section-header">
-            <h2 className="biz-section-title">Recent Orders</h2>
+            <h2 className="biz-section-title">{t("businessDashboard.recentOrders")}</h2>
             {filteredOrders.length > 2 && (
-              <button className="biz-link-btn" onClick={() => setShowAllOrders(v => !v)}>
-                {showAllOrders ? "Show less" : `View all ${filteredOrders.length} →`}
+              <button className="biz-link-btn" onClick={() => setShowAllOrders((v) => !v)}>
+                {showAllOrders ? t("businessDashboard.showLess") : t("businessDashboard.viewAllOrders", { count: filteredOrders.length })}
               </button>
             )}
           </div>
           <div className="biz-table-wrap">
             <table className="biz-table">
-              <thead><tr><th>ID</th><th>Offer</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+              <thead><tr><th>{t("businessDashboard.orderTable.id")}</th><th>{t("businessDashboard.orderTable.offer")}</th><th>{t("businessDashboard.orderTable.customer")}</th><th>{t("businessDashboard.orderTable.amount")}</th><th>{t("businessDashboard.orderTable.status")}</th></tr></thead>
               <tbody>
                 {(showAllOrders ? filteredOrders : filteredOrders.slice(0, 2)).map(o => (
                   <tr key={o.id}>
@@ -723,10 +742,10 @@ export default function Business() {
                                  o.status === "cancelled" ? "#991b1b" : "#374151",
                         }}
                       >
-                        <option value="processing">Processing</option>
-                        <option value="completed">Completed</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="processing">{t("businessDashboard.orderStatus.processing")}</option>
+                        <option value="completed">{t("businessDashboard.orderStatus.completed")}</option>
+                        <option value="delivered">{t("businessDashboard.orderStatus.delivered")}</option>
+                        <option value="cancelled">{t("businessDashboard.orderStatus.cancelled")}</option>
                       </select>
                     </td>
                   </tr>
@@ -734,7 +753,7 @@ export default function Business() {
               </tbody>
             </table>
           </div>
-          {filteredOrders.length > 2 && !showAllOrders && <p className="biz-more">and {filteredOrders.length - 2} more order(s)…</p>}
+          {filteredOrders.length > 2 && !showAllOrders && <p className="biz-more">{t("businessDashboard.moreOrders", { count: filteredOrders.length - 2 })}</p>}
         </div>
 
       </main>

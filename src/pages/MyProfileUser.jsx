@@ -317,8 +317,14 @@ function OrdersSection({ orders }) {
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { logout } = useAuth();
-
+  const { logout, darkMode, toggleDarkMode } = useAuth();
+  const { role } = useAuth();
+  useEffect(() => {
+  if (role && role !== "customer") {
+    if (role === "super_admin" || role === "manager") navigate("/admin/profile");
+    else if (role === "vendor") navigate("/business/profile");
+  }
+}, [role]);
   const [activePanel, setActivePanel] = useState(null);
   const [activeSection, setActiveSection] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
@@ -646,6 +652,14 @@ export default function UserProfile() {
                   <KeyRound size={18} />
                   <span className="setting-label">Change Password</span>
                   <ChevronRight size={18} className="chevron" />
+                </button>
+                <button
+                  className="setting-row"
+                  onClick={toggleDarkMode}
+                >
+                  <span style={{ fontSize: 18 }}>{darkMode ? "☀️" : "🌙"}</span>
+                  <span className="setting-label">{darkMode ? "Light Mode" : "Dark Mode"}</span>
+                  <span className={`profile-switch ${darkMode ? "is-on" : ""}`}><span /></span>
                 </button>
                 <button
                   className="setting-row setting-red"

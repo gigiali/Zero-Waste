@@ -323,7 +323,7 @@ export default function Navigation({
   const pillStyle = {
     display: "flex", alignItems: "center", gap: "0.5rem",
     padding: "0.5rem 0.75rem", borderRadius: "8px",
-    border: "1px solid #e5e7eb", background: "white",
+    border: "1px solid #e5e7eb", background: "var(--nav-pill-bg, white)",
     cursor: "pointer", transition: "all 0.2s ease",
   };
   const pillHoverIn  = (e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#cbd5e1"; };
@@ -345,8 +345,8 @@ export default function Navigation({
     <>
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
-        padding: "0.75rem 2rem", background: "#fafafa",
         borderBottom: `1px solid ${borderBottomColor}`,
+        padding: "0.75rem 2rem", background: "var(--nav-bg, #fafafa)",
         boxShadow: showShadow ? "0 1px 4px rgba(0,0,0,0.04)" : "none",
         position: "sticky", top: 0, zIndex: 200,
       }}>
@@ -451,8 +451,8 @@ export default function Navigation({
             {isLangDropdownOpen && (
               <div style={{
                 position: "absolute", top: "calc(100% + 8px)", right: 0,
-                background: "white", borderRadius: "8px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb",
+                background: "var(--nav-pill-bg, white)", borderRadius: "8px",
+        boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb",
                 minWidth: "150px", zIndex: 1000,
               }}>
                 {[["EN", "English"], ["AR", "Arabic"]].map(([code, label]) => (
@@ -531,7 +531,7 @@ export default function Navigation({
       {/* ── Logout confirmation popup ── */}
       {showLogoutConfirm && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
+          <div style={{ background: "var(--nav-pill-bg, white)", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👋</div>
             <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.2rem" }}>Log Out?</h3>
             <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>

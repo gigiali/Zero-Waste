@@ -1,3 +1,4 @@
+import { useAuth } from "../Context/AuthContext";
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import "./HomePage.css";
@@ -310,7 +311,8 @@ const sortOptions = [
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToCart } = useCart();
+  const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
+const { isLoggedIn } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
@@ -337,7 +339,7 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
+  const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
 
   useEffect(() => {
     const fetchOffers = async () => {
@@ -350,11 +352,10 @@ const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel
           sessionStorage.getItem("auth_token") ||
           sessionStorage.getItem("token");
 
-        // Try different endpoints for public offers
         const vendorType = selectedCategory === "All" ? "" : selectedCategory.toLowerCase();
-const endpoints = [
-  `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
-];
+        const endpoints = [
+          `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
+        ];
 
         let offersData = null;
 
@@ -384,16 +385,33 @@ const endpoints = [
         if (offersData && offersData.length > 0) {
           const transformedOffers = offersData.map((offer, idx) => {
             const source = offer;
-            
-const resolvedId = offer.id ?? idx;
-const hasRealId = true;
-const safeId = resolvedId;
+            const resolvedId = offer.id ?? idx;
+            const safeId = resolvedId;
+
+            // ── Fix: build image URL correctly ──────────────────────────────
+            const BASE_URL = "https://zero-waste-production.up.railway.app";
+            let imageUrl = "/assets/images/e.png";
+            if (source.image) {
+              const raw = source.image.trim();
+              if (raw.startsWith("http")) {
+                // already a full URL — strip the wrong /storage prefix if present
+                // e.g. https://...railway.app/storage/uploads/... → https://...railway.app/uploads/...
+                imageUrl = raw.replace(`${BASE_URL}/storage/`, `${BASE_URL}/`);
+              } else {
+                // relative path — strip leading slashes and any leading "storage/"
+                // e.g. "storage/uploads/images_GradProj/x.jpg" → "uploads/images_GradProj/x.jpg"
+                const cleaned = raw.replace(/^\/+/, "").replace(/^storage\//, "");
+                imageUrl = `${BASE_URL}/${cleaned}`;
+              }
+            }
+            // ────────────────────────────────────────────────────────────────
+
             return {
               id: safeId,
-              hasId: hasRealId,
+              hasId: true,
               title: source.title,
               description: source.description,
-              image: `https://zero-waste-production.up.railway.app/storage/${source.image}` || "/assets/images/e.png",
+              image: imageUrl,
               discount: source.discount_price
                 ? Math.round(
                     ((source.original_price - source.discount_price) /
@@ -404,15 +422,24 @@ const safeId = resolvedId;
               originalPrice: source.original_price || 0,
               discountedPrice: source.discount_price || 0,
               quantity: source.quantity_available || 0,
-              pickupTime: source.expiration_time ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : "Today",
+              pickupTime: source.expiration_time
+                ? new Date(source.expiration_time).toLocaleTimeString("en-US", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    hour12: true,
+                  })
+                : "Today",
               location:
-              source.branch?.branch_name ||
-              source.branch?.store_address ||
-              source.vendor?.business_name || "Unknown",
+                source.branch?.branch_name ||
+                source.branch?.store_address ||
+                source.vendor?.business_name ||
+                "Unknown",
               distance: 0,
               rating: 4.5,
-              category: source.branch?.type ||
-              source.branch?.vendor?.business_name || "Restaurant",
+              category:
+                source.branch?.type ||
+                source.branch?.vendor?.business_name ||
+                "Restaurant",
             };
           });
 
@@ -439,7 +466,6 @@ const safeId = resolvedId;
         offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     })
-    
     .sort((a, b) => {
       switch (sortOption) {
         case "highest_discount":
@@ -615,6 +641,10 @@ const safeId = resolvedId;
                       src={offer.image}
                       alt={offer.title}
                       className="offer-image"
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src = "/assets/images/e.png";
+                      }}
                     />
                   ) : (
                     <div className="offer-image-placeholder">🍽️</div>
@@ -664,7 +694,7 @@ const safeId = resolvedId;
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        addToCart(offer, 1);
+                        addToCart(offer, 1, isLoggedIn);
                       }}
                       style={{
                         background: "#10b981",
@@ -685,7 +715,30 @@ const safeId = resolvedId;
             ))}
           </div>
         )}
-      </section>
+</section>
+
+    {showSignInPopup && (
+      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
+        onClick={() => setShowSignInPopup(false)}>
+        <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+          onClick={(e) => e.stopPropagation()}>
+          <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
+          <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
+          <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>You need to sign in first to add items to your cart.</p>
+          <div style={{ display: "flex", gap: "0.75rem" }}>
+            <button onClick={() => setShowSignInPopup(false)}
+              style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
+              Cancel
+            </button>
+            <button onClick={() => { setShowSignInPopup(false); navigate("/signin"); }}
+              style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
+              Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     </div>
   );
 }

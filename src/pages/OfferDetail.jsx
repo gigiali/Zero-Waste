@@ -15,6 +15,7 @@ import {
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../Context/CartContext";
+import { useAuth } from "../Context/AuthContext";
 import "./OfferDetail.css";
 
 const normalizeOffer = (payload) => {
@@ -126,7 +127,8 @@ export default function OfferDetail() {
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const { addToCart } = useCart();
+  const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
+const { isLoggedIn } = useAuth();
   const [offer, setOffer] = useState(null);
   const [loadingOffer, setLoadingOffer] = useState(true);
   const [offerReviews, setOfferReviews] = useState([]);
@@ -196,7 +198,8 @@ export default function OfferDetail() {
 
   const handleAddToCart = () => {
     if (!offer) return;
-    addToCart(offer, qty);
+    if (!isLoggedIn) { setShowSignInPopup(true); return; }
+    addToCart(offer, qty, true);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -610,7 +613,27 @@ export default function OfferDetail() {
           </div>
         )}
       </div>
-
+      {showSignInPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowSignInPopup(false)}>
+          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>You need to sign in first to add items to your cart.</p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button onClick={() => setShowSignInPopup(false)}
+                style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
+                Cancel
+              </button>
+              <button onClick={() => { setShowSignInPopup(false); navigate("/signin"); }}
+                style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
+                Sign In
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── Sticky Add to Cart ── */}
       <div className="od-sticky-bar">
         <div className="od-sticky-price">

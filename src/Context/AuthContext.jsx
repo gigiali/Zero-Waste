@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
 
@@ -35,6 +35,27 @@ export function AuthProvider({ children }) {
     return localStorage.getItem("businessStatus") || null;
   });
 
+  const [darkMode, setDarkMode] = useState(() => {
+    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    let userId = "guest";
+    try { userId = JSON.parse(storedUser)?.id ?? "guest"; } catch {}
+    return localStorage.getItem(`darkMode_${userId}`) === "true";
+  });
+  
+  useEffect(() => {
+    if (darkMode) {
+      document.body.classList.add("dark");
+    } else {
+      document.body.classList.remove("dark");
+    }
+    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
+    let userId = "guest";
+    try { userId = JSON.parse(storedUser)?.id ?? "guest"; } catch {}
+    localStorage.setItem(`darkMode_${userId}`, darkMode);
+  }, [darkMode]);
+
+  const toggleDarkMode = () => setDarkMode((prev) => !prev);
+
   const login = (userData, token, remember = false) => {
     const storage = remember ? localStorage : sessionStorage;
     storage.setItem("token", token);
@@ -68,7 +89,7 @@ export function AuthProvider({ children }) {
   };
 
   const isLoggedIn = !!user;
-  const role = user?.role ?? null; // ✅ role comes from user object, no extra API call
+  const role = user?.role_type ?? user?.role ?? null;
 
   return (
     <AuthContext.Provider
@@ -80,7 +101,9 @@ export function AuthProvider({ children }) {
         businessStatus,
         setBusinessStatus,
         role,
-        updateUser,
+      updateUser,
+      darkMode,
+      toggleDarkMode,
       }}
     >
       {children}

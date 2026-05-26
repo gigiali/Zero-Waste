@@ -195,8 +195,13 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
 
 export default function MyProfileBusiness() {
   const navigate = useNavigate();
-  const { logout, businessStatus, user } = useAuth();
-
+  const { logout, businessStatus, user, darkMode, toggleDarkMode, role } = useAuth();
+  useEffect(() => {
+  if (role && role !== "vendor") {
+    if (role === "super_admin" || role === "manager") navigate("/admin/profile");
+    else navigate("/profile");
+  }
+}, [role]);
   const [view, setView] = useState("main");
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -491,6 +496,11 @@ export default function MyProfileBusiness() {
                 <KeyRound size={18} />
                 <span className="setting-label">Change Password</span>
                 <ChevronRight size={18} className="chevron" />
+              </button>
+              <button className="setting-row" onClick={toggleDarkMode}>
+                <span style={{ fontSize: 18 }}>{darkMode ? "☀️" : "🌙"}</span>
+                <span className="setting-label">{darkMode ? "Light Mode" : "Dark Mode"}</span>
+                <span className={`profile-switch ${darkMode ? "is-on" : ""}`}><span /></span>
               </button>
               <button className="setting-row setting-red" onClick={() => setShowLogoutConfirm(true)}>
                 <LogOut size={18} />

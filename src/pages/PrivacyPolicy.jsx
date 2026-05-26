@@ -1,18 +1,20 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import Navigation from "../Components/Navigation";
 import "./PrivacyPolicy.css";
 
 function PrivacyPolicy() {
+  const { t } = useTranslation();
   const [activeSection, setActiveSection] = useState("introduction");
 
   const sections = [
-    { id: "introduction", title: "Introduction", icon: "📋" },
-    { id: "data-collection", title: "Data Collection", icon: "📊" },
-    { id: "data-usage", title: "Data Usage", icon: "🔄" },
-    { id: "data-protection", title: "Data Protection", icon: "🔐" },
-    { id: "data-sharing", title: "Data Sharing", icon: "🤝" },
-    { id: "your-rights", title: "Your Rights", icon: "⚖️" },
-    { id: "cookies", title: "Cookies", icon: "🍪" },
+    { id: "introduction", title: t("privacy.sections.introduction"), icon: "📋" },
+    { id: "data-collection", title: t("privacy.sections.dataCollection"), icon: "📊" },
+    { id: "data-usage", title: t("privacy.sections.dataUsage"), icon: "🔄" },
+    { id: "data-protection", title: t("privacy.sections.dataProtection"), icon: "🔐" },
+    { id: "data-sharing", title: t("privacy.sections.dataSharing"), icon: "🤝" },
+    { id: "your-rights", title: t("privacy.sections.yourRights"), icon: "⚖️" },
+    { id: "cookies", title: t("privacy.sections.cookies"), icon: "🍪" },
   ];
 
   const scrollToSection = (sectionId) => {
@@ -27,8 +29,8 @@ function PrivacyPolicy() {
       <div className="policy-page">
         <div className="policy-header">
           <div className="header-content">
-            <h1>Privacy Policy</h1>
-            <p>Your privacy is our priority. Learn how we protect your data.</p>
+            <h1>{t("privacy.title")}</h1>
+            <p>{t("privacy.subtitle")}</p>
           </div>
           <div className="header-decoration"></div>
         </div>
@@ -37,7 +39,7 @@ function PrivacyPolicy() {
           {/* ── TABLE OF CONTENTS ─────────────────────────────────── */}
           <aside className="table-of-contents">
             <div className="toc-header">
-              <h3>📑 Contents</h3>
+              <h3>{t("privacy.contentsHeader")}</h3>
             </div>
             <nav className="toc-nav">
               {sections.map((section) => (
@@ -52,7 +54,7 @@ function PrivacyPolicy() {
               ))}
             </nav>
             <div className="toc-footer">
-              <p>Last updated: {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <p>{t("privacy.lastUpdated")} {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
             </div>
           </aside>
 
@@ -61,61 +63,57 @@ function PrivacyPolicy() {
             {/* Introduction */}
             <section id="introduction" className="policy-section">
               <h2>
-                <span className="section-icon">📋</span> Introduction
+                <span className="section-icon">📋</span> {t("privacy.introduction.title")}
               </h2>
-              <p>
-                Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your 
-                personal information when you use our Zero Waste platform. We're committed to transparency and ensuring 
-                you have control over your data.
-              </p>
+              <p>{t("privacy.introduction.description")}</p>
               <div className="highlight-box">
-                <p>🔒 We never sell your personal information to third parties.</p>
+                <p>{t("privacy.introduction.highlight")}</p>
               </div>
             </section>
 
             {/* Data Collection */}
             <section id="data-collection" className="policy-section">
               <h2>
-                <span className="section-icon">📊</span> Data Collection
+                <span className="section-icon">📊</span> {t("privacy.dataCollection.title")}
               </h2>
-              <p>We collect information in several ways to improve your experience:</p>
+              <p>{t("privacy.dataCollection.description")}</p>
               <div className="data-grid">
                 <div className="data-item">
-                  <h4>👤 Personal Information</h4>
+                  <h4>{t("privacy.dataCollection.personalInformation.title")}</h4>
                   <ul>
-                    <li>Full name</li>
-                    <li>Email address</li>
-                    <li>Phone number</li>
-                    <li>Business details</li>
+                    <li>{t("privacy.dataCollection.personalInformation.items.fullName")}</li>
+                    <li>{t("privacy.dataCollection.personalInformation.items.email")}</li>
+                    <li>{t("privacy.dataCollection.personalInformation.items.phone")}</li>
+                    <li>{t("privacy.dataCollection.personalInformation.items.businessDetails")}</li>
                   </ul>
                 </div>
 
                 <div className="data-item">
-                  <h4>🔑 Account Information</h4>
+                  <h4>{t("privacy.dataCollection.accountInformation.title")}</h4>
                   <ul>
-                    <li>Username</li>
-                    <li>Encrypted password</li>
-                    <li>User preferences</li>
-                    <li>Profile settings</li>
+                    <li>{t("privacy.dataCollection.accountInformation.items.username")}</li>
+                    <li>{t("privacy.dataCollection.accountInformation.items.encryptedPassword")}</li>
+                    <li>{t("privacy.dataCollection.accountInformation.items.preferences")}</li>
+                    <li>{t("privacy.dataCollection.accountInformation.items.profileSettings")}</li>
                   </ul>
                 </div>
 
                 <div className="data-item">
-                  <h4>📈 Usage Data</h4>
+                  <h4>{t("privacy.dataCollection.usageData.title")}</h4>
                   <ul>
-                    <li>Platform interactions</li>
-                    <li>Pages visited</li>
-                    <li>Features used</li>
-                    <li>Time spent</li>
+                    <li>{t("privacy.dataCollection.usageData.items.interactions")}</li>
+                    <li>{t("privacy.dataCollection.usageData.items.pagesVisited")}</li>
+                    <li>{t("privacy.dataCollection.usageData.items.featuresUsed")}</li>
+                    <li>{t("privacy.dataCollection.usageData.items.timeSpent")}</li>
                   </ul>
                 </div>
 
                 <div className="data-item">
-                  <h4>📍 Location Data</h4>
+                  <h4>{t("privacy.dataCollection.locationData.title")}</h4>
                   <ul>
-                    <li>Business address</li>
-                    <li>General location</li>
-                    <li>Service coverage area</li>
+                    <li>{t("privacy.dataCollection.locationData.items.businessAddress")}</li>
+                    <li>{t("privacy.dataCollection.locationData.items.generalLocation")}</li>
+                    <li>{t("privacy.dataCollection.locationData.items.coverageArea")}</li>
                   </ul>
                 </div>
               </div>
@@ -124,50 +122,50 @@ function PrivacyPolicy() {
             {/* Data Usage */}
             <section id="data-usage" className="policy-section">
               <h2>
-                <span className="section-icon">🔄</span> Data Usage
+                <span className="section-icon">🔄</span> {t("privacy.dataUsage.title")}
               </h2>
-              <p>We use your data for these specific purposes:</p>
+              <p>{t("privacy.dataUsage.description")}</p>
               <div className="checklist">
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Service Provision</h4>
-                    <p>Provide and maintain platform services</p>
+                    <h4>{t("privacy.dataUsage.items.serviceProvision.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.serviceProvision.description")}</p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Transactions</h4>
-                    <p>Process transactions and manage accounts</p>
+                    <h4>{t("privacy.dataUsage.items.transactions.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.transactions.description")}</p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Communication</h4>
-                    <p>Communicate with users about services</p>
+                    <h4>{t("privacy.dataUsage.items.communication.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.communication.description")}</p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Improvement</h4>
-                    <p>Improve platform and develop new features</p>
+                    <h4>{t("privacy.dataUsage.items.improvement.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.improvement.description")}</p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Analytics</h4>
-                    <p>Analyze usage patterns for optimization</p>
+                    <h4>{t("privacy.dataUsage.items.analytics.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.analytics.description")}</p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>Security</h4>
-                    <p>Ensure platform security and prevent fraud</p>
+                    <h4>{t("privacy.dataUsage.items.security.title")}</h4>
+                    <p>{t("privacy.dataUsage.items.security.description")}</p>
                   </div>
                 </div>
               </div>
@@ -176,29 +174,29 @@ function PrivacyPolicy() {
             {/* Data Protection */}
             <section id="data-protection" className="policy-section">
               <h2>
-                <span className="section-icon">🔐</span> Data Protection
+                <span className="section-icon">🔐</span> {t("privacy.dataProtection.title")}
               </h2>
-              <p>Your data security is our top priority. We implement:</p>
+              <p>{t("privacy.dataProtection.description")}</p>
               <div className="security-features">
                 <div className="feature">
                   <div className="feature-icon">🔒</div>
-                  <h4>Encryption</h4>
-                  <p>End-to-end encryption of sensitive data in transit and storage</p>
+                  <h4>{t("privacy.dataProtection.features.encryption.title")}</h4>
+                  <p>{t("privacy.dataProtection.features.encryption.description")}</p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">🛡️</div>
-                  <h4>Security Audits</h4>
-                  <p>Regular security audits and vulnerability assessments</p>
+                  <h4>{t("privacy.dataProtection.features.securityAudits.title")}</h4>
+                  <p>{t("privacy.dataProtection.features.securityAudits.description")}</p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">🔑</div>
-                  <h4>Access Control</h4>
-                  <p>Strict access controls and authentication systems</p>
+                  <h4>{t("privacy.dataProtection.features.accessControl.title")}</h4>
+                  <p>{t("privacy.dataProtection.features.accessControl.description")}</p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">💾</div>
-                  <h4>Secure Storage</h4>
-                  <p>Secure data storage and backup procedures</p>
+                  <h4>{t("privacy.dataProtection.features.secureStorage.title")}</h4>
+                  <p>{t("privacy.dataProtection.features.secureStorage.description")}</p>
                 </div>
               </div>
             </section>
@@ -206,27 +204,25 @@ function PrivacyPolicy() {
             {/* Data Sharing */}
             <section id="data-sharing" className="policy-section">
               <h2>
-                <span className="section-icon">🤝</span> Data Sharing
+                <span className="section-icon">🤝</span> {t("privacy.dataSharing.title")}
               </h2>
-              <p>
-                We do not sell your personal information. We may share your data only in these limited circumstances:
-              </p>
+              <p>{t("privacy.dataSharing.description")}</p>
               <div className="sharing-list">
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ Allowed</span>
-                  <p>With trusted service providers (hosting, payment processing)</p>
+                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <p>{t("privacy.dataSharing.items.providers")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ Allowed</span>
-                  <p>When required by law or to protect our rights</p>
+                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <p>{t("privacy.dataSharing.items.legalRequirements")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ Allowed</span>
-                  <p>With your explicit consent for specific purposes</p>
+                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <p>{t("privacy.dataSharing.items.consent")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ Allowed</span>
-                  <p>In connection with business transfer or merger</p>
+                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <p>{t("privacy.dataSharing.items.businessTransfer")}</p>
                 </div>
               </div>
             </section>
@@ -234,33 +230,33 @@ function PrivacyPolicy() {
             {/* Your Rights */}
             <section id="your-rights" className="policy-section">
               <h2>
-                <span className="section-icon">⚖️</span> Your Rights
+                <span className="section-icon">⚖️</span> {t("privacy.yourRights.title")}
               </h2>
-              <p>You have the following rights regarding your personal data:</p>
+              <p>{t("privacy.yourRights.description")}</p>
               <div className="rights-grid">
                 <div className="right-card">
-                  <h4>👁️ Right to Access</h4>
-                  <p>Access your personal information anytime</p>
+                  <h4>{t("privacy.yourRights.items.access.title")}</h4>
+                  <p>{t("privacy.yourRights.items.access.description")}</p>
                 </div>
                 <div className="right-card">
-                  <h4>✏️ Right to Correct</h4>
-                  <p>Update or correct inaccurate information</p>
+                  <h4>{t("privacy.yourRights.items.correct.title")}</h4>
+                  <p>{t("privacy.yourRights.items.correct.description")}</p>
                 </div>
                 <div className="right-card">
-                  <h4>🗑️ Right to Delete</h4>
-                  <p>Delete your account and personal data</p>
+                  <h4>{t("privacy.yourRights.items.delete.title")}</h4>
+                  <p>{t("privacy.yourRights.items.delete.description")}</p>
                 </div>
                 <div className="right-card">
-                  <h4>✋ Right to Opt-Out</h4>
-                  <p>Opt out of marketing communications</p>
+                  <h4>{t("privacy.yourRights.items.optOut.title")}</h4>
+                  <p>{t("privacy.yourRights.items.optOut.description")}</p>
                 </div>
                 <div className="right-card">
-                  <h4>📥 Right to Export</h4>
-                  <p>Request a copy of your data</p>
+                  <h4>{t("privacy.yourRights.items.export.title")}</h4>
+                  <p>{t("privacy.yourRights.items.export.description")}</p>
                 </div>
                 <div className="right-card">
-                  <h4>🚫 Right to Restrict</h4>
-                  <p>Restrict processing of your data</p>
+                  <h4>{t("privacy.yourRights.items.restrict.title")}</h4>
+                  <p>{t("privacy.yourRights.items.restrict.description")}</p>
                 </div>
               </div>
             </section>
@@ -268,38 +264,38 @@ function PrivacyPolicy() {
             {/* Cookies */}
             <section id="cookies" className="policy-section">
               <h2>
-                <span className="section-icon">🍪</span> Cookies
+                <span className="section-icon">🍪</span> {t("privacy.cookies.title")}
               </h2>
-              <p>We use cookies to enhance your experience. Here's what we use:</p>
+              <p>{t("privacy.cookies.description")}</p>
               <div className="cookie-types">
                 <div className="cookie-type">
-                  <h4>🔧 Essential Cookies</h4>
-                  <p>Required for platform functionality and security</p>
-                  <span className="status required">Required</span>
+                  <h4>{t("privacy.cookies.items.essential.title")}</h4>
+                  <p>{t("privacy.cookies.items.essential.description")}</p>
+                  <span className="status required">{t("privacy.cookies.labels.required")}</span>
                 </div>
                 <div className="cookie-type">
-                  <h4>📈 Analytics Cookies</h4>
-                  <p>Help us understand usage patterns and improve features</p>
-                  <span className="status optional">Optional</span>
+                  <h4>{t("privacy.cookies.items.analytics.title")}</h4>
+                  <p>{t("privacy.cookies.items.analytics.description")}</p>
+                  <span className="status optional">{t("privacy.cookies.labels.optional")}</span>
                 </div>
                 <div className="cookie-type">
-                  <h4>💾 Preference Cookies</h4>
-                  <p>Remember your settings and preferences</p>
-                  <span className="status optional">Optional</span>
+                  <h4>{t("privacy.cookies.items.preference.title")}</h4>
+                  <p>{t("privacy.cookies.items.preference.description")}</p>
+                  <span className="status optional">{t("privacy.cookies.labels.optional")}</span>
                 </div>
               </div>
               <div className="info-box">
-                <p>📌 You can control cookies through your browser settings at any time.</p>
+                <p>{t("privacy.cookies.note")}</p>
               </div>
             </section>
 
             {/* Contact Section */}
             <section className="contact-section">
-              <h2>Questions About Privacy?</h2>
-              <p>If you have concerns about our privacy practices, please contact us:</p>
+              <h2>{t("privacy.contact.title")}</h2>
+              <p>{t("privacy.contact.description")}</p>
               <div className="contact-info">
-                <p>📧 privacy@zerowaste.com</p>
-                <p>💬 Support Chat: Available 24/7</p>
+                <p>{t("privacy.contact.email")}</p>
+                <p>{t("privacy.contact.chat")}</p>
               </div>
             </section>
           </main>

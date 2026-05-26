@@ -195,6 +195,428 @@
       "vendorSetupCompleted": "Vendor setup completed successfully!"
     }
   },
+  "addBranch": {
+    "title": "Add New Branch",
+    "subtitle": "Create a branch to start taking orders",
+    "sectionTitle": "Branch Details",
+    "branchName": "Branch Name",
+    "branchNamePlaceholder": "Enter your branch name",
+    "branchType": "Branch Type",
+    "selectBranchType": "Select branch type",
+    "type": {
+      "restaurant": "Restaurant",
+      "supermarket": "Supermarket",
+      "hotel": "Hotel",
+      "bakery": "Bakery",
+      "cafe": "Cafe",
+      "dessertShop": "Dessert Shop",
+      "others": "Other"
+    },
+    "branchTypeOtherPlaceholder": "Enter branch type",
+    "contactEmail": "Contact Email",
+    "contactEmailPlaceholder": "Enter contact email",
+    "contactPhone": "Contact Phone",
+    "contactPhonePlaceholder": "Enter contact phone",
+    "fullAddress": "Full Address",
+    "fullAddressPlaceholder": "Enter full address",
+    "locationPin": "Location Pin",
+    "selectOnMap": "Select on Map",
+    "useCurrentLocation": "Use My Current Location",
+    "locationSelected": "Location selected",
+    "workingHours": "Working Hours",
+    "from": "From",
+    "to": "To",
+    "saveBranch": "Save Branch",
+    "saving": "Saving...",
+    "mapModalTitle": "Select Branch Location",
+    "searchAddressPlaceholder": "Search for an address in Cairo",
+    "success": {
+      "branchAdded": "Branch added successfully!"
+    },
+    "errors": {
+      "branchNameRequired": "Branch name is required",
+      "branchTypeRequired": "Branch type is required",
+      "branchTypeOtherRequired": "Branch type is required",
+      "branchAddressRequired": "Branch address is required",
+      "locationRequired": "Location is required",
+      "workingHoursRequired": "Working hours are required",
+      "contactEmailRequired": "Contact email is required",
+      "contactPhoneRequired": "Contact phone is required",
+      "notAvailableInArea": "We are not available in this area yet.",
+      "enableLocation": "Unable to get your location. Please enable location services.",
+      "geolocationUnsupported": "Geolocation is not supported by your browser.",
+      "loginToContinue": "Please login to continue"
+    }
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "subtitle": "How we protect and use your personal information",
+    "contentsHeader": "📑 Contents",
+    "lastUpdated": "Last updated:",
+    "sections": {
+      "introduction": "Introduction",
+      "dataCollection": "Data Collection",
+      "dataUsage": "Data Usage",
+      "dataProtection": "Data Protection",
+      "dataSharing": "Data Sharing",
+      "yourRights": "Your Rights",
+      "cookies": "Cookies"
+    },
+    "introduction": {
+      "title": "Introduction",
+      "description": "Your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your personal information when you use our Zero Waste platform.",
+      "highlight": "🔒 We never sell your personal information to third parties."
+    },
+    "dataCollection": {
+      "title": "Data Collection",
+      "description": "We collect information in several ways to improve your experience:",
+      "personalInformation": {
+        "title": "Personal Information",
+        "items": {
+          "fullName": "Full name",
+          "email": "Email address",
+          "phone": "Phone number",
+          "businessDetails": "Business details"
+        }
+      },
+      "accountInformation": {
+        "title": "Account Information",
+        "items": {
+          "username": "Username",
+          "encryptedPassword": "Encrypted password",
+          "preferences": "User preferences",
+          "profileSettings": "Profile settings"
+        }
+      },
+      "usageData": {
+        "title": "Usage Data",
+        "items": {
+          "interactions": "Platform interactions",
+          "pagesVisited": "Pages visited",
+          "featuresUsed": "Features used",
+          "timeSpent": "Time spent"
+        }
+      },
+      "locationData": {
+        "title": "Location Data",
+        "items": {
+          "businessAddress": "Business address",
+          "generalLocation": "General location",
+          "coverageArea": "Service coverage area"
+        }
+      }
+    },
+    "dataUsage": {
+      "title": "Data Usage",
+      "description": "We use your data for these specific purposes:",
+      "items": {
+        "serviceProvision": {
+          "title": "Service Provision",
+          "description": "Provide and maintain platform services"
+        },
+        "transactions": {
+          "title": "Transactions",
+          "description": "Process transactions and manage accounts"
+        },
+        "communication": {
+          "title": "Communication",
+          "description": "Communicate with users about services"
+        },
+        "improvement": {
+          "title": "Improvement",
+          "description": "Improve platform and develop new features"
+        },
+        "analytics": {
+          "title": "Analytics",
+          "description": "Analyze usage patterns for optimization"
+        },
+        "security": {
+          "title": "Security",
+          "description": "Ensure platform security and prevent fraud"
+        }
+      }
+    },
+    "dataProtection": {
+      "title": "Data Protection",
+      "description": "Your data security is our top priority. We implement:",
+      "features": {
+        "encryption": {
+          "title": "Encryption",
+          "description": "End-to-end encryption of sensitive data in transit and storage"
+        },
+        "securityAudits": {
+          "title": "Security Audits",
+          "description": "Regular security audits and vulnerability assessments"
+        },
+        "accessControl": {
+          "title": "Access Control",
+          "description": "Strict access controls and authentication systems"
+        },
+        "secureStorage": {
+          "title": "Secure Storage",
+          "description": "Secure data storage and backup procedures"
+        }
+      }
+    },
+    "dataSharing": {
+      "title": "Data Sharing",
+      "description": "We do not sell your personal information. We may share your data only in these limited circumstances:",
+      "labels": {
+        "allowed": "Allowed"
+      },
+      "items": {
+        "providers": "With trusted service providers (hosting, payment processing)",
+        "legalRequirements": "When required by law or to protect our rights",
+        "consent": "With your explicit consent for specific purposes",
+        "businessTransfer": "In connection with business transfer or merger"
+      }
+    },
+    "yourRights": {
+      "title": "Your Rights",
+      "description": "You have the following rights regarding your personal data:",
+      "items": {
+        "access": {
+          "title": "👁️ Right to Access",
+          "description": "Access your personal information anytime"
+        },
+        "correct": {
+          "title": "✏️ Right to Correct",
+          "description": "Update or correct inaccurate information"
+        },
+        "delete": {
+          "title": "🗑️ Right to Delete",
+          "description": "Delete your account and personal data"
+        },
+        "optOut": {
+          "title": "✋ Right to Opt-Out",
+          "description": "Opt out of marketing communications"
+        },
+        "export": {
+          "title": "📥 Right to Export",
+          "description": "Request a copy of your data"
+        },
+        "restrict": {
+          "title": "🚫 Right to Restrict",
+          "description": "Restrict processing of your data"
+        }
+      }
+    },
+    "cookies": {
+      "title": "Cookies",
+      "description": "We use cookies to enhance your experience. Here's what we use:",
+      "items": {
+        "essential": {
+          "title": "🔧 Essential Cookies",
+          "description": "Required for platform functionality and security"
+        },
+        "analytics": {
+          "title": "📈 Analytics Cookies",
+          "description": "Help us understand usage patterns and improve features"
+        },
+        "preference": {
+          "title": "💾 Preference Cookies",
+          "description": "Remember your settings and preferences"
+        }
+      },
+      "labels": {
+        "required": "Required",
+        "optional": "Optional"
+      },
+      "note": "📌 You can control cookies through your browser settings at any time."
+    },
+    "contact": {
+      "title": "Questions About Privacy?",
+      "description": "If you have concerns about our privacy practices, please contact us:",
+      "email": "📧 privacy@zerowaste.com",
+      "chat": "💬 Support Chat: Available 24/7"
+    }
+  },
+  "admin": {
+    "title": "Admin Control Panel",
+    "subtitle": "Monitor platform performance and manage the ZeroWaste ecosystem",
+    "notLoggedIn": "You are not logged in. Please",
+    "login": "log in",
+    "platformCommission": "Platform Commission",
+    "activeIssues": "Active Issues",
+    "platformAnalytics": "Platform Analytics",
+    "analyticsSubtitle": "Real-time insights and system health monitoring",
+    "cards": {
+      "userManagement": "User Management",
+      "userManagementSubtitle": "View & manage customers",
+      "reportsIssues": "Reports & Issues",
+      "reportsIssuesSubtitle": "Handle reported content",
+      "manageBusinesses": "Manage Businesses",
+      "manageBusinessesSubtitle": "Approve or reject vendors"
+    },
+    "loadingStats": "Loading stats…",
+    "stats": {
+      "totalOrders": "Total Orders",
+      "totalRevenue": "Total Revenue",
+      "activeBusinesses": "Active Businesses",
+      "totalUsers": "Total Users"
+    },
+    "commissionRate": "15% commission rate",
+    "foodSaved": "Food Saved",
+    "environmentalImpact": "Environmental Impact",
+    "avgOrderValue": "Avg. Order Value",
+    "perTransaction": "Per Transaction",
+    "weeklyPerformance": "Weekly Performance",
+    "chart": {
+      "orders": "Orders",
+      "revenue": "Revenue (EGP)"
+    },
+    "recentActivityTitle": "System Recent Activity (Logs)",
+    "updatingActivity": "Updating activity logs…",
+    "noRecentActivity": "No recent activities recorded.",
+    "activity": {
+      "by": "By",
+      "system": "System",
+      "justNow": "Just now"
+    },
+    "roles": {
+      "superAdmin": "Super Admin — Full Control",
+      "manager": "Manager",
+      "support": "Support"
+    }
+  },
+  "terms": {
+    "title": "Terms of Service",
+    "subtitle": "Our commitment to fair and transparent service terms.",
+    "contentsHeader": "📑 Contents",
+    "lastUpdated": "Last updated:",
+    "sections": {
+      "introduction": "Introduction",
+      "userResponsibilities": "User Responsibilities",
+      "prohibitedActivities": "Prohibited Activities",
+      "accountSecurity": "Account Security",
+      "limitationOfLiability": "Limitation of Liability",
+      "changesToTerms": "Changes to Terms"
+    },
+    "introduction": {
+      "title": "Introduction",
+      "description": "These Terms of Service (\"Terms\") govern your use of the Zero Waste platform and all related services, websites, and applications (collectively, the \"Platform\"). By accessing and using our Platform, you agree to be bound by these Terms.",
+      "warning": "⚖️ If you do not agree with any part of these Terms, please do not use our Platform.",
+      "missionTitle": "🎯 Our Mission",
+      "missionText": "Zero Waste connects businesses with customers to reduce food waste and promote sustainability. We're committed to creating a transparent and trustworthy marketplace."
+    },
+    "userResponsibilities": {
+      "title": "User Responsibilities",
+      "description": "As a user of our Platform, you agree to:",
+      "accurateInformation": {
+        "title": "Accurate Information",
+        "text": "Provide accurate information when creating an account"
+      },
+      "legitimateUse": {
+        "title": "Legitimate Use",
+        "text": "Use platform for legitimate purposes only"
+      },
+      "respectOthers": {
+        "title": "Respect Others",
+        "text": "Respect rights of other users and businesses"
+      },
+      "securePassword": {
+        "title": "Secure Password",
+        "text": "Keep account credentials secure and confidential"
+      }
+    },
+    "prohibitedActivities": {
+      "title": "Prohibited Activities",
+      "description": "You may not engage in the following activities on our Platform:",
+      "falseInformation": {
+        "title": "False Information",
+        "text": "Posting false, misleading, or deceptive information"
+      },
+      "illegalActivities": {
+        "title": "Illegal Activities",
+        "text": "Violating applicable laws, regulations, or rights"
+      },
+      "platformInterference": {
+        "title": "Platform Interference",
+        "text": "Interfering with or disrupting platform operations"
+      },
+      "harmfulUse": {
+        "title": "Harmful Use",
+        "text": "Using platform for harmful, threatening, or abusive purposes"
+      },
+      "fraud": {
+        "title": "Fraud",
+        "text": "Engaging in fraudulent, suspicious, or unethical activities"
+      },
+      "ipViolations": {
+        "title": "IP Violations",
+        "text": "Infringing upon intellectual property rights"
+      }
+    },
+    "accountSecurity": {
+      "title": "Account Security",
+      "description": "You are solely responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account, whether authorized or not.",
+      "immediateNotification": {
+        "title": "🔔 Immediate Notification",
+        "text": "Notify us immediately of any unauthorized access or suspicious activity"
+      },
+      "accountProtection": {
+        "title": "💻 Account Protection",
+        "text": "Use strong, unique passwords and enable two-factor authentication if available"
+      },
+      "deviceSecurity": {
+        "title": "📱 Device Security",
+        "text": "Keep your devices and software updated with the latest security patches"
+      },
+      "unauthorizedAccess": {
+        "title": "🚫 Unauthorized Access",
+        "text": "Never share your account with others or allow unauthorized access"
+      },
+      "warning": "⚠️ We are not liable for unauthorized access if you fail to maintain account security."
+    },
+    "limitationOfLiability": {
+      "title": "Limitation of Liability",
+      "description": "To the maximum extent permitted by applicable law, Zero Waste and its officers, directors, employees, and agents shall not be liable for:",
+      "indirectDamages": "Indirect, incidental, or consequential damages",
+      "lossOfProfits": "Loss of profits, data, or revenue",
+      "businessInterruption": "Business interruption or service outages",
+      "thirdPartyActions": "Third-party actions or content",
+      "capTitle": "💰 Liability Cap",
+      "capDescription": "Our total liability shall not exceed the amount you paid to Zero Waste in the past 12 months, or $100, whichever is greater."
+    },
+    "changesToTerms": {
+      "title": "Changes to Terms",
+      "description": "We reserve the right to modify these Terms at any time. Changes will be effective immediately upon posting to the Platform.",
+      "acknowledgmentTitle": "📢 Your Acknowledgment",
+      "acknowledgmentText": "Your continued use of the Platform following the posting of revised Terms means that you accept and agree to the changes.",
+      "notificationTitle": "Notification",
+      "notificationText": "We will notify you of significant changes via email",
+      "reviewTitle": "Review Period",
+      "reviewText": "You have 30 days to review changes before they become binding",
+      "acceptanceTitle": "Acceptance",
+      "acceptanceText": "Continued use after 30 days constitutes acceptance of new terms"
+    },
+    "additionalTerms": {
+      "title": "Important Additional Terms",
+      "intellectualProperty": {
+        "title": "📋 Intellectual Property",
+        "text": "All content on our Platform is our property or licensed content. You may not reproduce without permission."
+      },
+      "governingLaw": {
+        "title": "🌍 Governing Law",
+        "text": "These Terms are governed by applicable laws. Any disputes will be resolved in appropriate courts."
+      },
+      "thirdPartyServices": {
+        "title": "🤝 Third-Party Services",
+        "text": "We are not responsible for third-party services, links, or content on our Platform."
+      },
+      "contactSupport": {
+        "title": "📞 Contact & Support",
+        "text": "Have questions? Contact our support team at support@zerowaste.com"
+      }
+    },
+    "contact": {
+      "title": "Questions About These Terms?",
+      "description": "If you have any questions or concerns about our Terms of Service, please reach out:",
+      "email": "📧 legal@zerowaste.com",
+      "chat": "💬 Support Chat: Available 24/7",
+      "phone": "📞 Phone Support: Coming Soon"
+    }
+  },
   "offerDetail": {
     "loadingOffer": "Loading offer...",
     "notFoundTitle": "Offer not found",
@@ -274,6 +696,160 @@
     "reviewAction": "Review",
     "noDataBackendMissing": "⚠️ No data — backend route missing",
     "noIssuesFound": "✓ No issues found"
+  },
+  "businessDashboard": {
+    "notifications": "Notifications",
+    "languageEnglish": "English",
+    "languageArabic": "العربية",
+    "myProfile": "My Profile",
+    "branches": "Branches",
+    "branchLocations": {
+      "maadi": "Maadi",
+      "nasrCity": "Nasr City"
+    },
+    "orders": "Orders",
+    "locationLabel": "Branch Location",
+    "location": {
+      "maadi": "Maadi",
+      "nasrCity": "Nasr City"
+    },
+    "goToProfile": "Go to profile",
+    "yourBusiness": "Your business",
+    "businessAccount": "Business account",
+    "welcomeBack": "Welcome back, {{business}}",
+    "manageOffersSubtitle": "Manage your surplus offers from one place",
+    "impactTitle": "Your impact this month",
+    "foodSaved": "{{count}} kg food saved",
+    "kpis": {
+      "activeOffers": "Active offers",
+      "totalOrders": "Total orders",
+      "todaysRevenue": "Today's revenue"
+    },
+    "charts": {
+      "salesOverview": "Sales Overview",
+      "salesLabel": "Sales",
+      "ordersOverview": "Orders Overview",
+      "ordersLabel": "Orders"
+    },
+    "myOffers": "My Offers",
+    "showLess": "Show less",
+    "viewAllOffers": "View all ({{count}})",
+    "addOffer": "+ Add Offer",
+    "editOffer": "Edit Offer",
+    "newOffer": "New Offer",
+    "previewImageAlt": "Offer preview image",
+    "form": {
+      "title": "Title",
+      "titlePlaceholder": "Enter the offer title",
+      "description": "Description",
+      "descriptionPlaceholder": "Write a short offer description",
+      "offerPhoto": "Offer Photo",
+      "originalPrice": "Original Price",
+      "discountPrice": "Discount Price",
+      "quantityAvailable": "Quantity Available",
+      "quantityPlaceholder": "Enter available quantity",
+      "expiresIn": "Expires In",
+      "expiresInPlaceholder": "Enter number of days until expiry",
+      "expirationDate": "Expiration Date",
+      "status": "Status",
+      "pricePlaceholder": "Enter the price"
+    },
+    "currency": "EGP",
+    "status": {
+      "active": "Active",
+      "expired": "Expired",
+      "disabled": "Disabled"
+    },
+    "orderStatus": {
+      "processing": "Processing",
+      "completed": "Completed",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "offerStatus": {
+      "active": "Active",
+      "expired": "Expired",
+      "disabled": "Disabled"
+    },
+    "cancel": "Cancel",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "createOffer": "Create Offer",
+    "noOffers": "No offers for this branch yet",
+    "edit": "Edit",
+    "delete": "Delete",
+    "moreOffers": "{{count}} more offers",
+    "moreOrders": "{{count}} more orders",
+    "recentOrders": "Recent Orders",
+    "viewAllOrders": "View all ({{count}})",
+    "orderTable": {
+      "id": "ID",
+      "offer": "Offer",
+      "customer": "Customer",
+      "amount": "Amount",
+      "status": "Status"
+    },
+    "errors": {
+      "fillTitleDescription": "Please provide an offer title and description.",
+      "loginToContinue": "Please login to continue.",
+      "selectValidBranch": "Please select a valid branch.",
+      "network": "Network error. Please try again.",
+      "failedUpdateOrderStatus": "Failed to update order status. Please try again."
+    }
+  },
+  "manageBusinesses": {
+    "title": "Manage Businesses",
+    "subtitle": "Review registration pipelines and system vendors",
+    "backToAdmin": "Back to Admin Dashboard",
+    "stats": {
+      "totalRegistered": "Total Registered",
+      "activeState": "Active State",
+      "awaitingVerification": "Awaiting Verification",
+      "grossVolume": "Aggregated Gross Volume"
+    },
+    "controls": {
+      "searchPlaceholder": "Filter vendors...",
+      "allStates": "All States",
+      "allSectors": "All Sectors"
+    },
+    "loading": "Syncing live database logs...",
+    "table": {
+      "businessEntity": "Business Entity",
+      "sector": "Sector",
+      "state": "State",
+      "performance": "Performance",
+      "userBase": "User Base",
+      "timestamp": "Timestamp",
+      "volumeValuation": "Volume Valuation",
+      "managementActions": "Management Actions"
+    },
+    "unknownBusiness": "Unknown Business",
+    "actions": {
+      "manageDetails": "Manage Business Details",
+      "approve": "Approve",
+      "reject": "Reject",
+      "delete": "Delete"
+    },
+    "alerts": {
+      "vendorView": "Vendor View: {{name}}"
+    },
+    "confirm": {
+      "rejectVendor": "Reject {{name}}?",
+      "deleteVendor": "Permanently delete {{name}}?"
+    },
+    "errors": {
+      "approveFailed": "Server error: Could not approve vendor.",
+      "rejectFailed": "Server error: Could not reject vendor.",
+      "deleteFailed": "Server error: Could not delete vendor."
+    },
+    "status": {
+      "approved": "Approved",
+      "active": "Active",
+      "pending": "Pending",
+      "underReview": "Under Review",
+      "rejected": "Rejected",
+      "unknown": "Unknown"
+    }
   },
   "common": {
     "save": "Save",

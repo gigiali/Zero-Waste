@@ -195,6 +195,428 @@
       "vendorSetupCompleted": "تم إكمال إعداد البائع بنجاح!"
     }
   },
+  "addBranch": {
+    "title": "إضافة فرع جديد",
+    "subtitle": "أنشئ فرعًا لبدء تلقي الطلبات",
+    "sectionTitle": "تفاصيل الفرع",
+    "branchName": "اسم الفرع",
+    "branchNamePlaceholder": "أدخل اسم الفرع",
+    "branchType": "نوع الفرع",
+    "selectBranchType": "اختر نوع الفرع",
+    "type": {
+      "restaurant": "مطعم",
+      "supermarket": "سوبر ماركت",
+      "hotel": "فندق",
+      "bakery": "مخبز",
+      "cafe": "مقهى",
+      "dessertShop": "محل حلويات",
+      "others": "أخرى"
+    },
+    "branchTypeOtherPlaceholder": "أدخل نوع الفرع",
+    "contactEmail": "البريد الإلكتروني للتواصل",
+    "contactEmailPlaceholder": "أدخل البريد الإلكتروني للتواصل",
+    "contactPhone": "رقم الهاتف للتواصل",
+    "contactPhonePlaceholder": "أدخل رقم الهاتف للتواصل",
+    "fullAddress": "العنوان الكامل",
+    "fullAddressPlaceholder": "أدخل العنوان الكامل",
+    "locationPin": "موقع الفرع",
+    "selectOnMap": "اختر من الخريطة",
+    "useCurrentLocation": "استخدم موقعي الحالي",
+    "locationSelected": "تم اختيار الموقع",
+    "workingHours": "ساعات العمل",
+    "from": "من",
+    "to": "إلى",
+    "saveBranch": "حفظ الفرع",
+    "saving": "جاري الحفظ...",
+    "mapModalTitle": "اختر موقع الفرع",
+    "searchAddressPlaceholder": "ابحث عن عنوان في القاهرة",
+    "success": {
+      "branchAdded": "تم إضافة الفرع بنجاح!"
+    },
+    "errors": {
+      "branchNameRequired": "اسم الفرع مطلوب",
+      "branchTypeRequired": "نوع الفرع مطلوب",
+      "branchTypeOtherRequired": "نوع الفرع مطلوب",
+      "branchAddressRequired": "عنوان الفرع مطلوب",
+      "locationRequired": "الموقع مطلوب",
+      "workingHoursRequired": "ساعات العمل مطلوبة",
+      "contactEmailRequired": "البريد الإلكتروني للتواصل مطلوب",
+      "contactPhoneRequired": "رقم الهاتف للتواصل مطلوب",
+      "notAvailableInArea": "نحن غير متاحين في هذه المنطقة بعد.",
+      "enableLocation": "تعذر الحصول على موقعك. يرجى تمكين خدمات الموقع.",
+      "geolocationUnsupported": "المتصفح لا يدعم تحديد الموقع.",
+      "loginToContinue": "يرجى تسجيل الدخول للمتابعة"
+    }
+  },
+  "privacy": {
+    "title": "سياسة الخصوصية",
+    "subtitle": "كيف نحمي معلوماتك الشخصية ونستخدمها",
+    "contentsHeader": "📑 المحتوى",
+    "lastUpdated": "آخر تحديث:",
+    "sections": {
+      "introduction": "مقدمة",
+      "dataCollection": "جمع البيانات",
+      "dataUsage": "استخدام البيانات",
+      "dataProtection": "حماية البيانات",
+      "dataSharing": "مشاركة البيانات",
+      "yourRights": "حقوقك",
+      "cookies": "ملفات تعريف الارتباط"
+    },
+    "introduction": {
+      "title": "مقدمة",
+      "description": "تعد خصوصيتك مهمة بالنسبة لنا. تشرح سياسة الخصوصية هذه كيفية جمع معلوماتك الشخصية واستخدامها وحمايتها عند استخدام منصة Zero Waste.",
+      "highlight": "🔒 نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة."
+    },
+    "dataCollection": {
+      "title": "جمع البيانات",
+      "description": "نقوم بجمع المعلومات بعدة طرق لتحسين تجربتك:",
+      "personalInformation": {
+        "title": "المعلومات الشخصية",
+        "items": {
+          "fullName": "الاسم الكامل",
+          "email": "البريد الإلكتروني",
+          "phone": "رقم الهاتف",
+          "businessDetails": "تفاصيل العمل"
+        }
+      },
+      "accountInformation": {
+        "title": "معلومات الحساب",
+        "items": {
+          "username": "اسم المستخدم",
+          "encryptedPassword": "كلمة مرور مشفرة",
+          "preferences": "تفضيلات المستخدم",
+          "profileSettings": "إعدادات الملف الشخصي"
+        }
+      },
+      "usageData": {
+        "title": "بيانات الاستخدام",
+        "items": {
+          "interactions": "تفاعلات المنصة",
+          "pagesVisited": "الصفحات التي تمت زيارتها",
+          "featuresUsed": "الميزات المستخدمة",
+          "timeSpent": "الوقت المستغرق"
+        }
+      },
+      "locationData": {
+        "title": "بيانات الموقع",
+        "items": {
+          "businessAddress": "عنوان العمل",
+          "generalLocation": "الموقع العام",
+          "coverageArea": "منطقة التغطية"
+        }
+      }
+    },
+    "dataUsage": {
+      "title": "استخدام البيانات",
+      "description": "نستخدم بياناتك للأغراض التالية:",
+      "items": {
+        "serviceProvision": {
+          "title": "توفير الخدمة",
+          "description": "توفير خدمات المنصة وصيانتها"
+        },
+        "transactions": {
+          "title": "المعاملات",
+          "description": "معالجة المعاملات وإدارة الحسابات"
+        },
+        "communication": {
+          "title": "الاتصال",
+          "description": "التواصل مع المستخدمين حول الخدمات"
+        },
+        "improvement": {
+          "title": "التحسين",
+          "description": "تحسين المنصة وتطوير ميزات جديدة"
+        },
+        "analytics": {
+          "title": "التحليلات",
+          "description": "تحليل أنماط الاستخدام من أجل التحسين"
+        },
+        "security": {
+          "title": "الأمان",
+          "description": "ضمان أمان المنصة ومنع الاحتيال"
+        }
+      }
+    },
+    "dataProtection": {
+      "title": "حماية البيانات",
+      "description": "أمان بياناتك هو أولويتنا القصوى. ننفذ ما يلي:",
+      "features": {
+        "encryption": {
+          "title": "التشفير",
+          "description": "تشفير end-to-end للبيانات الحساسة أثناء النقل والتخزين"
+        },
+        "securityAudits": {
+          "title": "تدقيقات الأمان",
+          "description": "تدقيقات أمان منتظمة وتقييمات الثغرات"
+        },
+        "accessControl": {
+          "title": "التحكم في الوصول",
+          "description": "ضوابط وصول صارمة وأنظمة مصادقة"
+        },
+        "secureStorage": {
+          "title": "التخزين الآمن",
+          "description": "إجراءات تخزين بيانات آمنة ونسخ احتياطية"
+        }
+      }
+    },
+    "dataSharing": {
+      "title": "مشاركة البيانات",
+      "description": "نحن لا نبيع معلوماتك الشخصية. قد نشارك بياناتك فقط في هذه الظروف المحدودة:",
+      "labels": {
+        "allowed": "مسموح"
+      },
+      "items": {
+        "providers": "مع مزودي خدمة موثوقين (الاستضافة، معالجة الدفع)",
+        "legalRequirements": "عند الحاجة بموجب القانون أو لحماية حقوقنا",
+        "consent": "بموافقتك الصريحة لأغراض محددة",
+        "businessTransfer": "بموجب نقل أو دمج الأعمال"
+      }
+    },
+    "yourRights": {
+      "title": "حقوقك",
+      "description": "لديك الحقوق التالية بخصوص بياناتك الشخصية:",
+      "items": {
+        "access": {
+          "title": "👁️ الحق في الوصول",
+          "description": "الوصول إلى معلوماتك الشخصية في أي وقت"
+        },
+        "correct": {
+          "title": "✏️ الحق في التصحيح",
+          "description": "تحديث أو تصحيح المعلومات غير الدقيقة"
+        },
+        "delete": {
+          "title": "🗑️ الحق في الحذف",
+          "description": "حذف حسابك وبياناتك الشخصية"
+        },
+        "optOut": {
+          "title": "✋ الحق في إلغاء الاشتراك",
+          "description": "إلغاء الاشتراك من الاتصالات التسويقية"
+        },
+        "export": {
+          "title": "📥 الحق في التصدير",
+          "description": "طلب نسخة من بياناتك"
+        },
+        "restrict": {
+          "title": "🚫 الحق في التقييد",
+          "description": "تقييد معالجة بياناتك"
+        }
+      }
+    },
+    "cookies": {
+      "title": "ملفات تعريف الارتباط",
+      "description": "نستخدم ملفات تعريف الارتباط لتعزيز تجربتك. إليك ما نستخدمه:",
+      "items": {
+        "essential": {
+          "title": "🔧 ملفات تعريف الارتباط الأساسية",
+          "description": "مطلوبة لوظائف المنصة والأمان"
+        },
+        "analytics": {
+          "title": "📈 ملفات تعريف الارتباط التحليلية",
+          "description": "تساعدنا على فهم أنماط الاستخدام وتحسين الميزات"
+        },
+        "preference": {
+          "title": "💾 ملفات تعريف الارتباط الخاصة بالتفضيلات",
+          "description": "تتذكر إعداداتك وتفضيلاتك"
+        }
+      },
+      "labels": {
+        "required": "مطلوب",
+        "optional": "اختياري"
+      },
+      "note": "📌 يمكنك التحكم في ملفات تعريف الارتباط من خلال إعدادات المتصفح في أي وقت."
+    },
+    "contact": {
+      "title": "أسئلة حول الخصوصية؟",
+      "description": "إذا كانت لديك مخاوف بشأن ممارسات الخصوصية لدينا، يرجى الاتصال بنا:",
+      "email": "📧 privacy@zerowaste.com",
+      "chat": "💬 دردشة الدعم: متاحة 24/7"
+    }
+  },
+  "admin": {
+    "title": "لوحة تحكم الإدارة",
+    "subtitle": "راقب أداء المنصة وأدر نظام ZeroWaste",
+    "notLoggedIn": "أنت غير مسجل الدخول. يرجى",
+    "login": "تسجيل الدخول",
+    "platformCommission": "عمولة المنصة",
+    "activeIssues": "المشاكل النشطة",
+    "platformAnalytics": "تحليلات المنصة",
+    "analyticsSubtitle": "رؤى فورية ومراقبة حالة النظام",
+    "cards": {
+      "userManagement": "إدارة المستخدمين",
+      "userManagementSubtitle": "عرض وإدارة العملاء",
+      "reportsIssues": "التقارير والمشاكل",
+      "reportsIssuesSubtitle": "التعامل مع المحتوى المبلغ عنه",
+      "manageBusinesses": "إدارة الأعمال التجارية",
+      "manageBusinessesSubtitle": "الموافقة أو رفض البائعين"
+    },
+    "loadingStats": "جاري تحميل الإحصائيات…",
+    "stats": {
+      "totalOrders": "إجمالي الطلبات",
+      "totalRevenue": "إجمالي الإيرادات",
+      "activeBusinesses": "الأعمال النشطة",
+      "totalUsers": "إجمالي المستخدمين"
+    },
+    "commissionRate": "سعر العمولة 15%",
+    "foodSaved": "الطعام الموفر",
+    "environmentalImpact": "التأثير البيئي",
+    "avgOrderValue": "متوسط قيمة الطلب",
+    "perTransaction": "لكل معاملة",
+    "weeklyPerformance": "أداء الأسبوع",
+    "chart": {
+      "orders": "الطلبات",
+      "revenue": "الإيرادات (EGP)"
+    },
+    "recentActivityTitle": "سجل الأنشطة الأخير للنظام",
+    "updatingActivity": "جاري تحديث سجلات الأنشطة…",
+    "noRecentActivity": "لا توجد أنشطة حديثة مسجلة.",
+    "activity": {
+      "by": "بواسطة",
+      "system": "النظام",
+      "justNow": "الآن"
+    },
+    "roles": {
+      "superAdmin": "المشرف العام — تحكم كامل",
+      "manager": "مدير",
+      "support": "الدعم"
+    }
+  },
+  "terms": {
+    "title": "شروط الخدمة",
+    "subtitle": "التزامنا بشروط خدمة عادلة وشفافة.",
+    "contentsHeader": "📑 المحتويات",
+    "lastUpdated": "آخر تحديث:",
+    "sections": {
+      "introduction": "المقدمة",
+      "userResponsibilities": "مسؤوليات المستخدم",
+      "prohibitedActivities": "الأنشطة المحظورة",
+      "accountSecurity": "أمان الحساب",
+      "limitationOfLiability": "تحديد المسؤولية",
+      "changesToTerms": "التغييرات في الشروط"
+    },
+    "introduction": {
+      "title": "المقدمة",
+      "description": "تحكم شروط الخدمة هذه (\"الشروط\") استخدامك لمنصة Zero Waste وجميع الخدمات والمواقع والتطبيقات ذات الصلة (مجتمعة، \"المنصة\"). من خلال الوصول إلى منصتنا واستخدامها، فإنك توافق على الالتزام بهذه الشروط.",
+      "warning": "⚖️ إذا كنت لا توافق على أي جزء من هذه الشروط، فيرجى عدم استخدام منصتنا.",
+      "missionTitle": "🎯 مهمتنا",
+      "missionText": "تربط Zero Waste بين الشركات والعملاء لتقليل هدر الطعام وتعزيز الاستدامة. نحن ملتزمون بإنشاء سوق شفاف وجدير بالثقة."
+    },
+    "userResponsibilities": {
+      "title": "مسؤوليات المستخدم",
+      "description": "بصفتك مستخدمًا لمنصتنا، فإنك توافق على:",
+      "accurateInformation": {
+        "title": "معلومات دقيقة",
+        "text": "تقديم معلومات دقيقة عند إنشاء حساب"
+      },
+      "legitimateUse": {
+        "title": "استخدام مشروع",
+        "text": "استخدام المنصة لأغراض مشروعة فقط"
+      },
+      "respectOthers": {
+        "title": "احترام الآخرين",
+        "text": "احترام حقوق المستخدمين والشركات الأخرى"
+      },
+      "securePassword": {
+        "title": "كلمة مرور آمنة",
+        "text": "حفظ بيانات حسابك آمنة وسرية"
+      }
+    },
+    "prohibitedActivities": {
+      "title": "الأنشطة المحظورة",
+      "description": "لا يجوز لك الانخراط في الأنشطة التالية على منصتنا:",
+      "falseInformation": {
+        "title": "معلومات كاذبة",
+        "text": "نشر معلومات خاطئة أو مضللة أو خادعة"
+      },
+      "illegalActivities": {
+        "title": "أنشطة غير قانونية",
+        "text": "انتهاك القوانين أو اللوائح أو الحقوق المعمول بها"
+      },
+      "platformInterference": {
+        "title": "التدخل في المنصة",
+        "text": "التدخل في عمليات المنصة أو تعطيلها"
+      },
+      "harmfulUse": {
+        "title": "استخدام ضار",
+        "text": "استخدام المنصة لأغراض ضارة أو مهددة أو مسيئة"
+      },
+      "fraud": {
+        "title": "احتيال",
+        "text": "الانخراط في أنشطة احتيالية أو مريبة أو غير أخلاقية"
+      },
+      "ipViolations": {
+        "title": "انتهاكات حقوق الملكية الفكرية",
+        "text": "التعدي على حقوق الملكية الفكرية"
+      }
+    },
+    "accountSecurity": {
+      "title": "أمان الحساب",
+      "description": "أنت المسؤول الوحيد عن الحفاظ على سرية بيانات حسابك وعن جميع الأنشطة التي تحدث تحت حسابك، سواء كانت مصرحًا بها أم لا.",
+      "immediateNotification": {
+        "title": "🔔 الإخطار الفوري",
+        "text": "أبلغنا فورًا عن أي وصول غير مصرح به أو نشاط مشبوه"
+      },
+      "accountProtection": {
+        "title": "💻 حماية الحساب",
+        "text": "استخدم كلمات مرور قوية وفريدة وقم بتمكين المصادقة الثنائية إذا كانت متاحة"
+      },
+      "deviceSecurity": {
+        "title": "📱 أمان الجهاز",
+        "text": "حافظ على تحديث أجهزتك وبرامجك بأحدث تصحيحات الأمان"
+      },
+      "unauthorizedAccess": {
+        "title": "🚫 الوصول غير المصرح به",
+        "text": "لا تشارك حسابك مع الآخرين أو تسمح بالوصول غير المصرح به"
+      },
+      "warning": "⚠️ لسنا مسؤولين عن الوصول غير المصرح به إذا فشلت في الحفاظ على أمان الحساب."
+    },
+    "limitationOfLiability": {
+      "title": "تحديد المسؤولية",
+      "description": "إلى أقصى حد يسمح به القانون المعمول به، لا تتحمل Zero Waste أو مسؤولوها أو مديروها أو موظفوها أو وكلاؤها المسؤولية عن:",
+      "indirectDamages": "الأضرار غير المباشرة أو العرضية أو التبعية",
+      "lossOfProfits": "فقدان الأرباح أو البيانات أو الإيرادات",
+      "businessInterruption": "تعطل الأعمال أو انقطاعات الخدمة",
+      "thirdPartyActions": "أفعال أو محتوى طرف ثالث",
+      "capTitle": "💰 حد المسؤولية",
+      "capDescription": "لا تتجاوز مسؤوليتنا الإجمالية المبلغ الذي دفعته لـ Zero Waste في الأشهر الاثني عشر الماضية، أو 100 دولار، أيهما أكبر."
+    },
+    "changesToTerms": {
+      "title": "التغييرات في الشروط",
+      "description": "نحتفظ بالحق في تعديل هذه الشروط في أي وقت. تصبح التغييرات سارية فور نشرها على المنصة.",
+      "acknowledgmentTitle": "📢 إقرارك",
+      "acknowledgmentText": "يعني استمرارك في استخدام المنصة بعد نشر الشروط المعدلة أنك تقبل وتوافق على التغييرات.",
+      "notificationTitle": "الإخطار",
+      "notificationText": "سوف نخطرك بالتغييرات الجوهرية عبر البريد الإلكتروني",
+      "reviewTitle": "فترة المراجعة",
+      "reviewText": "لديك 30 يومًا لمراجعة التغييرات قبل أن تصبح ملزمة",
+      "acceptanceTitle": "القبول",
+      "acceptanceText": "يعد استمرار الاستخدام بعد 30 يومًا قبولًا للشروط الجديدة"
+    },
+    "additionalTerms": {
+      "title": "شروط إضافية هامة",
+      "intellectualProperty": {
+        "title": "📋 الملكية الفكرية",
+        "text": "جميع المحتوى على منصتنا هو ملكنا أو محتوى مرخَّص. لا يجوز لك إعادة إنتاجه بدون إذن."
+      },
+      "governingLaw": {
+        "title": "🌍 القانون الواجب التطبيق",
+        "text": "تخضع هذه الشروط للقوانين المعمول بها. سيتم حل أي نزاعات في المحاكم المناسبة."
+      },
+      "thirdPartyServices": {
+        "title": "🤝 خدمات طرف ثالث",
+        "text": "لسنا مسؤولين عن خدمات أو روابط أو محتوى طرف ثالث على منصتنا."
+      },
+      "contactSupport": {
+        "title": "📞 الاتصال والدعم",
+        "text": "هل لديك أسئلة؟ اتصل بفريق الدعم الخاص بنا على support@zerowaste.com"
+      }
+    },
+    "contact": {
+      "title": "أسئلة حول هذه الشروط؟",
+      "description": "إذا كانت لديك أي أسئلة أو استفسارات حول شروط الخدمة الخاصة بنا، يرجى التواصل:",
+      "email": "📧 legal@zerowaste.com",
+      "chat": "💬 دردشة الدعم: متاحة 24/7",
+      "phone": "📞 دعم الهاتف: قادم قريبًا"
+    }
+  },
   "offerDetail": {
     "loadingOffer": "جاري تحميل العرض...",
     "notFoundTitle": "العرض غير موجود",
@@ -274,6 +696,160 @@
     "reviewAction": "مراجعة",
     "noDataBackendMissing": "⚠️ لا توجد بيانات — مسار الخلفية مفقود",
     "noIssuesFound": "✓ لم يتم العثور على مشاكل"
+  },
+  "businessDashboard": {
+    "notifications": "الإشعارات",
+    "languageEnglish": "English",
+    "languageArabic": "العربية",
+    "myProfile": "حسابي",
+    "branches": "الفروع",
+    "branchLocations": {
+      "maadi": "المعادِ",
+      "nasrCity": "مدينة نصر"
+    },
+    "orders": "الطلبات",
+    "locationLabel": "موقع الفرع",
+    "location": {
+      "maadi": "المعادِ",
+      "nasrCity": "مدينة نصر"
+    },
+    "goToProfile": "اذهب إلى الملف الشخصي",
+    "yourBusiness": "عملك التجاري",
+    "businessAccount": "حساب العمل التجاري",
+    "welcomeBack": "مرحبًا بعودتك، {{business}}",
+    "manageOffersSubtitle": "أدر عروض فائض الطعام من مكان واحد",
+    "impactTitle": "أثرُك هذا الشهر",
+    "foodSaved": "{{count}} كجم طعام محفوظ",
+    "kpis": {
+      "activeOffers": "العروض النشطة",
+      "totalOrders": "إجمالي الطلبات",
+      "todaysRevenue": "إيرادات اليوم"
+    },
+    "charts": {
+      "salesOverview": "نظرة عامة على المبيعات",
+      "salesLabel": "المبيعات",
+      "ordersOverview": "نظرة عامة على الطلبات",
+      "ordersLabel": "الطلبات"
+    },
+    "myOffers": "عروضي",
+    "showLess": "عرض أقل",
+    "viewAllOffers": "عرض الكل ({{count}})",
+    "addOffer": "+ إضافة عرض",
+    "editOffer": "تعديل العرض",
+    "newOffer": "عرض جديد",
+    "previewImageAlt": "صورة معاينة العرض",
+    "form": {
+      "title": "العنوان",
+      "titlePlaceholder": "أدخل عنوان العرض",
+      "description": "الوصف",
+      "descriptionPlaceholder": "اكتب وصفًا موجزًا للعرض",
+      "offerPhoto": "صورة العرض",
+      "originalPrice": "السعر الأصلي",
+      "discountPrice": "سعر الخصم",
+      "quantityAvailable": "الكمية المتاحة",
+      "quantityPlaceholder": "أدخل الكمية المتاحة",
+      "expiresIn": "ينتهي خلال",
+      "expiresInPlaceholder": "أدخل عدد الأيام حتى الانتهاء",
+      "expirationDate": "تاريخ الانتهاء",
+      "status": "الحالة",
+      "pricePlaceholder": "أدخل السعر"
+    },
+    "currency": "EGP",
+    "status": {
+      "active": "نشط",
+      "expired": "منتهي",
+      "disabled": "معطل"
+    },
+    "orderStatus": {
+      "processing": "قيد المعالجة",
+      "completed": "مكتمل",
+      "delivered": "تم التسليم",
+      "cancelled": "أُلغي"
+    },
+    "offerStatus": {
+      "active": "نشط",
+      "expired": "منتهي",
+      "disabled": "معطل"
+    },
+    "cancel": "إلغاء",
+    "saving": "جاري الحفظ...",
+    "saveChanges": "حفظ التغييرات",
+    "createOffer": "إنشاء عرض",
+    "noOffers": "لا توجد عروض لهذا الفرع بعد",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "moreOffers": "{{count}} عروض إضافية",
+    "moreOrders": "{{count}} طلبات إضافية",
+    "recentOrders": "الطلبات الأخيرة",
+    "viewAllOrders": "عرض الكل ({{count}})",
+    "orderTable": {
+      "id": "الرقم",
+      "offer": "العرض",
+      "customer": "الزبون",
+      "amount": "المبلغ",
+      "status": "الحالة"
+    },
+    "errors": {
+      "fillTitleDescription": "يرجى إدخال عنوان ووصف للعرض.",
+      "loginToContinue": "يرجى تسجيل الدخول للمتابعة.",
+      "selectValidBranch": "يرجى اختيار فرع صالح.",
+      "network": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "failedUpdateOrderStatus": "فشل تحديث حالة الطلب. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "manageBusinesses": {
+    "title": "إدارة الأعمال",
+    "subtitle": "راجع سير تسجيل البائعين وبيانات النظام",
+    "backToAdmin": "العودة إلى لوحة الإدارة",
+    "stats": {
+      "totalRegistered": "إجمالي المسجلين",
+      "activeState": "الحسابات النشطة",
+      "awaitingVerification": "في انتظار التحقق",
+      "grossVolume": "إجمالي الحجم المالي"
+    },
+    "controls": {
+      "searchPlaceholder": "تصفية البائعين...",
+      "allStates": "كل الحالات",
+      "allSectors": "كل القطاعات"
+    },
+    "loading": "جاري مزامنة سجلات قاعدة البيانات...",
+    "table": {
+      "businessEntity": "الجهة التجارية",
+      "sector": "القطاع",
+      "state": "الحالة",
+      "performance": "الأداء",
+      "userBase": "قاعدة المستخدمين",
+      "timestamp": "الوقت",
+      "volumeValuation": "تقييم الحجم",
+      "managementActions": "إجراءات الإدارة"
+    },
+    "unknownBusiness": "عمل تجاري غير معروف",
+    "actions": {
+      "manageDetails": "إدارة تفاصيل العمل",
+      "approve": "قبول",
+      "reject": "رفض",
+      "delete": "حذف"
+    },
+    "alerts": {
+      "vendorView": "عرض البائع: {{name}}"
+    },
+    "confirm": {
+      "rejectVendor": "رفض {{name}}؟",
+      "deleteVendor": "حذف {{name}} بشكل دائم؟"
+    },
+    "errors": {
+      "approveFailed": "خطأ في الخادم: لم يتم قبول البائع.",
+      "rejectFailed": "خطأ في الخادم: لم يتم رفض البائع.",
+      "deleteFailed": "خطأ في الخادم: لم يتم حذف البائع."
+    },
+    "status": {
+      "approved": "مقبول",
+      "active": "نشط",
+      "pending": "قيد الانتظار",
+      "underReview": "قيد المراجعة",
+      "rejected": "مرفوض",
+      "unknown": "غير معروف"
+    }
   },
   "common": {
     "save": "حفظ",

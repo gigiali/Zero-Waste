@@ -4,8 +4,13 @@ const CartContext = createContext();
 
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
+  const [showSignInPopup, setShowSignInPopup] = useState(false);
 
-  const addToCart = (item, quantity = 1) => {
+  const addToCart = (item, quantity = 1, isLoggedIn = false) => {
+    if (!isLoggedIn) {
+      setShowSignInPopup(true);
+      return;
+    }
     setCartItems((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       if (existing) {
@@ -35,7 +40,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, totalItems }}
+      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, totalItems, showSignInPopup, setShowSignInPopup }}
     >
       {children}
     </CartContext.Provider>
