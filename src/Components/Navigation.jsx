@@ -1,8 +1,15 @@
 import {
-  ShoppingCart, User, MapPin, Globe, X, Search, LogIn,
+  ShoppingCart,
+  User,
+  MapPin,
+  Globe,
+  X,
+  Search,
+  LogIn,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/AuthContext";
 import { NotificationsBell } from "./Notificationsdropdown";
@@ -16,10 +23,18 @@ export default function Navigation({
 }) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  const { isLoggedIn, logout } = useAuth();
+  const { isLoggedIn, logout, user, updateUser } = useAuth();
+  const { t, i18n } = useTranslation();
 
-  const [isLangDropdownOpen, setIsLangDropdownOpen]     = useState(false);
-  const [selectedLanguage, setSelectedLanguage]         = useState("EN");
+  const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState(() => {
+    const initial =
+      user?.language ||
+      localStorage.getItem("language") ||
+      i18n.language ||
+      "en";
+    return (typeof initial === "string" ? initial : "en").toUpperCase();
+  });
   const [showMap, setShowMap]                           = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm]       = useState(false);
   const [showNotifications, setShowNotifications]       = useState(false);
@@ -68,15 +83,77 @@ export default function Navigation({
     return () => document.removeEventListener("mousedown", handler);
   }, [isLangDropdownOpen]);
 
+  // Sync selectedLanguage when i18n language changes externally
+  useEffect(() => {
+    const handleLanguageChanged = (lng) => {
+      setSelectedLanguage(String(lng).toUpperCase());
+    };
+    i18n.on("languageChanged", handleLanguageChanged);
+    return () => {
+      i18n.off("languageChanged", handleLanguageChanged);
+    };
+  }, [i18n]);
+
+  // ── Language ──────────────────────────────────────────────────────────────
+
+  const updateLanguageOnServer = async (lang) => {
+    if (!isLoggedIn || !user) return;
+    const token =
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
+    if (!token) return;
+
+    let route = "/api/user/profile";
+    if (user.role === "vendor") route = "/api/vendor/profile";
+    else if (user.role === "admin") route = "/api/profile";
+
+    try {
+      await fetch(route, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ language: lang }),
+      });
+    } catch (err) {
+      console.warn("Language preference update failed:", err);
+    }
+  };
+
+  const handleLanguageChange = async (code) => {
+    const lang = code.toLowerCase();
+    setSelectedLanguage(code);
+    await i18n.changeLanguage(lang);
+    if (updateUser) updateUser({ language: lang });
+    updateLanguageOnServer(lang);
+  };
+
   // ── Helpers ──────────────────────────────────────────────────────────────
 
-  const isCairoArea = (address) => {
-    const names = [
-      "cairo","giza","nasr city","maadi","helwan","6th of october","shubra",
-      "ain shams","matariya","dokki","mohandessin","agouza","zamalek","heliopolis",
-      "misr el gdeda","obour","shorouk","new cairo","madinaty","rehab","tagamo3","katameya",
-    ];
-    return names.some((n) => JSON.stringify(address).toLowerCase().includes(n));
+  // Allow Greater Cairo: Cairo, Giza, and Qalyubia governorates only
+  const isCairoArea = (input) => {
+    const raw = JSON.stringify(input).toLowerCase();
+    return (
+      raw.includes("cairo governorate") ||
+      raw.includes("governorate of cairo") ||
+      raw.includes('"state":"cairo"') ||
+      raw.includes('"state": "cairo"') ||
+      raw.includes("giza governorate") ||
+      raw.includes("governorate of giza") ||
+      raw.includes('"state":"giza"') ||
+      raw.includes('"state": "giza"') ||
+      raw.includes("qalyubia governorate") ||
+      raw.includes("qalyubiyya governorate") ||
+      raw.includes("governorate of qalyubia") ||
+      raw.includes('"state":"qalyubia"') ||
+      raw.includes('"state": "qalyubia"') ||
+      raw.includes('"state":"qalyubiyya"') ||
+      raw.includes('"state": "qalyubiyya"')
+    );
   };
 
   // Get current GPS location and reverse-geocode it
@@ -92,6 +169,10 @@ export default function Navigation({
           .then((res) => res.json())
           .then((data) => {
             const locationName =
+              data.address?.suburb ||
+              data.address?.neighbourhood ||
+              data.address?.quarter ||
+              data.address?.city_district ||
               data.address?.city ||
               data.address?.town ||
               data.address?.village ||
@@ -109,8 +190,13 @@ export default function Navigation({
           });
       },
       (err) => {
-        console.error("Error getting location:", err);
+        console.error("Geolocation error:", err);
         alert("Unable to get your location. Please enable location services.");
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
       }
     );
   };
@@ -126,7 +212,7 @@ export default function Navigation({
     mapSearchTimeoutRef.current = setTimeout(async () => {
       try {
         const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=10&countrycodes=eg&accept-language=en`
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&addressdetails=1&limit=10&countrycodes=eg&accept-language=en`
         );
         const data = await res.json();
         setMapSearchResults(data.filter(isCairoArea));
@@ -161,24 +247,47 @@ export default function Navigation({
     if (showMap && mapRef.current && !mapInstanceRef.current) {
       const L = window.L;
       if (L) {
-        const map = L.map(mapRef.current).setView([30.0444, 31.2357], 13);
+        const savedLat  = parseFloat(localStorage.getItem("userLocationLat"));
+        const savedLng  = parseFloat(localStorage.getItem("userLocationLng"));
+        const savedName = localStorage.getItem("userLocationName");
+        const initLat   = !isNaN(savedLat) ? savedLat : 30.0444;
+        const initLng   = !isNaN(savedLng) ? savedLng : 31.2357;
+
+        const map = L.map(mapRef.current).setView([initLat, initLng], 15);
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "© OpenStreetMap contributors",
         }).addTo(map);
-        L.marker([30.0444, 31.2357]).addTo(map).bindPopup("ZeroWaste - Cairo").openPopup();
+
+        if (!isNaN(savedLat) && savedName) {
+          L.marker([initLat, initLng])
+            .addTo(map)
+            .bindPopup(savedName)
+            .openPopup();
+        }
 
         map.on("click", async (e) => {
           const { lat, lng } = e.latlng;
           try {
             const res  = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
             const data = await res.json();
-            if (!isCairoArea(data.address)) {
+            if (!isCairoArea(data)) {
               setAreaNotAvailable(true);
               setTimeout(() => setAreaNotAvailable(false), 4000);
               return;
             }
-            const city = data.address?.city || data.address?.town || data.address?.village || "Unknown";
-            const locationName = `${city}, ${data.address?.country || ""}`.trim().replace(/,$/, "");
+            const a = data.address || {};
+            const locationName =
+              a.suburb ||
+              a.neighbourhood ||
+              a.quarter ||
+              a.city_district ||
+              a.residential ||
+              a.road ||
+              a.city ||
+              a.town ||
+              a.village ||
+              data.display_name ||
+              "Unknown";
             if (mapInstanceRef.current.tempMarker)
               mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
             window.L.marker([lat, lng]).addTo(mapInstanceRef.current).bindPopup("Your location").openPopup();
@@ -258,7 +367,7 @@ export default function Navigation({
         {/* ── Right side ── */}
         <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
 
-          {/* Location pill */}
+          {/* Location pill — her version exactly */}
           {!hideLocation && (
             <div
               style={{
@@ -274,22 +383,29 @@ export default function Navigation({
             >
               <MapPin size={18} />
               <span style={{ fontSize: "0.9rem" }}>{selectedLocation || "Location"}</span>
-              {/* Quick GPS button inside the pill */}
-              <button
-                onClick={(e) => { e.stopPropagation(); handleGetCurrentLocation(); }}
-                title="Use my current location"
-                style={{
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  background: "#10b981", color: "white", border: "none",
-                  borderRadius: "6px", padding: "0.3rem 0.5rem",
-                  cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
-                  transition: "background 0.2s",
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = "#22c55e")}
-                onMouseLeave={(e) => (e.currentTarget.style.background = "#10b981")}
-              >
-                📍
-              </button>
+              {selectedLocation && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedLocation(null);
+                    localStorage.removeItem("userLocationName");
+                    localStorage.removeItem("userLocationLat");
+                    localStorage.removeItem("userLocationLng");
+                  }}
+                  title="Clear location"
+                  style={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    background: "none", color: "#10b981", border: "none",
+                    borderRadius: "50%", padding: "0.1rem",
+                    cursor: "pointer", fontSize: "0.75rem",
+                    transition: "color 0.2s",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#10b981")}
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           )}
 
@@ -324,7 +440,7 @@ export default function Navigation({
             notifRef={notifRef}
           />
 
-          {/* Language */}
+          {/* Language — your full i18n implementation */}
           <div
             data-lang-dropdown
             style={{ position: "relative", display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", color: "#374151" }}
@@ -343,7 +459,7 @@ export default function Navigation({
                   <div
                     key={code}
                     style={{ padding: "0.75rem 1rem", cursor: "pointer", backgroundColor: selectedLanguage === code ? "#f0fdf4" : "white", display: "flex", justifyContent: "space-between" }}
-                    onClick={(e) => { e.stopPropagation(); setSelectedLanguage(code); setIsLangDropdownOpen(false); }}
+                    onClick={(e) => { e.stopPropagation(); handleLanguageChange(code); setIsLangDropdownOpen(false); }}
                     onMouseEnter={(e) => { if (selectedLanguage !== code) e.currentTarget.style.backgroundColor = "#f9fafb"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = selectedLanguage === code ? "#f0fdf4" : "white"; }}
                   >
@@ -357,7 +473,7 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Profile + Logout  — respects hideProfile prop */}
+          {/* Profile + Logout — respects hideProfile prop */}
           {!hideProfile ? (
             isLoggedIn ? (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
@@ -397,10 +513,7 @@ export default function Navigation({
             )
           ) : (
             /* hideProfile = true → always show avatar, no logout */
-            <div
-              ref={profileMenuRef}
-              style={{ position: "relative" }}
-            >
+            <div ref={profileMenuRef} style={{ position: "relative" }}>
               <div
                 onClick={() => navigate("/profile")}
                 title="My Profile"

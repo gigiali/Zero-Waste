@@ -6,6 +6,7 @@ import { AuthProvider } from "./Context/AuthContext";
 import { NotificationsProvider } from "./Context/Notificationscontext";
 import { installApiFetch } from "./utils/api";
 import "./index.css";
+import "./i18n";
 
 installApiFetch();
 
@@ -16,5 +17,5 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <App />
       </NotificationsProvider>
     </CartProvider>
-  </AuthProvider>
+  </AuthProvider>,
 );

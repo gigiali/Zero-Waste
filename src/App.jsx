@@ -40,7 +40,7 @@ function App() {
       <Routes>
 
         {/* Auth */}
-        <Route path="/"                element={<SignIn />} />
+        <Route path="/"                element={<><Navigation /> <HomePage /></>} />
         <Route path="/signin"          element={<SignIn />} />
         <Route path="/signup"          element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />

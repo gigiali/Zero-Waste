@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../Context/AuthContext";
+import { useTranslation } from "react-i18next";
 import Button from "../Components/Button";
 import "../auth-theme.css";
 import "./SignIn.css";
 
 function SignIn() {
-  const [email, setEmail]         = useState("");
-  const [password, setPassword]   = useState("");
+  const { login } = useAuth();
+  const [email, setEmail]           = useState("");
+  const [password, setPassword]     = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors]       = useState({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors]         = useState({});
+  const [isLoading, setIsLoading]   = useState(false);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   useEffect(() => {
     const saved = localStorage.getItem("rememberMe") === "true";
@@ -26,9 +30,9 @@ function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!email)                  newErrors.email    = "Email is required";
-    else if (!validateEmail(email)) newErrors.email = "Enter a valid email address";
-    if (!password)               newErrors.password = "Password is required";
+    if (!email)                     newErrors.email    = "Email is required";
+    else if (!validateEmail(email)) newErrors.email    = "Enter a valid email address";
+    if (!password)                  newErrors.password = "Password is required";
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
 
     setIsLoading(true);
@@ -41,6 +45,8 @@ function SignIn() {
       const data = await response.json();
 
       if (response.ok) {
+        login(data.user, data.token, rememberMe);
+
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
           localStorage.setItem("rememberedEmail", email);
@@ -66,9 +72,10 @@ function SignIn() {
           localStorage.removeItem("user");
           localStorage.removeItem("userRole");
         }
-        if (data.user.role === "vendor")      navigate("/business/profile");
-        else if (data.user.role === "admin")  navigate("/admin");
-        else                                  navigate("/home");
+
+        if (data.user.role === "vendor")     navigate("/business/profile");
+        else if (data.user.role === "admin") navigate("/admin");
+        else                                 navigate("/home");
       } else {
         setErrors({
           general:
@@ -87,16 +94,13 @@ function SignIn() {
   return (
     <main className="auth-page">
       <div className="auth-card">
-        {/* ── header band ── */}
         <div className="auth-card-header">
           <h2>Welcome Back</h2>
           <p>Sign in to continue your journey</p>
         </div>
 
-        {/* ── form body ── */}
         <div className="auth-card-body">
           <form onSubmit={handleSubmit} noValidate>
-            {/* Email */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="si-email">Email</label>
               <input id="si-email" className="auth-input" type="email"
@@ -105,7 +109,6 @@ function SignIn() {
               {errors.email && <span className="auth-error-text">{errors.email}</span>}
             </div>
 
-            {/* Password */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="si-password">Password</label>
               <input id="si-password" className="auth-input" type="password"
@@ -114,7 +117,6 @@ function SignIn() {
               {errors.password && <span className="auth-error-text">{errors.password}</span>}
             </div>
 
-            {/* Options row */}
             <div className="si-options">
               <label className="auth-checkbox-label">
                 <input type="checkbox" checked={rememberMe}

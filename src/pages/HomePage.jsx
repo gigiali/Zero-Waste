@@ -383,25 +383,17 @@ const endpoints = [
 
         if (offersData && offersData.length > 0) {
           const transformedOffers = offersData.map((offer, idx) => {
-            const source = offer.offer || offer;
-            const resolvedId =
-  offer.id ??
-  offer.offer_id ??
-  offer.offerId ??
-  offer._id ??
-  offer._id_str ??
-  offer.uuid ??
-  idx;
-
+            const source = offer;
+            
+const resolvedId = offer.id ?? idx;
 const hasRealId = true;
 const safeId = resolvedId;
-
             return {
               id: safeId,
               hasId: hasRealId,
               title: source.title,
               description: source.description,
-              image: source.image || "/assets/images/e.png",
+              image: `https://zero-waste-production.up.railway.app/storage/${source.image}` || "/assets/images/e.png",
               discount: source.discount_price
                 ? Math.round(
                     ((source.original_price - source.discount_price) /
@@ -412,7 +404,7 @@ const safeId = resolvedId;
               originalPrice: source.original_price || 0,
               discountedPrice: source.discount_price || 0,
               quantity: source.quantity_available || 0,
-              pickupTime: source.expiration_time || "Today",
+              pickupTime: source.expiration_time ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }) : "Today",
               location:
               source.branch?.branch_name ||
               source.branch?.store_address ||

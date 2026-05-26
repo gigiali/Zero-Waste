@@ -1,8 +1,10 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Mail, Bell, MessageSquare } from "lucide-react";
 import "./NotificationSettings.css";
 
 export default function NotificationSettings({ onCancel }) {
+  const { t } = useTranslation();
   const [channels, setChannels] = useState({
     email: true,
     push: true,
@@ -28,28 +30,32 @@ export default function NotificationSettings({ onCancel }) {
 
   return (
     <div className="ns-page">
-
       {/* Hero */}
       <div className="ns-hero">
         <div className="ns-hero-inner">
-          <h1 className="ns-title">Notification Settings</h1>
-          <p className="ns-subtitle">Manage how you receive notifications</p>
+          <h1 className="ns-title">{t("notifications.title")}</h1>
+          <p className="ns-subtitle">{t("notifications.subtitle")}</p>
         </div>
       </div>
 
       {/* Body */}
       <div className="ns-body">
-
         {/* Notification Channels */}
         <div className="ns-card">
-          <h2 className="ns-card-title">Notification Channels</h2>
+          <h2 className="ns-card-title">{t("notifications.channelsTitle")}</h2>
 
           <div className="ns-list">
             <div className="ns-row">
-              <span className="ns-icon"><Mail size={20} /></span>
+              <span className="ns-icon">
+                <Mail size={20} />
+              </span>
               <div className="ns-info">
-                <span className="ns-name">Email Notifications</span>
-                <span className="ns-desc">Receive notifications via email</span>
+                <span className="ns-name">
+                  {t("notifications.channels.email.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.channels.email.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -62,10 +68,16 @@ export default function NotificationSettings({ onCancel }) {
             </div>
 
             <div className="ns-row">
-              <span className="ns-icon"><Bell size={20} /></span>
+              <span className="ns-icon">
+                <Bell size={20} />
+              </span>
               <div className="ns-info">
-                <span className="ns-name">Push Notifications</span>
-                <span className="ns-desc">Get instant updates on your device</span>
+                <span className="ns-name">
+                  {t("notifications.channels.push.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.channels.push.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -78,10 +90,16 @@ export default function NotificationSettings({ onCancel }) {
             </div>
 
             <div className="ns-row">
-              <span className="ns-icon"><MessageSquare size={20} /></span>
+              <span className="ns-icon">
+                <MessageSquare size={20} />
+              </span>
               <div className="ns-info">
-                <span className="ns-name">SMS Notifications</span>
-                <span className="ns-desc">Text message alerts for important updates</span>
+                <span className="ns-name">
+                  {t("notifications.channels.sms.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.channels.sms.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -97,13 +115,17 @@ export default function NotificationSettings({ onCancel }) {
 
         {/* Notification Types */}
         <div className="ns-card">
-          <h2 className="ns-card-title">Notification Types</h2>
+          <h2 className="ns-card-title">{t("notifications.typesTitle")}</h2>
 
           <div className="ns-list">
             <div className="ns-row">
               <div className="ns-info">
-                <span className="ns-name">Order Updates</span>
-                <span className="ns-desc">Status changes for your orders</span>
+                <span className="ns-name">
+                  {t("notifications.types.orderUpdates.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.types.orderUpdates.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -117,8 +139,12 @@ export default function NotificationSettings({ onCancel }) {
 
             <div className="ns-row">
               <div className="ns-info">
-                <span className="ns-name">New Offers</span>
-                <span className="ns-desc">Alerts about new food surplus offers</span>
+                <span className="ns-name">
+                  {t("notifications.types.newOffers.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.types.newOffers.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -132,8 +158,12 @@ export default function NotificationSettings({ onCancel }) {
 
             <div className="ns-row">
               <div className="ns-info">
-                <span className="ns-name">Promotions &amp; Deals</span>
-                <span className="ns-desc">Special offers and discounts</span>
+                <span className="ns-name">
+                  {t("notifications.types.promotions.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.types.promotions.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -147,8 +177,12 @@ export default function NotificationSettings({ onCancel }) {
 
             <div className="ns-row">
               <div className="ns-info">
-                <span className="ns-name">Weekly Digest</span>
-                <span className="ns-desc">Weekly summary of activity</span>
+                <span className="ns-name">
+                  {t("notifications.types.weeklyDigest.name")}
+                </span>
+                <span className="ns-desc">
+                  {t("notifications.types.weeklyDigest.description")}
+                </span>
               </div>
               <label className="ns-toggle">
                 <input
@@ -164,10 +198,13 @@ export default function NotificationSettings({ onCancel }) {
 
         {/* Actions */}
         <div className="ns-actions">
-          <button className="ns-btn-cancel" onClick={onCancel}>Cancel</button>
-          <button className="ns-btn-save" onClick={handleSave}>Save</button>
+          <button className="ns-btn-cancel" onClick={onCancel}>
+            {t("common.cancel")}
+          </button>
+          <button className="ns-btn-save" onClick={handleSave}>
+            {t("common.save")}
+          </button>
         </div>
-
       </div>
     </div>
   );

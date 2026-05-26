@@ -1,20 +1,28 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { RecoveryFrame } from "./ForgotPassword";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
 export default function ResetPassword() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
-  const [password,        setPassword]        = useState("");
+  const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (password.length < 8)         { setError("Password must be at least 8 characters"); return; }
-    if (password !== confirmPassword) { setError("Passwords do not match"); return; }
+    if (password.length < 8) {
+      setError(t("auth.passwordMinLength"));
+      return;
+    }
+    if (password !== confirmPassword) {
+      setError(t("auth.passwordsDoNotMatch"));
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -23,7 +31,10 @@ export default function ResetPassword() {
 
       const response = await fetch("/api/reset-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
           password,
           password_confirmation: confirmPassword,
@@ -38,37 +49,66 @@ export default function ResetPassword() {
         sessionStorage.removeItem("passwordResetPhone");
         navigate("/signin");
       } else {
-        setError(data.message || "Failed to reset password");
+        setError(data.message || t("auth.failedResetPassword"));
       }
     } catch (err) {
       console.error("Reset password error:", err);
-      setError("Network error. Please try again.");
+      setError(t("auth.networkError"));
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <RecoveryFrame title="New Password" showFooter={false}>
+    <RecoveryFrame title={t("auth.newPassword")} showFooter={false}>
       <form onSubmit={handleSubmit} noValidate>
         <div className="auth-field">
-          <label className="auth-label" htmlFor="rp-new">New Password</label>
-          <input id="rp-new" className="auth-input" type="password"
-            placeholder="At least 8 characters" value={password}
-            onChange={(e) => { setPassword(e.target.value); setError(""); }} />
+          <label className="auth-label" htmlFor="rp-new">
+            {t("auth.newPassword")}
+          </label>
+          <input
+            id="rp-new"
+            className="auth-input"
+            type="password"
+            placeholder={t("auth.passwordPlaceholder")}
+            value={password}
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setError("");
+            }}
+          />
         </div>
 
         <div className="auth-field">
-          <label className="auth-label" htmlFor="rp-confirm">Confirm Password</label>
-          <input id="rp-confirm" className="auth-input" type="password"
-            placeholder="••••••••" value={confirmPassword}
-            onChange={(e) => { setConfirmPassword(e.target.value); setError(""); }} />
+          <label className="auth-label" htmlFor="rp-confirm">
+            {t("auth.confirmPassword")}
+          </label>
+          <input
+            id="rp-confirm"
+            className="auth-input"
+            type="password"
+            placeholder={t("auth.confirmPasswordPlaceholder")}
+            value={confirmPassword}
+            onChange={(e) => {
+              setConfirmPassword(e.target.value);
+              setError("");
+            }}
+          />
         </div>
 
-        {error && <p className="auth-error-text" style={{ marginBottom: 12 }}>{error}</p>}
+        {error && (
+          <p className="auth-error-text" style={{ marginBottom: 12 }}>
+            {error}
+          </p>
+        )}
 
-        <button type="submit" className="auth-btn-primary" style={{ marginTop: 4 }} disabled={isLoading}>
-          {isLoading ? "Resetting..." : "Reset Password"}
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          style={{ marginTop: 4 }}
+          disabled={isLoading}
+        >
+          {isLoading ? t("auth.resetting") : t("auth.resetPassword")}
         </button>
       </form>
     </RecoveryFrame>

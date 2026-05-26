@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Button from "../Components/Button";
 import "../auth-theme.css";
 import "./BusinessSetup.css";
 
 function BusinessSetup() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     businessName: "",
@@ -21,15 +23,17 @@ function BusinessSetup() {
   const validateForm = () => {
     const newErrors = {};
     if (!formData.businessName.trim())
-      newErrors.businessName = "Business name is required";
+      newErrors.businessName = t("businessSetup.errors.businessNameRequired");
     if (!formData.businessType)
-      newErrors.businessType = "Business type is required";
+      newErrors.businessType = t("businessSetup.errors.businessTypeRequired");
     if (!formData.taxNumber.trim())
-      newErrors.taxNumber = "Tax number is required";
+      newErrors.taxNumber = t("businessSetup.errors.taxNumberRequired");
     if (!formData.commercialRegister)
-      newErrors.commercialRegister = "Commercial register document is required";
+      newErrors.commercialRegister = t(
+        "businessSetup.errors.commercialRegisterRequired",
+      );
     if (!formData.taxCard)
-      newErrors.taxCard = "Tax card document is required";
+      newErrors.taxCard = t("businessSetup.errors.taxCardRequired");
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -47,40 +51,35 @@ function BusinessSetup() {
         submitData.append("tax_number", formData.taxNumber.trim());
         submitData.append("commercial_register", formData.commercialRegister);
         submitData.append("tax_card", formData.taxCard);
-        if (formData.logo)
-          submitData.append("logo", formData.logo);
+        if (formData.logo) submitData.append("logo", formData.logo);
 
         const token = localStorage.getItem("auth_token");
         if (!token) {
-          setSubmitMessage("Please login to continue");
+          setSubmitMessage(t("businessSetup.errors.loginToContinue"));
           setIsSubmitting(false);
           return;
         }
 
-        const response = await fetch(
-          "/api/vendor/complete-setup",
-          {
-            method: "POST",
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: submitData,
-          }
-        );
+        const response = await fetch("/api/vendor/complete-setup", {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: submitData,
+        });
 
         const responseData = await response.json();
 
         if (response.ok) {
-          setSubmitMessage("Vendor setup completed successfully!");
+          setSubmitMessage(t("businessSetup.success.vendorSetupCompleted"));
           setTimeout(() => navigate("/signin"), 2000);
         } else {
           if (response.status === 401) {
-            setSubmitMessage("Please login to continue");
+            setSubmitMessage(t("businessSetup.errors.loginToContinue"));
           } else if (response.status === 403) {
             setSubmitMessage(
-              responseData.message ||
-                "Access denied. Your account may be pending or rejected."
+              responseData.message || t("businessSetup.errors.accessDenied"),
             );
           } else if (response.status === 422) {
             if (responseData.errors) {
@@ -91,19 +90,17 @@ function BusinessSetup() {
               setErrors(newErrors);
             }
             setSubmitMessage(
-              responseData.message || "Please fix the errors below"
+              responseData.message || t("businessSetup.errors.fixErrorsBelow"),
             );
           } else {
             setSubmitMessage(
-              responseData.message || "An error occurred. Please try again."
+              responseData.message || t("businessSetup.errors.genericError"),
             );
           }
         }
       } catch (error) {
         console.error("Submit error:", error);
-        setSubmitMessage(
-          "Network error. Please check your connection and try again."
-        );
+        setSubmitMessage(t("businessSetup.errors.networkError"));
       } finally {
         setIsSubmitting(false);
       }
@@ -119,8 +116,7 @@ function BusinessSetup() {
     const file = e.target.files[0];
     if (file) {
       setFormData((prev) => ({ ...prev, [field]: file }));
-      if (errors[field])
-        setErrors((prev) => ({ ...prev, [field]: "" }));
+      if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
@@ -128,18 +124,18 @@ function BusinessSetup() {
     <div className="business-setup-page">
       <div className="business-setup-container">
         <div className="business-setup-header">
-          <h2>Complete your business profile</h2>
-          <p>Tell us about your business to get started</p>
+          <h2>{t("businessSetup.title")}</h2>
+          <p>{t("businessSetup.subtitle")}</p>
         </div>
 
         <div className="business-setup-form-section">
           <form className="business-setup-form" onSubmit={handleSubmit}>
             <div className="form-section">
               <div className="form-group">
-                <label>Business Name</label>
+                <label>{t("businessSetup.businessName")}</label>
                 <input
                   type="text"
-                  placeholder="Enter your business name"
+                  placeholder={t("businessSetup.businessNamePlaceholder")}
                   className="form-input"
                   value={formData.businessName}
                   onChange={(e) =>
@@ -152,7 +148,7 @@ function BusinessSetup() {
               </div>
 
               <div className="form-group">
-                <label>Business Type</label>
+                <label>{t("businessSetup.businessType")}</label>
                 <select
                   className="form-input"
                   value={formData.businessType}
@@ -160,13 +156,25 @@ function BusinessSetup() {
                     handleInputChange("businessType", e.target.value)
                   }
                 >
-                  <option value="">Select business type</option>
-                  <option value="restaurant">Restaurant</option>
-                  <option value="supermarket">Supermarket</option>
-                  <option value="coffee-shop">Coffee Shop</option>
-                  <option value="hotel">Hotel</option>
-                  <option value="bakery">Bakery</option>
-                  <option value="dessert-shop">Dessert Shop</option>
+                  <option value="">
+                    {t("businessSetup.selectBusinessType")}
+                  </option>
+                  <option value="restaurant">
+                    {t("businessSetup.type.restaurant")}
+                  </option>
+                  <option value="supermarket">
+                    {t("businessSetup.type.supermarket")}
+                  </option>
+                  <option value="coffee-shop">
+                    {t("businessSetup.type.coffeeShop")}
+                  </option>
+                  <option value="hotel">{t("businessSetup.type.hotel")}</option>
+                  <option value="bakery">
+                    {t("businessSetup.type.bakery")}
+                  </option>
+                  <option value="dessert-shop">
+                    {t("businessSetup.type.dessertShop")}
+                  </option>
                 </select>
                 {errors.businessType && (
                   <span className="error-text">{errors.businessType}</span>
@@ -174,10 +182,13 @@ function BusinessSetup() {
               </div>
 
               <div className="form-group">
-                <label>Tax Number <span style={{color: "#ef4444"}}>*</span></label>
+                <label>
+                  {t("businessSetup.taxNumber")}{" "}
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
                 <input
                   type="text"
-                  placeholder="Enter your tax number"
+                  placeholder={t("businessSetup.taxNumberPlaceholder")}
                   className="form-input"
                   value={formData.taxNumber}
                   onChange={(e) =>
@@ -190,7 +201,10 @@ function BusinessSetup() {
               </div>
 
               <div className="form-group">
-                <label>Commercial Register <span style={{color: "#ef4444"}}>*</span></label>
+                <label>
+                  {t("businessSetup.commercialRegister")}{" "}
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
                 <div className="file-upload">
                   <input
                     type="file"
@@ -201,17 +215,24 @@ function BusinessSetup() {
                   <div className="file-upload-label">
                     {formData.commercialRegister
                       ? formData.commercialRegister.name
-                      : "Upload PDF, JPG or PNG"}
+                      : t("businessSetup.uploadDocumentPlaceholder")}
                   </div>
                 </div>
                 {errors.commercialRegister && (
-                  <span className="error-text">{errors.commercialRegister}</span>
+                  <span className="error-text">
+                    {errors.commercialRegister}
+                  </span>
                 )}
-                <small style={{color: "#6b7280", fontSize: "0.8rem"}}>Required: PDF, JPG or PNG (max 4MB)</small>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+                  Required: PDF, JPG or PNG (max 4MB)
+                </small>
               </div>
 
               <div className="form-group">
-                <label>Tax Card <span style={{color: "#ef4444"}}>*</span></label>
+                <label>
+                  {t("businessSetup.taxCard")}{" "}
+                  <span style={{ color: "#ef4444" }}>*</span>
+                </label>
                 <div className="file-upload">
                   <input
                     type="file"
@@ -222,17 +243,24 @@ function BusinessSetup() {
                   <div className="file-upload-label">
                     {formData.taxCard
                       ? formData.taxCard.name
-                      : "Upload PDF, JPG or PNG"}
+                      : t("businessSetup.uploadDocumentPlaceholder")}
                   </div>
                 </div>
                 {errors.taxCard && (
                   <span className="error-text">{errors.taxCard}</span>
                 )}
-                <small style={{color: "#6b7280", fontSize: "0.8rem"}}>Required: PDF, JPG or PNG (max 4MB)</small>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+                  Required: PDF, JPG or PNG (max 4MB)
+                </small>
               </div>
 
               <div className="form-group">
-                <label>Business Logo <span style={{color: "#6b7280"}}>(Optional)</span></label>
+                <label>
+                  {t("businessSetup.businessLogo")}{" "}
+                  <span style={{ color: "#6b7280" }}>
+                    {t("businessSetup.optional")}
+                  </span>
+                </label>
                 <div className="file-upload">
                   <input
                     type="file"
@@ -243,10 +271,12 @@ function BusinessSetup() {
                   <div className="file-upload-label">
                     {formData.logo
                       ? formData.logo.name
-                      : "Choose logo file (Optional)"}
+                      : t("businessSetup.chooseLogoPlaceholder")}
                   </div>
                 </div>
-                <small style={{color: "#6b7280", fontSize: "0.8rem"}}>Optional: JPEG, PNG or JPG (max 2MB)</small>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>
+                  {t("businessSetup.logoOptionalHint")}
+                </small>
               </div>
             </div>
 
@@ -256,9 +286,9 @@ function BusinessSetup() {
                   submitMessage.includes("successfully")
                     ? "success"
                     : submitMessage.includes("error") ||
-                      submitMessage.includes("failed")
-                    ? "error"
-                    : "warning"
+                        submitMessage.includes("failed")
+                      ? "error"
+                      : "warning"
                 }`}
               >
                 {submitMessage}
@@ -266,7 +296,11 @@ function BusinessSetup() {
             )}
 
             <Button
-              text={isSubmitting ? "Submitting..." : "Complete Setup"}
+              text={
+                isSubmitting
+                  ? t("businessSetup.submitting")
+                  : t("businessSetup.completeSetup")
+              }
               variant="success"
               className="complete-setup-btn"
               disabled={isSubmitting}
@@ -274,7 +308,7 @@ function BusinessSetup() {
           </form>
 
           <div className="back-prompt">
-            <a href="/signup">← Back to Sign Up</a>
+            <a href="/signup">← {t("businessSetup.backToSignUp")}</a>
           </div>
         </div>
       </div>

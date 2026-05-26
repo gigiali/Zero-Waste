@@ -1,17 +1,22 @@
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { ShoppingCart, Trash2 } from "lucide-react";
 import "./CartPage.css";
 import { useCart } from "../Context/CartContext";
 
 export default function CartPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity } = useCart();
   const [selectedDelivery, setSelectedDelivery] = useState(null);
 
   const subtotal = cartItems.reduce(
-    (sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
-    0
+    (sum, item) =>
+      sum +
+      Number(item.discountedPrice ?? item.discountPrice ?? 0) *
+        Number(item.quantity || 0),
+    0,
   );
   const deliveryFee = selectedDelivery === "delivery" ? 25 : 0;
   const total = subtotal + deliveryFee;
@@ -22,9 +27,9 @@ export default function CartPage() {
         <div className="cart-header-inner">
           <div className="cart-header-title">
             <ShoppingCart size={32} />
-            <h1>Shopping Cart</h1>
+            <h1>{t("cart.title")}</h1>
           </div>
-          <p className="cart-header-subtitle">Review your items before checkout</p>
+          <p className="cart-header-subtitle">{t("cart.subtitle")}</p>
         </div>
       </div>
 
@@ -33,8 +38,8 @@ export default function CartPage() {
           {cartItems.length === 0 ? (
             <div className="cart-empty">
               <ShoppingCart size={48} color="#d1d5db" />
-              <h3>Your cart is empty</h3>
-              <p>Add some offers to get started!</p>
+              <h3>{t("cart.emptyTitle")}</h3>
+              <p>{t("cart.emptyMessage")}</p>
             </div>
           ) : (
             cartItems.map((item) => (
@@ -48,7 +53,10 @@ export default function CartPage() {
                     e.target.nextSibling.style.display = "flex";
                   }}
                 />
-                <div className="cart-item-placeholder" style={{ display: "none" }}>
+                <div
+                  className="cart-item-placeholder"
+                  style={{ display: "none" }}
+                >
                   🍽️
                 </div>
 
@@ -57,25 +65,46 @@ export default function CartPage() {
                   <p className="cart-item-location">{item.location}</p>
                   <div className="cart-item-prices">
                     <span className="cart-item-price">
-                      EGP {Number(item.discountedPrice ?? item.discountPrice ?? 0).toFixed(2)}
+                      EGP{" "}
+                      {Number(
+                        item.discountedPrice ?? item.discountPrice ?? 0,
+                      ).toFixed(2)}
                     </span>
                     <span className="cart-item-original-price">
-                      EGP {Number(item.originalPrice ?? item.original_price ?? 0).toFixed(2)}
+                      EGP{" "}
+                      {Number(
+                        item.originalPrice ?? item.original_price ?? 0,
+                      ).toFixed(2)}
                     </span>
                   </div>
                   {item.pickupTime && (
-                    <p className="cart-item-expiry">Pickup: {item.pickupTime}</p>
+                    <p className="cart-item-expiry">
+                      {t("cart.pickupPrefix")}: {item.pickupTime}
+                    </p>
                   )}
                 </div>
 
-                <button className="cart-item-delete" onClick={() => removeFromCart(item.id)}>
+                <button
+                  className="cart-item-delete"
+                  onClick={() => removeFromCart(item.id)}
+                >
                   <Trash2 size={20} />
                 </button>
 
                 <div className="cart-item-quantity">
-                  <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}>−</button>
+                  <button
+                    className="qty-btn"
+                    onClick={() => updateQuantity(item.id, -1)}
+                  >
+                    −
+                  </button>
                   <span className="qty-number">{item.quantity}</span>
-                  <button className="qty-btn" onClick={() => updateQuantity(item.id, 1)}>+</button>
+                  <button
+                    className="qty-btn"
+                    onClick={() => updateQuantity(item.id, 1)}
+                  >
+                    +
+                  </button>
                 </div>
               </div>
             ))
@@ -83,26 +112,26 @@ export default function CartPage() {
         </div>
 
         <div className="order-summary">
-          <h2>Order Summary</h2>
+          <h2>{t("cart.summaryTitle")}</h2>
           <div className="summary-rows">
             <div className="summary-row">
-              <span>Subtotal</span>
+              <span>{t("cart.subtotal")}</span>
               <span>EGP {subtotal.toFixed(2)}</span>
             </div>
             {deliveryFee > 0 && (
               <div className="summary-row">
-                <span>Delivery Fee</span>
+                <span>{t("cart.deliveryFee")}</span>
                 <span>EGP {deliveryFee.toFixed(2)}</span>
               </div>
             )}
           </div>
           <div className="summary-total">
-            <span>Total</span>
+            <span>{t("cart.total")}</span>
             <span>EGP {total.toFixed(2)}</span>
           </div>
 
           <div className="delivery-options">
-            <h3>Choose Delivery Method</h3>
+            <h3>{t("cart.chooseDeliveryMethod")}</h3>
             <div className="delivery-buttons">
               <button
                 className={`delivery-btn pickup-btn ${selectedDelivery === "pickup" ? "selected" : ""}`}
@@ -110,10 +139,16 @@ export default function CartPage() {
               >
                 <span className="delivery-icon">🏪</span>
                 <div className="delivery-info">
-                  <span className="delivery-title">Pickup from Restaurant</span>
-                  <span className="delivery-desc">Collect your order directly</span>
+                  <span className="delivery-title">
+                    {t("cart.pickupTitle")}
+                  </span>
+                  <span className="delivery-desc">
+                    {t("cart.pickupDescription")}
+                  </span>
                 </div>
-                {selectedDelivery === "pickup" && <span className="selected-indicator">✓</span>}
+                {selectedDelivery === "pickup" && (
+                  <span className="selected-indicator">✓</span>
+                )}
               </button>
               <button
                 className={`delivery-btn delivery-home-btn ${selectedDelivery === "delivery" ? "selected" : ""}`}
@@ -121,29 +156,41 @@ export default function CartPage() {
               >
                 <span className="delivery-icon">🚚</span>
                 <div className="delivery-info">
-                  <span className="delivery-title">Home Delivery</span>
-                  <span className="delivery-desc">Get it delivered to your door</span>
+                  <span className="delivery-title">
+                    {t("cart.deliveryTitle")}
+                  </span>
+                  <span className="delivery-desc">
+                    {t("cart.deliveryDescription")}
+                  </span>
                 </div>
                 <span className="delivery-fee">+25 EGP</span>
-                {selectedDelivery === "delivery" && <span className="selected-indicator">✓</span>}
+                {selectedDelivery === "delivery" && (
+                  <span className="selected-indicator">✓</span>
+                )}
               </button>
             </div>
             {selectedDelivery && (
               <div className="delivery-confirmation">
                 <small className="selected-text">
-                  {selectedDelivery === "pickup" ? "🏪 Pickup selected" : "🚚 Delivery selected"}
+                  {selectedDelivery === "pickup"
+                    ? t("cart.pickupSelected")
+                    : t("cart.deliverySelected")}
                 </small>
                 <button
                   className="confirm-delivery-btn"
-                  onClick={() => navigate(`/payment?method=${selectedDelivery}`)}
+                  onClick={() =>
+                    navigate(`/payment?method=${selectedDelivery}`)
+                  }
                 >
-                  Continue to Payment
+                  {t("cart.continueToPayment")}
                 </button>
               </div>
             )}
           </div>
 
           <button className="continue-btn" onClick={() => navigate("/home")}>
+            {" "}
+            {t("cart.continueShopping")}
             Continue Shopping
           </button>
         </div>

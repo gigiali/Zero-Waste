@@ -3,89 +3,138 @@ import {
   ArrowLeft,
   Clock,
   MapPin,
-  Share2,
   Phone,
   Mail,
   ShoppingCart,
   Check,
   Star,
   Store,
+  Package,
+  Tag,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import { useCart } from "../Context/CartContext";
 import "./OfferDetail.css";
 
 const normalizeOffer = (payload) => {
-  const source = payload?.offer || payload?.data || payload;
+  const source = payload?.data || payload?.offer || payload;
   if (!source) return null;
 
   const originalPrice = Number(
-    source.originalPrice ?? source.original_price ?? source.price ?? 0,
+    source.original_price ?? source.originalPrice ?? 0,
   );
   const discountedPrice = Number(
-    source.discountedPrice ??
-      source.discount_price ??
-      source.discountPrice ??
-      0,
+    source.discount_price ?? source.discountedPrice ?? 0,
   );
-  const quantity = Number(source.quantity ?? source.quantity_available ?? 0);
+  const quantity = Number(source.quantity_available ?? source.quantity ?? 0);
   const discount =
-    source.discount ??
-    (originalPrice > 0 && discountedPrice > 0
+    originalPrice > 0 && discountedPrice > 0
       ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
-      : 0);
+      : (source.discount ?? 0);
+
   const branch = source.branch || {};
-  const vendor = source.vendor || branch.vendor || {};
+  const vendor = branch.vendor || source.vendor || {};
+
+  const expirationTime = source.expiration_time
+    ? new Date(source.expiration_time).toLocaleTimeString("en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+    : "Today";
 
   return {
     id: source.id,
     title: source.title || "Untitled Offer",
     description: source.description || "No description available",
-    image: source.image_url || source.image || "/images/e.png",
+    image:
+      `https://zero-waste-production.up.railway.app/storage/${source.image}` ||
+      "/images/e.png",
     discount,
     originalPrice,
     discountedPrice,
-    discountPrice: discountedPrice,
     quantity,
-    pickupTime: source.pickupTime || source.expiration_time || "Today",
+    pickupTime: expirationTime,
+    expirationRaw: source.expiration_time,
     location:
-    branch.branch_name || 
-    branch.store_address || 
-    source.location || 
-    vendor.business_name || "Restaurant",
+      branch.branch_name ||
+      branch.store_address ||
+      vendor.business_name ||
+      "Restaurant",
     distance: source.distance || "",
     category: branch.type || source.category || "Restaurant",
-    restaurantName:
-      vendor.business_name ||
-      source.restaurantName ||
-      branch.name ||
-      "Restaurant",
-    restaurantRating: source.restaurantRating || vendor.rating || 4.5,
-    restaurantHours: source.restaurantHours || branch.opening_hours || "N/A",
-    restaurantPhone:
-      source.restaurantPhone || branch.contact_phone || vendor.phone || "N/A",
-    restaurantEmail:
-      source.restaurantEmail || branch.contact_email || vendor.email || "N/A",
+    restaurantName: vendor.business_name || branch.branch_name || "Restaurant",
+    restaurantRating: source.average_rating || vendor.rating || 0,
+    restaurantHours: branch.opening_hours || "N/A",
+    restaurantPhone: branch.contact_phone || vendor.phone || "N/A",
+    restaurantEmail: branch.contact_email || vendor.email || "N/A",
+    restaurantLogo: vendor.logo || null,
+    branchAddress: branch.store_address || "",
   };
 };
 
+function CountdownTimer({ expirationRaw }) {
+  const [timeLeft, setTimeLeft] = useState({
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+  const [isUrgent, setIsUrgent] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
+
+  useEffect(() => {
+    const calculate = () => {
+      if (!expirationRaw) return;
+      const target = new Date(expirationRaw);
+      const diff = target - new Date();
+      if (diff <= 0) {
+        setIsExpired(true);
+        return;
+      }
+      const h = Math.floor(diff / 3600000);
+      const m = Math.floor((diff % 3600000) / 60000);
+      const s = Math.floor((diff % 60000) / 1000);
+      setIsUrgent(h === 0 && m < 30);
+      setTimeLeft({ hours: h, minutes: m, seconds: s });
+    };
+    calculate();
+    const interval = setInterval(calculate, 1000);
+    return () => clearInterval(interval);
+  }, [expirationRaw]);
+
+  const pad = (n) => String(n).padStart(2, "0");
+
+  if (isExpired) return <span className="od-expired-badge">Expired</span>;
+
+  return (
+    <div className={`od-countdown ${isUrgent ? "urgent" : ""}`}>
+      <Clock size={14} />
+      <span>
+        {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
+      </span>
+      <span className="od-countdown-label">
+        {isUrgent ? "Hurry!" : "remaining"}
+      </span>
+    </div>
+  );
+}
+
 export default function OfferDetail() {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart } = useCart();
-
   const [offer, setOffer] = useState(null);
   const [loadingOffer, setLoadingOffer] = useState(true);
-  const [rawResponse, setRawResponse] = useState(null);
-
   const [offerReviews, setOfferReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  const [activeTab, setActiveTab] = useState("details");
 
   useEffect(() => {
     let mounted = true;
-
     (async () => {
       try {
         const token =
@@ -96,22 +145,10 @@ export default function OfferDetail() {
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const tryUrls = [`/api/offers/${id}`, `/offers/${id}`];
-        let data = null;
-
-        for (const url of tryUrls) {
-          const res = await fetch(url, { headers });
-          if (!mounted) return;
-          if (res.ok) {
-            data = await res.json();
-            break;
-          }
-          // try next url on 404; for other statuses, stop and throw
-          if (res.status !== 404) throw new Error("Fetch error");
-        }
-
-        if (data) {
-          setRawResponse(data);
+        const res = await fetch(`/api/offers/${id}`, { headers });
+        if (!mounted) return;
+        if (res.ok) {
+          const data = await res.json();
           setOffer(normalizeOffer(data));
         } else {
           setOffer(null);
@@ -122,7 +159,6 @@ export default function OfferDetail() {
         if (mounted) setLoadingOffer(false);
       }
     })();
-
     return () => {
       mounted = false;
     };
@@ -131,7 +167,6 @@ export default function OfferDetail() {
   useEffect(() => {
     let mounted = true;
     setLoadingReviews(true);
-
     (async () => {
       try {
         const token =
@@ -142,24 +177,11 @@ export default function OfferDetail() {
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const tryUrls = [`/api/offers/${id}/reviews`, `/offers/${id}/reviews`];
-        let data = null;
-
-        for (const url of tryUrls) {
-          const res = await fetch(url, { headers });
-          if (!mounted) return;
-          if (res.ok) {
-            data = await res.json();
-            break;
-          }
-          if (res.status !== 404) throw new Error("Fetch error");
-        }
-
-        if (data) {
-          setRawResponse((prev) => prev || data);
-          setOfferReviews(data.reviews || []);
-        } else {
-          setOfferReviews([]);
+        const res = await fetch(`/api/offers/${id}/reviews`, { headers });
+        if (!mounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          setOfferReviews(data.data || data.reviews || data || []);
         }
       } catch {
         setOfferReviews([]);
@@ -167,7 +189,6 @@ export default function OfferDetail() {
         if (mounted) setLoadingReviews(false);
       }
     })();
-
     return () => {
       mounted = false;
     };
@@ -180,324 +201,438 @@ export default function OfferDetail() {
     setTimeout(() => setAdded(false), 2000);
   };
 
+  const avgRating =
+    offerReviews.length > 0
+      ? (
+          offerReviews.reduce((a, r) => a + (r.rating || 0), 0) /
+          offerReviews.length
+        ).toFixed(1)
+      : null;
+
   if (loadingOffer) {
     return (
-      <div className="offer-detail-container">
-        <p style={{ textAlign: "center", marginTop: "2rem" }}>Loading...</p>
+      <div className="od-loading">
+        <div className="od-spinner" />
+        <p>{t("offerDetail.loadingOffer")}</p>
       </div>
     );
   }
 
   if (!offer) {
     return (
-      <div className="offer-detail-container">
-        <div className="not-found">
-          <h2>Offer not found</h2>
-          <button onClick={() => navigate("/")} className="back-btn">
-            ← Back to Home
-          </button>
-          {rawResponse && (
-            <details style={{ marginTop: "1rem", textAlign: "left" }}>
-              <summary>Debug: raw response</summary>
-              <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
-                {JSON.stringify(rawResponse, null, 2)}
-              </pre>
-            </details>
-          )}
-        </div>
+      <div className="od-not-found">
+        <div className="od-not-found-icon">🔍</div>
+        <h2>{t("offerDetail.notFoundTitle")}</h2>
+        <p>{t("offerDetail.notFoundMessage")}</p>
+        <button onClick={() => navigate("/")} className="od-back-home-btn">
+          ← {t("offerDetail.backToHome")}
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="offer-detail-container">
-      {/* ── Back Bar ── */}
-      <div className="detail-header">
-        <button onClick={() => navigate(-1)} className="back-btn">
-          <ArrowLeft size={18} />
-          Back
+    <div className="od-container">
+      {/* ── Top Bar ── */}
+      <div className="od-topbar">
+        <button onClick={() => navigate(-1)} className="od-back-btn">
+          <ArrowLeft size={18} /> {t("offerDetail.back")}
         </button>
-        <button className="share-btn">
-          <Share2 size={18} />
-        </button>
+        <span className="od-topbar-title">{t("offerDetail.pageTitle")}</span>
       </div>
 
-      {/* ── Hero ── */}
-      <div className="detail-hero">
+      {/* ── Hero Image ── */}
+      <div className="od-hero">
         <img
-          src={offer.image || "/images/e.png"}
+          src={offer.image}
           alt={offer.title}
-          className="detail-hero-image"
+          className="od-hero-img"
+          onError={(e) => {
+            e.target.src = "/images/e.png";
+          }}
         />
-        <div className="detail-hero-overlay" />
-        <div className="detail-hero-content">
-          <div className="detail-hero-text">
-            <h1>{offer.restaurantName}</h1>
-            <div className="detail-hero-meta">
-              <span>
-                <MapPin size={14} /> {offer.location} · {offer.distance}
-              </span>
-              <span className="hero-rating">⭐ {offer.restaurantRating}</span>
+        <div className="od-hero-overlay" />
+
+        {offer.discount > 0 && (
+          <div className="od-discount-badge">-{offer.discount}%</div>
+        )}
+
+        <CountdownTimer expirationRaw={offer.expirationRaw} />
+
+        <div className="od-hero-bottom">
+          <div className="od-restaurant-info">
+            {offer.restaurantLogo && (
+              <img
+                src={offer.restaurantLogo}
+                alt={offer.restaurantName}
+                className="od-restaurant-logo"
+                onError={(e) => {
+                  e.target.style.display = "none";
+                }}
+              />
+            )}
+            <div>
+              <h2 className="od-restaurant-name">{offer.title}</h2>
+              <div className="od-restaurant-meta">
+                <MapPin size={13} />
+                <span>{offer.location}</span>
+                {offer.restaurantRating > 0 && (
+                  <span className="od-rating-pill">
+                    ⭐ {offer.restaurantRating}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
-
           <button
+            className="od-view-restaurant-btn"
             onClick={() => navigate(`/restaurant/${id}`)}
-            className="view-restaurant-btn"
-            title="View restaurant details"
-            style={{
-              background: "rgba(255,255,255,0.15)",
-              backdropFilter: "blur(8px)",
-              border: "1px solid rgba(255,255,255,0.3)",
-              padding: "0.5rem 1rem",
-              borderRadius: "24px",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              cursor: "pointer",
-              color: "white",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              transition: "all 0.25s",
-              flexShrink: 0,
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.25)";
-              e.currentTarget.style.transform = "translateY(-2px)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.15)";
-              e.currentTarget.style.transform = "translateY(0)";
-            }}
           >
-            <Store size={18} />
-            View Restaurant
+            <Store size={16} /> {t("offerDetail.viewRestaurant")}
           </button>
         </div>
       </div>
 
-      {/* ── Info Strip ── */}
-      <div className="detail-info-strip">
-        <div className="detail-info-strip-inner">
-          <div className="info-strip-item">
-            <div className="info-strip-icon">
-              <Clock size={18} />
-            </div>
-            <div>
-              <div className="info-strip-label">Open Hours</div>
-              <div className="info-strip-value">{offer.restaurantHours}</div>
-            </div>
-          </div>
-          <div className="info-strip-item">
-            <div className="info-strip-icon">
-              <Phone size={18} />
-            </div>
-            <div>
-              <div className="info-strip-label">Phone</div>
-              <div className="info-strip-value">{offer.restaurantPhone}</div>
-            </div>
-          </div>
-          <div className="info-strip-item">
-            <div className="info-strip-icon">
-              <Mail size={18} />
-            </div>
-            <div>
-              <div className="info-strip-label">Email</div>
-              <div className="info-strip-value">{offer.restaurantEmail}</div>
-            </div>
-          </div>
+      {/* ── Offer Title + Price ── */}
+      <div className="od-offer-header">
+        <div className="od-offer-title-row">
+          <span className="od-quantity-badge">
+            <Package size={14} /> {offer.quantity} left
+          </span>
+        </div>
+        <div className="od-price-row">
+          <span className="od-price-new">EGP {offer.discountedPrice}</span>
+          {offer.originalPrice > 0 && (
+            <span className="od-price-old">EGP {offer.originalPrice}</span>
+          )}
+          {offer.discount > 0 && (
+            <span className="od-save-badge">
+              <Tag size={12} /> Save EGP{" "}
+              {(offer.originalPrice - offer.discountedPrice).toFixed(2)}
+            </span>
+          )}
         </div>
       </div>
 
-      {/* ── Body ── */}
-      <div className="detail-body">
-        {/* Left — Offers */}
-        <div className="offers-section">
-          <h2>Available Offers (1)</h2>
+      {/* ── Tabs ── */}
+      <div className="od-tabs">
+        {["details", "restaurant", "reviews"].map((tab) => (
+          <button
+            key={tab}
+            className={`od-tab ${activeTab === tab ? "active" : ""}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab === "details"
+              ? "Offer Details"
+              : tab === "restaurant"
+                ? "Restaurant Info"
+                : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
+          </button>
+        ))}
+      </div>
 
-          <div className="offer-card">
-            <img
-              src={offer.image || "/images/e.png"}
-              alt={offer.title}
-              className="offer-card-image"
-            />
-            <div className="offer-card-body">
-              <div className="offer-card-top">
-                <span className="offer-card-title">{offer.title}</span>
-                <span className="offer-badge">-{offer.discount}%</span>
-              </div>
-              <p className="offer-card-desc">{offer.description}</p>
-              <div className="offer-card-pricing">
-                <span className="price-new">EGP {offer.discountedPrice}</span>
-                <span className="price-old">EGP {offer.originalPrice}</span>
-              </div>
-              <div className="offer-card-footer">
-                <div className="offer-meta">
-                  <span>📦 {offer.quantity} left in stock</span>
-                  <span>
-                    <Clock size={13} /> Pickup: {offer.pickupTime}
-                  </span>
+      {/* ── Tab Content ── */}
+      <div className="od-tab-content">
+        {/* Details Tab */}
+        {activeTab === "details" && (
+          <div className="od-details-tab">
+            <div className="od-section-card">
+              <h3 className="od-section-title">
+                {t("offerDetail.aboutOffer")}
+              </h3>
+              <p className="od-description">{offer.description}</p>
+            </div>
+
+            <div className="od-section-card">
+              <h3 className="od-section-title">
+                {t("offerDetail.offerInformation")}
+              </h3>
+              <div className="od-info-grid">
+                <div className="od-info-item">
+                  <div className="od-info-icon">
+                    <Clock size={18} />
+                  </div>
+                  <div>
+                    <div className="od-info-label">
+                      {t("offerDetail.pickupBy")}
+                    </div>
+                    <div className="od-info-value">{offer.pickupTime}</div>
+                  </div>
                 </div>
-                <div className="offer-card-actions">
-                  <select
-                    className="qty-select"
-                    value={qty}
-                    onChange={(e) => setQty(Number(e.target.value))}
-                  >
-                    {[
-                      ...Array(
-                        Math.max(1, Math.min(Number(offer.quantity || 0), 10)),
-                      ),
-                    ].map((_, i) => (
-                      <option key={i + 1} value={i + 1}>
-                        Qty: {i + 1}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    className={`reserve-btn ${added ? "reserve-btn-added" : ""}`}
-                    onClick={handleAddToCart}
-                  >
-                    {added ? (
-                      <>
-                        <Check size={15} /> Added!
-                      </>
-                    ) : (
-                      <>
-                        <ShoppingCart size={15} /> Add to Cart
-                      </>
-                    )}
-                  </button>
+                <div className="od-info-item">
+                  <div className="od-info-icon">
+                    <Package size={18} />
+                  </div>
+                  <div>
+                    <div className="od-info-label">
+                      {t("offerDetail.available")}
+                    </div>
+                    <div className="od-info-value">
+                      {offer.quantity} {t("offerDetail.portions")}
+                    </div>
+                  </div>
+                </div>
+                <div className="od-info-item">
+                  <div className="od-info-icon">
+                    <MapPin size={18} />
+                  </div>
+                  <div>
+                    <div className="od-info-label">
+                      {t("offerDetail.location")}
+                    </div>
+                    <div className="od-info-value">
+                      {offer.branchAddress || offer.location}
+                    </div>
+                  </div>
+                </div>
+                <div className="od-info-item">
+                  <div className="od-info-icon">
+                    <Tag size={18} />
+                  </div>
+                  <div>
+                    <div className="od-info-label">
+                      {t("offerDetail.category")}
+                    </div>
+                    <div className="od-info-value">{offer.category}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Qty Selector */}
+            <div className="od-section-card od-qty-card">
+              <h3 className="od-section-title">
+                {t("offerDetail.selectQuantity")}
+              </h3>
+              <div className="od-qty-row">
+                <button
+                  className="od-qty-btn"
+                  onClick={() => setQty((q) => Math.max(1, q - 1))}
+                >
+                  −
+                </button>
+                <span className="od-qty-value">{qty}</span>
+                <button
+                  className="od-qty-btn"
+                  onClick={() => setQty((q) => Math.min(offer.quantity, q + 1))}
+                >
+                  +
+                </button>
+                <div className="od-qty-total">
+                  {t("offerDetail.total")}:{" "}
+                  <strong>
+                    EGP {(offer.discountedPrice * qty).toFixed(2)}
+                  </strong>
                 </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Right — Sidebar */}
-        <div className="detail-sidebar">
-          <div className="sidebar-card">
-            <h3>Restaurant Info</h3>
-            <div className="sidebar-row">
-              <span className="sidebar-label">Name</span>
-              <span className="sidebar-value">{offer.restaurantName}</span>
-            </div>
-            <div className="sidebar-row">
-              <span className="sidebar-label">Category</span>
-              <span className="sidebar-value">{offer.category}</span>
-            </div>
-            <div className="sidebar-row">
-              <span className="sidebar-label">Rating</span>
-              <span className="sidebar-value">
-                ⭐ {offer.restaurantRating} / 5.0
-              </span>
-            </div>
-            <div className="sidebar-row">
-              <span className="sidebar-label">Distance</span>
-              <span className="sidebar-value">{offer.distance}</span>
-            </div>
-          </div>
-
-          {/* Reviews Section */}
-          <div className="sidebar-card reviews-card">
-            <h3>Customer Reviews</h3>
-            {loadingReviews ? (
-              <p className="no-reviews">Loading reviews...</p>
-            ) : offerReviews.length === 0 ? (
-              <p className="no-reviews">
-                No reviews yet. Be the first to order and review!
-              </p>
-            ) : (
-              <>
-                <div className="reviews-summary">
-                  <div className="avg-rating">
-                    <span className="avg-stars">
-                      {[1, 2, 3, 4, 5].map((star) => (
+        {/* Restaurant Tab */}
+        {activeTab === "restaurant" && (
+          <div className="od-restaurant-tab">
+            <div className="od-section-card">
+              <div className="od-restaurant-header">
+                {offer.restaurantLogo && (
+                  <img
+                    src={offer.restaurantLogo}
+                    alt={offer.restaurantName}
+                    className="od-rest-logo-lg"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                    }}
+                  />
+                )}
+                <div>
+                  <h2 className="od-rest-name-lg">{offer.restaurantName}</h2>
+                  {offer.restaurantRating > 0 && (
+                    <div className="od-rest-stars">
+                      {[1, 2, 3, 4, 5].map((s) => (
                         <Star
-                          key={star}
-                          size={18}
+                          key={s}
+                          size={16}
                           fill={
-                            star <=
-                            Math.round(
-                              offerReviews.reduce((a, r) => a + r.rating, 0) /
-                                offerReviews.length,
-                            )
+                            s <= Math.round(offer.restaurantRating)
                               ? "#fbbf24"
                               : "none"
                           }
                           color={
-                            star <=
-                            Math.round(
-                              offerReviews.reduce((a, r) => a + r.rating, 0) /
-                                offerReviews.length,
-                            )
+                            s <= Math.round(offer.restaurantRating)
                               ? "#fbbf24"
                               : "#d1d5db"
                           }
                         />
                       ))}
-                    </span>
-                    <span className="avg-text">
-                      {(
-                        offerReviews.reduce((a, r) => a + r.rating, 0) /
-                        offerReviews.length
-                      ).toFixed(1)}{" "}
-                      / 5
-                    </span>
-                  </div>
-                  <span className="reviews-count">
-                    {offerReviews.length} review
-                    {offerReviews.length !== 1 ? "s" : ""}
-                  </span>
+                      <span>{offer.restaurantRating} / 5</span>
+                    </div>
+                  )}
                 </div>
-                <div className="reviews-list">
+              </div>
+
+              <div className="od-rest-details">
+                {[
+                  {
+                    icon: <MapPin size={16} />,
+                    key: "address",
+                    label: t("offerDetail.address"),
+                    value: offer.branchAddress || offer.location,
+                  },
+                  {
+                    icon: <Clock size={16} />,
+                    key: "openingHours",
+                    label: t("offerDetail.openingHours"),
+                    value: offer.restaurantHours,
+                  },
+                  {
+                    icon: <Phone size={16} />,
+                    key: "phone",
+                    label: t("offerDetail.phone"),
+                    value: offer.restaurantPhone,
+                  },
+                  {
+                    icon: <Mail size={16} />,
+                    key: "email",
+                    label: t("offerDetail.email"),
+                    value: offer.restaurantEmail,
+                  },
+                ].map(({ icon, key, label, value }) => (
+                  <div className="od-rest-row" key={key}>
+                    <div className="od-rest-row-icon">{icon}</div>
+                    <div>
+                      <div className="od-rest-row-label">{label}</div>
+                      <div className="od-rest-row-value">{value}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                className="od-view-rest-full-btn"
+                onClick={() => navigate(`/restaurant/${id}`)}
+              >
+                <Store size={16} /> {t("offerDetail.viewFullRestaurant")}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === "reviews" && (
+          <div className="od-reviews-tab">
+            {loadingReviews ? (
+              <div
+                className="od-section-card"
+                style={{ textAlign: "center", padding: "2rem" }}
+              >
+                <div className="od-spinner" />
+              </div>
+            ) : offerReviews.length === 0 ? (
+              <div className="od-section-card od-no-reviews">
+                <div style={{ fontSize: "2.5rem" }}>💬</div>
+                <h3>{t("offerDetail.noReviewsTitle")}</h3>
+                <p>{t("offerDetail.noReviewsMessage")}</p>
+              </div>
+            ) : (
+              <>
+                <div className="od-section-card od-reviews-summary">
+                  <div className="od-avg-score">{avgRating}</div>
+                  <div>
+                    <div className="od-avg-stars">
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star
+                          key={s}
+                          size={20}
+                          fill={s <= Math.round(avgRating) ? "#fbbf24" : "none"}
+                          color={
+                            s <= Math.round(avgRating) ? "#fbbf24" : "#d1d5db"
+                          }
+                        />
+                      ))}
+                    </div>
+                    <p className="od-reviews-count">
+                      {t("offerDetail.reviewsCount", {
+                        count: offerReviews.length,
+                      })}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="od-reviews-list">
                   {offerReviews
                     .slice()
                     .reverse()
                     .map((review, idx) => (
-                      <div key={idx} className="review-item">
-                        <div className="review-header-row">
-                          <span className="review-order-id">
-                            Order {review.order_id}
+                      <div key={idx} className="od-review-card">
+                        <div className="od-review-top">
+                          <div className="od-review-stars">
+                            {[1, 2, 3, 4, 5].map((s) => (
+                              <Star
+                                key={s}
+                                size={14}
+                                fill={s <= review.rating ? "#fbbf24" : "none"}
+                                color={
+                                  s <= review.rating ? "#fbbf24" : "#d1d5db"
+                                }
+                              />
+                            ))}
+                          </div>
+                          <span className="od-review-date">
+                            {review.created_at
+                              ? new Date(review.created_at).toLocaleDateString()
+                              : ""}
                           </span>
-                          <span className="review-date">
-                            {new Date(review.date).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <div className="review-stars-row">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <Star
-                              key={star}
-                              size={14}
-                              fill={star <= review.rating ? "#fbbf24" : "none"}
-                              color={
-                                star <= review.rating ? "#fbbf24" : "#d1d5db"
-                              }
-                            />
-                          ))}
                         </div>
                         {review.comment && (
-                          <p className="review-text">"{review.comment}"</p>
+                          <p className="od-review-comment">
+                            "{review.comment}"
+                          </p>
                         )}
-                        {review.imageBase64 && (
+                        {review.image_url && (
                           <img
-                            src={review.imageBase64}
+                            src={review.image_url}
                             alt="Review"
-                            className="review-image"
+                            className="od-review-img"
                           />
                         )}
-                        <span className="review-method">
-                          {review.delivery_method === "delivery"
-                            ? "🚚 Delivery"
-                            : "🏪 Pickup"}
-                        </span>
+                        <div className="od-review-footer">
+                          <span className="od-review-method">
+                            {review.delivery_method === "delivery"
+                              ? t("offerDetail.reviewDelivery")
+                              : t("offerDetail.reviewPickup")}
+                          </span>
+                        </div>
                       </div>
                     ))}
                 </div>
               </>
             )}
           </div>
+        )}
+      </div>
+
+      {/* ── Sticky Add to Cart ── */}
+      <div className="od-sticky-bar">
+        <div className="od-sticky-price">
+          <span className="od-sticky-label">{t("offerDetail.total")}</span>
+          <span className="od-sticky-total">
+            EGP {(offer.discountedPrice * qty).toFixed(2)}
+          </span>
         </div>
+        <button
+          className={`od-add-btn ${added ? "added" : ""}`}
+          onClick={handleAddToCart}
+        >
+          {added ? (
+            <>
+              <Check size={18} /> {t("offerDetail.addedToCart")}
+            </>
+          ) : (
+            <>
+              <ShoppingCart size={18} /> {t("offerDetail.addToCart")}
+            </>
+          )}
+        </button>
       </div>
     </div>
   );

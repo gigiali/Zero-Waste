@@ -1,19 +1,21 @@
 import React, { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { RecoveryFrame } from "./ForgotPassword";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
 export default function VerifyCode() {
-  const navigate  = useNavigate();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
   const inputsRef = useRef([]);
-  const [code, setCode]         = useState(["", "", "", "", "", ""]);
-  const [message, setMessage]   = useState("");
+  const [code, setCode] = useState(["", "", "", "", "", ""]);
+  const [message, setMessage] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (index, value) => {
     const digit = value.replace(/\D/g, "").slice(-1);
-    const next  = [...code];
+    const next = [...code];
     next[index] = digit;
     setCode(next);
     setMessage("");
@@ -33,22 +35,28 @@ export default function VerifyCode() {
     try {
       const response = await fetch("/api/forgot-password", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({ email }),
       });
       if (response.ok) {
-        setMessage("A new verification code has been sent.");
+        setMessage(t("auth.codeResent"));
       } else {
-        setMessage("Failed to resend code. Please try again.");
+        setMessage(t("auth.failedResendCode"));
       }
     } catch {
-      setMessage("Network error. Please try again.");
+      setMessage(t("auth.networkError"));
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (code.some((d) => !d)) { setMessage("Enter the 6-digit verification code"); return; }
+    if (code.some((d) => !d)) {
+      setMessage(t("auth.enterVerificationCodeError"));
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -58,22 +66,25 @@ export default function VerifyCode() {
 
       const response = await fetch("/api/verify-reset-code", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Accept: "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
         body: JSON.stringify({
-  reset_code: verificationCode,
-  email: email,
-}),
+          reset_code: verificationCode,
+          email: email,
+        }),
       });
       const data = await response.json();
 
       if (response.ok) {
         navigate("/reset-password");
       } else {
-        setMessage(data.message || "Invalid verification code");
+        setMessage(data.message || t("auth.invalidVerificationCode"));
       }
     } catch (err) {
       console.error("Verify code error:", err);
-      setMessage("Network error. Please try again.");
+      setMessage(t("auth.networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -82,17 +93,22 @@ export default function VerifyCode() {
   const isSent = message.includes("sent");
 
   return (
-    <RecoveryFrame title="Verification">
+    <RecoveryFrame title={t("auth.verification")}>
       <form onSubmit={handleSubmit} noValidate>
-        <p className="auth-label" style={{ marginBottom: 12, textAlign: "center" }}>
-          Enter Verification Code
+        <p
+          className="auth-label"
+          style={{ marginBottom: 12, textAlign: "center" }}
+        >
+          {t("auth.enterVerificationCode")}
         </p>
 
         <div className="auth-code-grid" aria-label="Verification code">
           {code.map((digit, i) => (
             <input
               key={i}
-              ref={(node) => { inputsRef.current[i] = node; }}
+              ref={(node) => {
+                inputsRef.current[i] = node;
+              }}
               className="auth-code-input"
               type="text"
               inputMode="numeric"
@@ -106,9 +122,13 @@ export default function VerifyCode() {
         </div>
 
         <p className="auth-resend-row" style={{ marginTop: 14 }}>
-          Didn't receive a code?{" "}
-          <button type="button" className="auth-btn-ghost" onClick={handleResend}>
-            Resend
+          {t("auth.didntReceiveCode")}{" "}
+          <button
+            type="button"
+            className="auth-btn-ghost"
+            onClick={handleResend}
+          >
+            {t("auth.resendCode")}
           </button>
         </p>
 
@@ -121,8 +141,13 @@ export default function VerifyCode() {
           </p>
         )}
 
-        <button type="submit" className="auth-btn-primary" style={{ marginTop: 6 }} disabled={isLoading}>
-          {isLoading ? "Verifying..." : "Verify"}
+        <button
+          type="submit"
+          className="auth-btn-primary"
+          style={{ marginTop: 6 }}
+          disabled={isLoading}
+        >
+          {isLoading ? t("auth.verifying") : t("auth.verify")}
         </button>
       </form>
     </RecoveryFrame>
