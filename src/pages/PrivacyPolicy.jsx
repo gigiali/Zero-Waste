@@ -8,11 +8,27 @@ function PrivacyPolicy() {
   const [activeSection, setActiveSection] = useState("introduction");
 
   const sections = [
-    { id: "introduction", title: t("privacy.sections.introduction"), icon: "📋" },
-    { id: "data-collection", title: t("privacy.sections.dataCollection"), icon: "📊" },
+    {
+      id: "introduction",
+      title: t("privacy.sections.introduction"),
+      icon: "📋",
+    },
+    {
+      id: "data-collection",
+      title: t("privacy.sections.dataCollection"),
+      icon: "📊",
+    },
     { id: "data-usage", title: t("privacy.sections.dataUsage"), icon: "🔄" },
-    { id: "data-protection", title: t("privacy.sections.dataProtection"), icon: "🔐" },
-    { id: "data-sharing", title: t("privacy.sections.dataSharing"), icon: "🤝" },
+    {
+      id: "data-protection",
+      title: t("privacy.sections.dataProtection"),
+      icon: "🔐",
+    },
+    {
+      id: "data-sharing",
+      title: t("privacy.sections.dataSharing"),
+      icon: "🤝",
+    },
     { id: "your-rights", title: t("privacy.sections.yourRights"), icon: "⚖️" },
     { id: "cookies", title: t("privacy.sections.cookies"), icon: "🍪" },
   ];
@@ -54,7 +70,14 @@ function PrivacyPolicy() {
               ))}
             </nav>
             <div className="toc-footer">
-              <p>{t("privacy.lastUpdated")} {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <p>
+                {t("privacy.lastUpdated")}{" "}
+                {new Date().toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
             </div>
           </aside>
 
@@ -63,7 +86,8 @@ function PrivacyPolicy() {
             {/* Introduction */}
             <section id="introduction" className="policy-section">
               <h2>
-                <span className="section-icon">📋</span> {t("privacy.introduction.title")}
+                <span className="section-icon">📋</span>{" "}
+                {t("privacy.introduction.title")}
               </h2>
               <p>{t("privacy.introduction.description")}</p>
               <div className="highlight-box">
@@ -74,46 +98,103 @@ function PrivacyPolicy() {
             {/* Data Collection */}
             <section id="data-collection" className="policy-section">
               <h2>
-                <span className="section-icon">📊</span> {t("privacy.dataCollection.title")}
+                <span className="section-icon">📊</span>{" "}
+                {t("privacy.dataCollection.title")}
               </h2>
               <p>{t("privacy.dataCollection.description")}</p>
               <div className="data-grid">
                 <div className="data-item">
-                  <h4>{t("privacy.dataCollection.personalInformation.title")}</h4>
+                  <h4>
+                    {t("privacy.dataCollection.personalInformation.title")}
+                  </h4>
                   <ul>
-                    <li>{t("privacy.dataCollection.personalInformation.items.fullName")}</li>
-                    <li>{t("privacy.dataCollection.personalInformation.items.email")}</li>
-                    <li>{t("privacy.dataCollection.personalInformation.items.phone")}</li>
-                    <li>{t("privacy.dataCollection.personalInformation.items.businessDetails")}</li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.personalInformation.items.fullName",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.personalInformation.items.email",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.personalInformation.items.phone",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.personalInformation.items.businessDetails",
+                      )}
+                    </li>
                   </ul>
                 </div>
 
                 <div className="data-item">
-                  <h4>{t("privacy.dataCollection.accountInformation.title")}</h4>
+                  <h4>
+                    {t("privacy.dataCollection.accountInformation.title")}
+                  </h4>
                   <ul>
-                    <li>{t("privacy.dataCollection.accountInformation.items.username")}</li>
-                    <li>{t("privacy.dataCollection.accountInformation.items.encryptedPassword")}</li>
-                    <li>{t("privacy.dataCollection.accountInformation.items.preferences")}</li>
-                    <li>{t("privacy.dataCollection.accountInformation.items.profileSettings")}</li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.accountInformation.items.username",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.accountInformation.items.encryptedPassword",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.accountInformation.items.preferences",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.accountInformation.items.profileSettings",
+                      )}
+                    </li>
                   </ul>
                 </div>
 
                 <div className="data-item">
                   <h4>{t("privacy.dataCollection.usageData.title")}</h4>
                   <ul>
-                    <li>{t("privacy.dataCollection.usageData.items.interactions")}</li>
-                    <li>{t("privacy.dataCollection.usageData.items.pagesVisited")}</li>
-                    <li>{t("privacy.dataCollection.usageData.items.featuresUsed")}</li>
-                    <li>{t("privacy.dataCollection.usageData.items.timeSpent")}</li>
+                    <li>
+                      {t("privacy.dataCollection.usageData.items.interactions")}
+                    </li>
+                    <li>
+                      {t("privacy.dataCollection.usageData.items.pagesVisited")}
+                    </li>
+                    <li>
+                      {t("privacy.dataCollection.usageData.items.featuresUsed")}
+                    </li>
+                    <li>
+                      {t("privacy.dataCollection.usageData.items.timeSpent")}
+                    </li>
                   </ul>
                 </div>
 
                 <div className="data-item">
                   <h4>{t("privacy.dataCollection.locationData.title")}</h4>
                   <ul>
-                    <li>{t("privacy.dataCollection.locationData.items.businessAddress")}</li>
-                    <li>{t("privacy.dataCollection.locationData.items.generalLocation")}</li>
-                    <li>{t("privacy.dataCollection.locationData.items.coverageArea")}</li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.locationData.items.businessAddress",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.locationData.items.generalLocation",
+                      )}
+                    </li>
+                    <li>
+                      {t(
+                        "privacy.dataCollection.locationData.items.coverageArea",
+                      )}
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -122,36 +203,49 @@ function PrivacyPolicy() {
             {/* Data Usage */}
             <section id="data-usage" className="policy-section">
               <h2>
-                <span className="section-icon">🔄</span> {t("privacy.dataUsage.title")}
+                <span className="section-icon">🔄</span>{" "}
+                {t("privacy.dataUsage.title")}
               </h2>
               <p>{t("privacy.dataUsage.description")}</p>
               <div className="checklist">
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
-                    <h4>{t("privacy.dataUsage.items.serviceProvision.title")}</h4>
-                    <p>{t("privacy.dataUsage.items.serviceProvision.description")}</p>
+                    <h4>
+                      {t("privacy.dataUsage.items.serviceProvision.title")}
+                    </h4>
+                    <p>
+                      {t(
+                        "privacy.dataUsage.items.serviceProvision.description",
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
                     <h4>{t("privacy.dataUsage.items.transactions.title")}</h4>
-                    <p>{t("privacy.dataUsage.items.transactions.description")}</p>
+                    <p>
+                      {t("privacy.dataUsage.items.transactions.description")}
+                    </p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
                     <h4>{t("privacy.dataUsage.items.communication.title")}</h4>
-                    <p>{t("privacy.dataUsage.items.communication.description")}</p>
+                    <p>
+                      {t("privacy.dataUsage.items.communication.description")}
+                    </p>
                   </div>
                 </div>
                 <div className="check-item">
                   <span className="check-icon">✓</span>
                   <div>
                     <h4>{t("privacy.dataUsage.items.improvement.title")}</h4>
-                    <p>{t("privacy.dataUsage.items.improvement.description")}</p>
+                    <p>
+                      {t("privacy.dataUsage.items.improvement.description")}
+                    </p>
                   </div>
                 </div>
                 <div className="check-item">
@@ -174,29 +268,54 @@ function PrivacyPolicy() {
             {/* Data Protection */}
             <section id="data-protection" className="policy-section">
               <h2>
-                <span className="section-icon">🔐</span> {t("privacy.dataProtection.title")}
+                <span className="section-icon">🔐</span>{" "}
+                {t("privacy.dataProtection.title")}
               </h2>
               <p>{t("privacy.dataProtection.description")}</p>
               <div className="security-features">
                 <div className="feature">
                   <div className="feature-icon">🔒</div>
-                  <h4>{t("privacy.dataProtection.features.encryption.title")}</h4>
-                  <p>{t("privacy.dataProtection.features.encryption.description")}</p>
+                  <h4>
+                    {t("privacy.dataProtection.features.encryption.title")}
+                  </h4>
+                  <p>
+                    {t(
+                      "privacy.dataProtection.features.encryption.description",
+                    )}
+                  </p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">🛡️</div>
-                  <h4>{t("privacy.dataProtection.features.securityAudits.title")}</h4>
-                  <p>{t("privacy.dataProtection.features.securityAudits.description")}</p>
+                  <h4>
+                    {t("privacy.dataProtection.features.securityAudits.title")}
+                  </h4>
+                  <p>
+                    {t(
+                      "privacy.dataProtection.features.securityAudits.description",
+                    )}
+                  </p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">🔑</div>
-                  <h4>{t("privacy.dataProtection.features.accessControl.title")}</h4>
-                  <p>{t("privacy.dataProtection.features.accessControl.description")}</p>
+                  <h4>
+                    {t("privacy.dataProtection.features.accessControl.title")}
+                  </h4>
+                  <p>
+                    {t(
+                      "privacy.dataProtection.features.accessControl.description",
+                    )}
+                  </p>
                 </div>
                 <div className="feature">
                   <div className="feature-icon">💾</div>
-                  <h4>{t("privacy.dataProtection.features.secureStorage.title")}</h4>
-                  <p>{t("privacy.dataProtection.features.secureStorage.description")}</p>
+                  <h4>
+                    {t("privacy.dataProtection.features.secureStorage.title")}
+                  </h4>
+                  <p>
+                    {t(
+                      "privacy.dataProtection.features.secureStorage.description",
+                    )}
+                  </p>
                 </div>
               </div>
             </section>
@@ -204,24 +323,33 @@ function PrivacyPolicy() {
             {/* Data Sharing */}
             <section id="data-sharing" className="policy-section">
               <h2>
-                <span className="section-icon">🤝</span> {t("privacy.dataSharing.title")}
+                <span className="section-icon">🤝</span>{" "}
+                {t("privacy.dataSharing.title")}
               </h2>
               <p>{t("privacy.dataSharing.description")}</p>
               <div className="sharing-list">
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <span className="sharing-badge">
+                    ✓ {t("privacy.dataSharing.labels.allowed")}
+                  </span>
                   <p>{t("privacy.dataSharing.items.providers")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <span className="sharing-badge">
+                    ✓ {t("privacy.dataSharing.labels.allowed")}
+                  </span>
                   <p>{t("privacy.dataSharing.items.legalRequirements")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <span className="sharing-badge">
+                    ✓ {t("privacy.dataSharing.labels.allowed")}
+                  </span>
                   <p>{t("privacy.dataSharing.items.consent")}</p>
                 </div>
                 <div className="sharing-item">
-                  <span className="sharing-badge">✓ {t("privacy.dataSharing.labels.allowed")}</span>
+                  <span className="sharing-badge">
+                    ✓ {t("privacy.dataSharing.labels.allowed")}
+                  </span>
                   <p>{t("privacy.dataSharing.items.businessTransfer")}</p>
                 </div>
               </div>
@@ -230,7 +358,8 @@ function PrivacyPolicy() {
             {/* Your Rights */}
             <section id="your-rights" className="policy-section">
               <h2>
-                <span className="section-icon">⚖️</span> {t("privacy.yourRights.title")}
+                <span className="section-icon">⚖️</span>{" "}
+                {t("privacy.yourRights.title")}
               </h2>
               <p>{t("privacy.yourRights.description")}</p>
               <div className="rights-grid">
@@ -264,24 +393,31 @@ function PrivacyPolicy() {
             {/* Cookies */}
             <section id="cookies" className="policy-section">
               <h2>
-                <span className="section-icon">🍪</span> {t("privacy.cookies.title")}
+                <span className="section-icon">🍪</span>{" "}
+                {t("privacy.cookies.title")}
               </h2>
               <p>{t("privacy.cookies.description")}</p>
               <div className="cookie-types">
                 <div className="cookie-type">
                   <h4>{t("privacy.cookies.items.essential.title")}</h4>
                   <p>{t("privacy.cookies.items.essential.description")}</p>
-                  <span className="status required">{t("privacy.cookies.labels.required")}</span>
+                  <span className="status required">
+                    {t("privacy.cookies.labels.required")}
+                  </span>
                 </div>
                 <div className="cookie-type">
                   <h4>{t("privacy.cookies.items.analytics.title")}</h4>
                   <p>{t("privacy.cookies.items.analytics.description")}</p>
-                  <span className="status optional">{t("privacy.cookies.labels.optional")}</span>
+                  <span className="status optional">
+                    {t("privacy.cookies.labels.optional")}
+                  </span>
                 </div>
                 <div className="cookie-type">
                   <h4>{t("privacy.cookies.items.preference.title")}</h4>
                   <p>{t("privacy.cookies.items.preference.description")}</p>
-                  <span className="status optional">{t("privacy.cookies.labels.optional")}</span>
+                  <span className="status optional">
+                    {t("privacy.cookies.labels.optional")}
+                  </span>
                 </div>
               </div>
               <div className="info-box">

@@ -863,5 +863,60 @@
     "newOffers": "New offers nearby",
     "paymentConfirmations": "Payment confirmations",
     "newsPromotions": "News and promotions"
+}
+,
+"userManagement": {
+  "title": "User Management",
+  "subtitle": "View and manage all platform users",
+  "backToDashboard": "← Back to Admin Dashboard",
+  "loading": "Loading users...",
+  "na": "N/A",
+  "stats": {
+    "totalRegistries": "Total Users",
+    "activeAccounts": "Active Accounts",
+    "activeVendors": "Active Vendors"
+  },
+  "searchPlaceholder": "Search by name or email...",
+  "filters": {
+    "allAccessStates": "All Statuses",
+    "allClearanceTiers": "All Roles"
+  },
+  "table": {
+    "identityLabel": "Name",
+    "emailRoute": "Email",
+    "tierClassification": "Role",
+    "stateStatus": "Status",
+    "joined": "Joined",
+    "actions": "Actions",
+    "empty": "No users found"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive",
+    "blocked": "Blocked",
+    "suspended": "Suspended",
+    "unknown": "Unknown"
+  },
+  "type": {
+    "vendor": "Vendor",
+    "customer": "Customer",
+    "admin": "Admin",
+    "unknown": "Unknown"
+  },
+  "actions": {
+    "viewRecord": "View Details",
+    "blockAccess": "Block User",
+    "unblockAccess": "Unblock User",
+    "deleteRecord": "Delete User"
+  },
+  "alert": {
+    "blockError": "Failed to block user",
+    "unblockError": "Failed to unblock user",
+    "deleteError": "Failed to delete user",
+    "viewUser": "Viewing: {{name}}"
+  },
+  "confirm": {
+    "deleteUser": "Permanently delete \"{{name}}\"?"
   }
+}
 }

@@ -1,59 +1,209 @@
 import React, { useState, useEffect } from "react";
 import Navigation from "../Components/Navigation";
-import { Shield, Users, CircleAlert, ClipboardList, Loader2, AlertCircle, Activity } from "lucide-react";
+import {
+  Shield,
+  Users,
+  CircleAlert,
+  ClipboardList,
+  Loader2,
+  AlertCircle,
+  Activity,
+  ShoppingBag,
+  ChevronDown,
+  ChevronUp,
+  Search,
+  RefreshCw,
+  LayoutDashboard,
+  TrendingUp,
+  Package,
+  Star,
+  LogOut,
+  Bell,
+  Settings,
+  ChevronRight,
+  ArrowUpRight,
+  ArrowDownRight,
+  DollarSign,
+  Percent,
+  BarChart2,
+  Menu,
+  X,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  PieChart, Pie, Cell, ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  PieChart,
+  Pie,
+  Cell,
+  ResponsiveContainer,
+  AreaChart,
+  Area,
 } from "recharts";
 import { useAuth } from "../Context/AuthContext";
 import { useTranslation } from "react-i18next";
 import "./Admin.css";
 
-const BASE_URL  = "https://zero-waste-production.up.railway.app/api";
-const PIE_COLORS = ["#ef4444", "#f97316", "#10b981", "#3b82f6"];
+const BASE_URL = "https://zero-waste-production.up.railway.app/api";
+const PIE_COLORS = ["#696cff", "#ff4d49", "#28c76f", "#ff9f43"];
 
 const isSuperAdmin = (r) => r === "super_admin";
-const isManager    = (r) => r === "manager";
-const canManage    = (r) => isSuperAdmin(r) || isManager(r);
+const isManager = (r) => r === "manager";
+const canManage = (r) => isSuperAdmin(r) || isManager(r);
 
+// ─── Build weekly chart data from real orders ─────────────────────────────────
+const buildWeeklyData = (orders = []) => {
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const today = new Date();
+  const map = {};
+
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    const key = days[d.getDay()];
+    map[key] = { day: key, orders: 0, revenue: 0 };
+  }
+
+  orders.forEach((o) => {
+    const d = new Date(o.created_at || o.order_date);
+    const diff = Math.floor((today - d) / (1000 * 60 * 60 * 24));
+    if (diff >= 0 && diff < 7) {
+      const key = days[d.getDay()];
+      if (map[key]) {
+        map[key].orders += 1;
+        map[key].revenue += parseFloat(o.total_amount || o.total || 0);
+      }
+    }
+  });
+
+  return Object.values(map);
+};
+
+// ─── Order status badge ───────────────────────────────────────────────────────
+const STATUS_COLORS = {
+  pending:          { bg: "#fff8e1", text: "#f59e0b",  label: "Pending" },
+  accepted:         { bg: "#e8f5e9", text: "#28c76f",  label: "Accepted" },
+  preparing:        { bg: "#e3f2fd", text: "#696cff",  label: "Preparing" },
+  out_for_delivery: { bg: "#f3e5f5", text: "#9c27b0",  label: "Out for Delivery" },
+  delivered:        { bg: "#e8f5e9", text: "#1b5e20",  label: "Delivered" },
+  cancelled:        { bg: "#ffebee", text: "#ff4d49",  label: "Cancelled" },
+  rejected:         { bg: "#fce4ec", text: "#c62828",  label: "Rejected" },
+};
+
+const StatusBadge = ({ status }) => {
+  const s = STATUS_COLORS[status?.toLowerCase()] ?? {
+    bg: "#f1f5f9",
+    text: "#64748b",
+    label: status ?? "—",
+  };
+  return (
+    <span className="status-badge" style={{ background: s.bg, color: s.text }}>
+      {s.label}
+    </span>
+  );
+};
+
+// ─── Stat Card Component ──────────────────────────────────────────────────────
+const StatCard = ({ title, value, subtitle, icon: Icon, color, trend, trendUp }) => (
+  <div className="stat-card">
+    <div className="stat-card__body">
+      <div>
+        <p className="stat-card__label">{title}</p>
+        <h3 className="stat-card__value">{value}</h3>
+        {subtitle && <p className="stat-card__sub">{subtitle}</p>}
+        {trend && (
+          <span className={`stat-card__trend ${trendUp ? "up" : "down"}`}>
+            {trendUp ? <ArrowUpRight size={13} /> : <ArrowDownRight size={13} />}
+            {trend}
+          </span>
+        )}
+      </div>
+      <div className="stat-card__icon" style={{ background: `${color}20` }}>
+        <Icon size={22} color={color} />
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Sidebar Nav Item ─────────────────────────────────────────────────────────
+const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
+  <button
+    type="button"
+    className={`sidebar-nav-item ${active ? "active" : ""}`}
+    onClick={onClick}
+  >
+    <Icon size={18} />
+    <span>{label}</span>
+    {badge && <span className="sidebar-nav-badge">{badge}</span>}
+    {active && <ChevronRight size={14} className="sidebar-nav-arrow" />}
+  </button>
+);
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 const Admin = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { role, isLoggedIn, token: contextToken } = useAuth();
-  // ✅ جلب الـ Token فقط كإثبات هوية للسيرفر عشان يقبل الـ API Requests
-  const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
+  const token =
+    contextToken ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
+
   const ROLE_LABEL = {
-    super_admin: t("admin.roles.superAdmin"),
-    manager: t("admin.roles.manager"),
-    support: t("admin.roles.support"),
+    super_admin: "Super Admin",
+    manager: "Manager",
+    support: "Support",
   };
-  // States
-  const [weeklyData,   setWeeklyData]   = useState([]);
-  const [pieData,      setPieData]      = useState([]);
-  const [activities,   setActivities]   = useState([]);
-  const [rawStats,     setRawStats]     = useState(null);
+
+  // ── UI State ─────────────────────────────────────────────────────────────────
+  const [activeSection, setActiveSection] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // ── Data State ───────────────────────────────────────────────────────────────
+  const [weeklyData, setWeeklyData] = useState([]);
+  const [pieData, setPieData] = useState([]);
+  const [activities, setActivities] = useState([]);
+  const [rawStats, setRawStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
 
-  // 1️⃣ طلب العدادات والبيانات الحية من الباك إند فعلياً (Dashboard Stats API)
+  // All Orders
+  const [allOrders, setAllOrders] = useState([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState(null);
+  const [ordersSearch, setOrdersSearch] = useState("");
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [ordersSortField, setOrdersSortField] = useState("created_at");
+  const [ordersSortDir, setOrdersSortDir] = useState("desc");
+  const ORDERS_PER_PAGE = 10;
+
+  // ── 1. Dashboard Stats ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
-
     (async () => {
       setStatsLoading(true);
       try {
-        const res  = await fetch(`${BASE_URL}/dashboard/stats`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        const res = await fetch(`${BASE_URL}/dashboard/stats`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
         if (!res.ok) throw new Error(`Stats ${res.status}`);
         const data = await res.json();
-
-        // قراءة البيانات الفعلية القادمة من الـ API مباشرة
         const realData = data?.data ?? data;
         setRawStats(realData);
-        setWeeklyData(realData?.weekly_data ?? []);
-        setPieData(realData?.category_distribution ?? []);
+        setPieData([
+          { name: "Customers",      value: realData?.total_customers ?? 0 },
+          { name: "Vendors",        value: realData?.total_vendors   ?? 0 },
+          { name: "Active Offers",  value: realData?.active_offers   ?? 0 },
+          { name: "Expired Offers", value: realData?.expired_offers  ?? 0 },
+        ]);
       } catch (err) {
         console.error("Stats fetch error:", err);
       } finally {
@@ -62,19 +212,38 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
-  // 2️⃣ طلب سجل العمليات الفعلي من الباك إند (Recent Activity API)
+  // ── 2. Recent Activity ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
-
     (async () => {
       setActivityLoading(true);
       try {
         const res = await fetch(`${BASE_URL}/dashboard/activity`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
         if (!res.ok) throw new Error(`Activity ${res.status}`);
         const data = await res.json();
-        setActivities(data?.activities ?? data?.data ?? (Array.isArray(data) ? data : []));
+        const users  = data?.data?.latest_users  ?? [];
+        const offers = data?.data?.latest_offers ?? [];
+
+        // ✅ FIX: Use index-based unique keys to avoid undefined key collisions
+        const merged = [
+          ...users.map((u, idx) => ({
+            uid: `u-${idx}-${u.id ?? idx}`,
+            description: `New ${u.role ?? "user"} registered: ${u.name ?? "Unknown"}`,
+            created_at: u.created_at,
+          })),
+          ...offers.map((o, idx) => ({
+            uid: `o-${idx}-${o.id ?? idx}`,
+            description: `New offer: ${o.title ?? "Untitled"}`,
+            created_at: o.created_at,
+          })),
+        ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+        setActivities(merged);
       } catch (err) {
         console.error("Activity fetch error:", err);
       } finally {
@@ -83,228 +252,628 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
-  // الحسابات المبنية على داتا الـ API
-  const totalOrders  = weeklyData.reduce((s, d) => s + (d.orders  || 0), 0);
-  const totalRevenue = weeklyData.reduce((s, d) => s + (d.revenue || 0), 0);
-  const commission   = (totalRevenue * 0.15).toFixed(2);
-  const avgOrder     = totalOrders > 0 ? (totalRevenue / totalOrders).toFixed(2) : "0.00";
-  const activeBiz    = pieData.reduce((s, d) => s + (d.value || 0), 0);
+  // ── 3. All Orders ─────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    (async () => {
+      setOrdersLoading(true);
+      setOrdersError(null);
+      try {
+        const res = await fetch(`${BASE_URL}/admin/all-orders`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(`Orders ${res.status}`);
+        const data = await res.json();
 
-  const totalOrdersF = rawStats?.total_orders  ?? totalOrders;
-  const totalRevF    = rawStats?.total_revenue ?? totalRevenue;
-  const totalUsers   = rawStats?.total_users   ?? 0;
+        // ✅ Handle all possible response shapes
+        console.log("🔍 RAW orders response:", JSON.stringify(data).slice(0, 300));
 
+const list =
+  Array.isArray(data)               ? data :
+  Array.isArray(data?.data)         ? data.data :
+  Array.isArray(data?.orders)       ? data.orders :
+  Array.isArray(data?.data?.orders) ? data.data.orders :
+  Array.isArray(data?.data?.data)   ? data.data.data :
+  data?.data && typeof data.data === "object" && !Array.isArray(data.data)
+    ? Object.values(data.data).find(Array.isArray) ?? []
+    : [];
+
+console.log("✅ Parsed orders list length:", list.length);
+
+        console.log("✅ Orders loaded:", list.length, "| Sample:", list[0]);
+        setAllOrders(list);
+        if (list.length > 0) {
+  setWeeklyData(buildWeeklyData(list));
+} else {
+  // Fallback: empty week structure bardo to avoid "no data" if API has orders older than 7 days
+  setWeeklyData(buildWeeklyData([]));
+}
+      } catch (err) {
+        console.error("Orders fetch error:", err);
+        setOrdersError(err.message);
+      } finally {
+        setOrdersLoading(false);
+      }
+    })();
+  }, [isLoggedIn, token]);
+
+  // ── Derived stats ─────────────────────────────────────────────────────────────
+  const totalUsers    = rawStats?.total_customers ?? 0;
+  const totalVendors  = rawStats?.total_vendors   ?? 0;
+  const activeOffers  = rawStats?.active_offers   ?? 0;
+  const expiredOffers = rawStats?.expired_offers  ?? 0;
+  const totalOrdersF  = rawStats?.total_orders    ?? allOrders.length;
+  const totalRevF     = rawStats?.total_revenue   ??
+    allOrders.reduce((s, o) => s + parseFloat(o.total_amount || o.total || 0), 0);
+  const commission = (totalRevF * 0.15).toFixed(2);
+  const avgOrder   = totalOrdersF > 0 ? (totalRevF / totalOrdersF).toFixed(2) : "0.00";
+
+  // ── Orders table ──────────────────────────────────────────────────────────────
+  const filteredOrders = allOrders
+    .filter((o) => {
+      const q = ordersSearch.toLowerCase();
+      return (
+        !q ||
+        String(o.id).includes(q) ||
+        (o.customer?.name || o.customer_name || "").toLowerCase().includes(q) ||
+        (o.status || "").toLowerCase().includes(q)
+      );
+    })
+    .sort((a, b) => {
+      const av = a[ordersSortField] ?? "";
+      const bv = b[ordersSortField] ?? "";
+      if (ordersSortDir === "asc") return av > bv ? 1 : -1;
+      return av < bv ? 1 : -1;
+    });
+
+  const totalPages  = Math.max(1, Math.ceil(filteredOrders.length / ORDERS_PER_PAGE));
+  const pagedOrders = filteredOrders.slice(
+    (ordersPage - 1) * ORDERS_PER_PAGE,
+    ordersPage * ORDERS_PER_PAGE
+  );
+
+  const handleSort = (field) => {
+    if (ordersSortField === field) setOrdersSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else { setOrdersSortField(field); setOrdersSortDir("asc"); }
+  };
+
+  const SortIcon = ({ field }) =>
+    ordersSortField === field
+      ? ordersSortDir === "asc"
+        ? <ChevronUp size={12} />
+        : <ChevronDown size={12} />
+      : null;
+
+  const fmtDate = (v) => {
+    if (!v) return "—";
+    try {
+      return new Date(v).toLocaleDateString("en-EG", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      });
+    } catch { return v; }
+  };
+
+  // ── Guard ─────────────────────────────────────────────────────────────────────
   if (!isLoggedIn) {
     return (
-      <div style={{ padding: 40, textAlign: "center", color: "#8b2323" }}>
-        <AlertCircle size={40} style={{ marginBottom: 12 }} />
-        <p>{t("admin.notLoggedIn")} <a href="/login">{t("admin.login")}</a>.</p>
+      <div className="admin-auth-error">
+        <AlertCircle size={40} />
+        <p>Please <a href="/login">log in</a> to access the admin panel.</p>
       </div>
     );
   }
 
+  // ─── Sidebar nav items ────────────────────────────────────────────────────────
+  const navItems = [
+    { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+    { id: "orders",    icon: ShoppingBag,     label: "All Orders", badge: allOrders.length || null },
+    { id: "activity",  icon: Activity,        label: "Activity" },
+  ];
+
+  const managementItems = [
+    { id: "users",     icon: Users,           label: "Users",      path: "/admin/users" },
+    { id: "businesses",icon: ClipboardList,   label: "Businesses", path: "/admin/businesses" },
+    { id: "reviews",   icon: Star,            label: "Reviews",    path: "/admin/review-moderation" },
+  ];
+
   return (
-    <>
-      <Navigation hideCart hideLocation hideProfile />
-
-      <section className="admin-header">
-        <div className="admin-header__left">
-          <h1 className="admin-header__title">
-            {t("admin.title")}&nbsp;
-            <Shield size={28} color="#3b82f6" strokeWidth={1.8} />
-          </h1>
-          <p className="admin-header__subtitle">
-            {ROLE_LABEL[role] ?? role} — {t("admin.subtitle")}
-          </p>
-        </div>
-
-        <div className="stats-group">
-          {canManage(role) && (
-            <div className="stats-group__item">
-              <span className="stats-group__label">{t("admin.platformCommission")}</span>
-              <span className="stats-group__value">EGP {commission}</span>
+    <div className="admin-shell">
+      {/* ── Sidebar ── */}
+      <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
+        {/* Logo */}
+        <div className="sidebar-logo">
+          <div className="sidebar-logo__icon">
+  <img src="/src/assets/images/e.png" alt="logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
+</div>
+          {sidebarOpen && (
+            <div className="sidebar-logo__text">
+              <span className="sidebar-logo__name">ZeroWaste</span>
+              <span className="sidebar-logo__role">{ROLE_LABEL[role] ?? role}</span>
             </div>
           )}
-          <div className="stats-group__item">
-            <span className="stats-group__label">{t("admin.activeIssues")}</span>
-            <span className="stats-group__value">{rawStats?.active_issues ?? 0}</span>
-          </div>
         </div>
-      </section>
 
-      <div className="admin-content">
+        {/* Toggle button */}
+        <button
+          className="sidebar-toggle"
+          onClick={() => setSidebarOpen((v) => !v)}
+          type="button"
+        >
+          {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
+        </button>
 
-        {/* كروت التحكم والزراير الثلاثة المربوطة بالـ App.jsx */}
-        <section className="platform-analytics-section">
-          <div className="section-title">
-            <h2 className="section-title__main">{t("admin.platformAnalytics")}</h2>
-            <p className="section-title__sub">{t("admin.analyticsSubtitle")}</p>
+        {/* Nav */}
+        <nav className="sidebar-nav">
+          {sidebarOpen && <p className="sidebar-nav-section-title">MENU</p>}
+          {navItems.map((item) => (
+            <NavItem
+              key={item.id}
+              icon={item.icon}
+              label={sidebarOpen ? item.label : ""}
+              active={activeSection === item.id}
+              badge={item.badge}
+              onClick={() => setActiveSection(item.id)}
+            />
+          ))}
+
+          {sidebarOpen && <p className="sidebar-nav-section-title">MANAGEMENT</p>}
+          {managementItems.map((item) => (
+            <NavItem
+              key={item.id}
+              icon={item.icon}
+              label={sidebarOpen ? item.label : ""}
+              active={activeSection === item.id}
+              onClick={() => navigate(item.path)}
+            />
+          ))}
+        </nav>
+
+        {/* Bottom profile */}
+        {sidebarOpen && (
+          <div className="sidebar-profile" onClick={() => navigate("/admin/profile")} style={{ cursor: "pointer" }}>
+            <div className="sidebar-profile__avatar">
+              {(ROLE_LABEL[role] ?? "A")[0]}
+            </div>
+            <div className="sidebar-profile__info">
+              <p className="sidebar-profile__name">Admin</p>
+              <p className="sidebar-profile__role">{ROLE_LABEL[role] ?? role}</p>
+            </div>
           </div>
+        )}
+      </aside>
 
-          <div className="cards-container">
-            {/* ✅ زرار إدارة المستخدمين - ينقل للروت الصح المتوافق مع الـ App.jsx */}
-            <button type="button" className="analytics-card analytics-card--button"
-              onClick={() => navigate("/admin/users")}>
-              <div className="icon-box icon-box--blue"><Users size={22} color="#3b82f6" /></div>
-              <div>
-                <h3 className="analytics-card__title">{t("admin.cards.userManagement")}</h3>
-                <p className="analytics-card__subtitle">{t("admin.cards.userManagementSubtitle")}</p>
-              </div>
+      {/* ── Main Content ── */}
+      <main className="admin-main">
+        {/* Top bar */}
+        <header className="admin-topbar">
+          <div className="admin-topbar__left">
+            <h1 className="admin-topbar__title">
+              {activeSection === "dashboard" && "Dashboard"}
+              {activeSection === "orders"    && "All Orders"}
+              {activeSection === "activity"  && "Recent Activity"}
+            </h1>
+            <div className="admin-topbar__breadcrumb">
+              <span>Admin</span>
+              <ChevronRight size={12} />
+              <span style={{ color: "#696cff" }}>
+                {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
+              </span>
+            </div>
+          </div>
+          <div className="admin-topbar__right">
+            <button className="topbar-icon-btn" type="button">
+              <Bell size={18} />
+              {(rawStats?.active_issues ?? 0) > 0 && (
+                <span className="topbar-notif-dot" />
+              )}
             </button>
-
-            {/* ✅ زرار البلاغات والشكاوى */}
-            <button type="button" className="analytics-card analytics-card--button"
-              onClick={() => navigate("/admin/reports-issues")}>
-              <div className="icon-box icon-box--orange"><CircleAlert size={22} color="#ea580c" /></div>
-              <div>
-                <h3 className="analytics-card__title">{t("admin.cards.reportsIssues")}</h3>
-                <p className="analytics-card__subtitle">{t("admin.cards.reportsIssuesSubtitle")}</p>
-              </div>
-            </button>
-
-            {/* ✅ زرار إدارة الشركات والـ Vendors - ظاهر دائماً وينقل لروت الـ App.jsx الصح */}
-            <button type="button" className="analytics-card analytics-card--button"
-              onClick={() => navigate("/admin/businesses")}>
-              <div className="icon-box icon-box--purple"><ClipboardList size={22} color="#9333ea" /></div>
-              <div>
-                <h3 className="analytics-card__title">{t("admin.cards.manageBusinesses")}</h3>
-                <p className="analytics-card__subtitle">{t("admin.cards.manageBusinessesSubtitle")}</p>
-              </div>
+            <button className="topbar-icon-btn" type="button">
+              <Settings size={18} />
             </button>
           </div>
-        </section>
+        </header>
 
-        {/* العدادات وعرض الأرقام الحية القادمة من الـ API */}
-        {statsLoading ? (
-          <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#64748b", margin: "24px 0" }}>
-            <Loader2 size={20} className="spin" /> {t("admin.loadingStats")}
-          </div>
-        ) : (
-          <>
-            <div className="row g-3">
-              <div className="col-md-6">
-                <div className="card p-4 shadow-sm">
-                  <p className="text-muted mb-1">{t("admin.stats.totalOrders")}</p>
-                  <h2>{Number(totalOrdersF).toLocaleString()}</h2>
-                  <span className="badge bg-success">+12.5%</span>
+        <div className="admin-page-content">
+
+          {/* ══════════════════════════════════════════
+              DASHBOARD SECTION
+          ══════════════════════════════════════════ */}
+          {activeSection === "dashboard" && (
+            <>
+              {/* Stat cards */}
+              {statsLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={20} className="spin" /> Loading stats…
                 </div>
-              </div>
-              
-              {canManage(role) && (
-                <div className="col-md-6">
-                  <div className="card p-4 shadow-sm">
-                    <p className="text-muted mb-1">{t("admin.stats.totalRevenue")}</p>
-                    <h2>EGP {Number(totalRevF).toLocaleString()}</h2>
-                    <span className="badge bg-primary">+8.3%</span>
-                  </div>
+              ) : (
+                <div className="stats-grid">
+                  <StatCard
+                    title="Total Customers"
+                    value={Number(totalUsers).toLocaleString()}
+                    icon={Users}
+                    color="#696cff"
+                    trend="+12% this month"
+                    trendUp
+                  />
+                  <StatCard
+                    title="Total Vendors"
+                    value={Number(totalVendors).toLocaleString()}
+                    icon={ShoppingBag}
+                    color="#28c76f"
+                    trend="+5% this month"
+                    trendUp
+                  />
+                  <StatCard
+                    title="Total Orders"
+                    value={Number(totalOrdersF).toLocaleString()}
+                    icon={Package}
+                    color="#ff9f43"
+                    trend={`Avg EGP ${avgOrder}`}
+                  />
+                  <StatCard
+                    title="Active Offers"
+                    value={Number(activeOffers).toLocaleString()}
+                    icon={Star}
+                    color="#ff4d49"
+                    subtitle={`${expiredOffers} expired`}
+                  />
+                  {canManage(role) && (
+                    <>
+                      <StatCard
+                        title="Total Revenue"
+                        value={`EGP ${Number(totalRevF).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        icon={DollarSign}
+                        color="#03c3ec"
+                        trend="+8.2% this week"
+                        trendUp
+                      />
+                      <StatCard
+                        title="Platform Commission (15%)"
+                        value={`EGP ${Number(commission).toLocaleString()}`}
+                        icon={Percent}
+                        color="#28c76f"
+                        subtitle="Based on total revenue"
+                      />
+                    </>
+                  )}
                 </div>
               )}
 
-              <div className="col-md-6">
-                <div className="card p-4 shadow-sm">
-                  <p className="text-muted mb-1">{t("admin.stats.activeBusinesses")}</p>
-                  <h2>{activeBiz}</h2>
-                  <span className="badge bg-purple text-white">+15.2%</span>
-                </div>
-              </div>
-              <div className="col-md-6">
-                <div className="card p-4 shadow-sm">
-                  <p className="text-muted mb-1">{t("admin.stats.totalUsers")}</p>
-                  <h2>{Number(totalUsers).toLocaleString()}</h2>
-                  <span className="badge bg-warning text-dark">+22.1%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* البانرات المالية والبيئية التابعة للأدمن والمدير */}
-            {canManage(role) && (
-              <div className="mt-4">
-                <div className="p-4 mb-3 text-white rounded" style={{ background: "#10b981" }}>
-                  <p className="mb-1">{t("admin.platformCommission")}</p>
-                  <h2>EGP {commission}</h2>
-                  <small>{t("admin.commissionRate")}</small>
-                </div>
-                <div className="p-4 mb-3 text-white rounded"
-                  style={{ background: "linear-gradient(to right, #3b82f6, #2563eb)" }}>
-                  <p className="mb-1">{t("admin.foodSaved")}</p>
-                  <h2>2,450 kg</h2>
-                  <small>{t("admin.environmentalImpact")}</small>
-                </div>
-                <div className="p-4 text-white rounded"
-                  style={{ background: "linear-gradient(to right, #a855f7, #9333ea)" }}>
-                  <p className="mb-1">{t("admin.avgOrderValue")}</p>
-                  <h2>EGP {avgOrder}</h2>
-                  <small>{t("admin.perTransaction")}</small>
-                </div>
-              </div>
-            )}
-
-            {/* الرسوم البيانية المتجاوبة المبنية على الداتا الحية للباك إند */}
-            <div className="card p-4 shadow-sm mt-4">
-              <h6 className="fw-bold mb-4">{t("admin.weeklyPerformance")}</h6>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={weeklyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                  <XAxis dataKey="day" tick={{ fontSize: 13 }} />
-                  <YAxis yAxisId="left"  tick={{ fontSize: 13 }} />
-                  {canManage(role) && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 13 }} />}
-                  <Tooltip />
-                  <Legend />
-                  <Line yAxisId="left"  type="monotone" dataKey="orders"  stroke="#10b981" strokeWidth={2} dot={{ r: 4 }} name={t("admin.chart.orders")} />
-                  {canManage(role) && (
-                    <Line yAxisId="right" type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} dot={{ r: 4 }} name={t("admin.chart.revenue")} />
-                  )}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-
-            <div className="card p-4 shadow-sm mt-4 mb-4">
-              <h6 className="fw-bold mb-4">Business Distribution</h6>
-              <ResponsiveContainer width="100%" height={280}>
-                <PieChart>
-                  <Pie data={pieData} cx="50%" cy="50%" outerRadius={100} dataKey="value"
-                    label={({ name, value }) => `${name} ${value}%`} labelLine>
-                    {pieData.map((_, i) => <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />)}
-                  </Pie>
-                  <Tooltip formatter={(v) => `${v}%`} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </>
-        )}
-
-        {/* عرض سجل العمليات القادم من الـ API الفعلي مباشرة */}
-        <div className="card p-4 shadow-sm mt-4 mb-5">
-          <div className="d-flex align-items-center gap-2 mb-4">
-            <Activity size={20} color="#3b82f6" />
-            <h6 className="fw-bold mb-0">{t("admin.recentActivityTitle")}</h6>
-          </div>
-          
-          {activityLoading ? (
-            <div style={{ display: "flex", gap: 10, alignItems: "center", color: "#64748b" }}>
-              <Loader2 size={18} className="spin" /> {t("admin.updatingActivity")}
-            </div>
-          ) : activities.length === 0 ? (
-            <p className="text-muted small">{t("admin.noRecentActivity")}</p>
-          ) : (
-            <div className="activity-list" style={{ maxHeight: "300px", overflowY: "auto" }}>
-              {activities.map((act, index) => (
-                <div key={act.id || index} className="d-flex justify-content-between align-items-center p-2 mb-2 rounded bg-light" style={{ fontSize: "14px" }}>
-                  <div>
-                    <span className="fw-semibold text-dark">{act.description || act.action}</span>
-                    <br />
-                    <small className="text-muted">{t("admin.activity.by")}: {act.user?.name || act.performed_by || t("admin.activity.system")}</small>
+              {/* Charts row */}
+              <div className="charts-row">
+                {/* Weekly Line/Area Chart */}
+                <div className="chart-card chart-card--wide">
+                  <div className="chart-card__header">
+                    <div>
+                      <h3 className="chart-card__title">Weekly Performance</h3>
+                      <p className="chart-card__sub">Orders & Revenue — last 7 days</p>
+                    </div>
+                    <BarChart2 size={18} color="#696cff" />
                   </div>
-                  <span className="badge bg-secondary">{act.created_at || t("admin.activity.justNow")}</span>
+                  {ordersLoading ? (
+                    <div className="loading-state">
+                      <Loader2 size={16} className="spin" /> Loading chart…
+                    </div>
+                  ) : weeklyData.length === 0 || weeklyData.every(d => d.orders === 0) ? (
+                    <div className="empty-state">
+                      <Package size={32} color="#cbd5e1" />
+                      <p>No order data available for the last 7 days.</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#696cff" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#696cff" stopOpacity={0}   />
+                          </linearGradient>
+                          {canManage(role) && (
+                            <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%"  stopColor="#28c76f" stopOpacity={0.2} />
+                              <stop offset="95%" stopColor="#28c76f" stopOpacity={0}   />
+                            </linearGradient>
+                          )}
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
+                        <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
+                        {canManage(role) && (
+                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
+                        )}
+                        <Tooltip
+                          contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff", boxShadow: "0 4px 24px rgba(105,108,255,0.1)" }}
+                          labelStyle={{ color: "#566a7f", fontWeight: 600 }}
+                        />
+                        <Legend iconType="circle" iconSize={8} />
+                        <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#696cff" strokeWidth={2} fill="url(#ordersGrad)" dot={{ r: 4, fill: "#696cff" }} name="Orders" />
+                        {canManage(role) && (
+                          <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#28c76f" strokeWidth={2} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#28c76f" }} name="Revenue (EGP)" />
+                        )}
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  )}
                 </div>
-              ))}
+
+                {/* Pie chart */}
+                <div className="chart-card">
+                  <div className="chart-card__header">
+                    <div>
+                      <h3 className="chart-card__title">Distribution</h3>
+                      <p className="chart-card__sub">Platform overview</p>
+                    </div>
+                  </div>
+                  <ResponsiveContainer width="100%" height={220}>
+                    <PieChart>
+                      <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={55}
+                        outerRadius={85}
+                        dataKey="value"
+                        paddingAngle={3}
+                      >
+                        {pieData.map((_, i) => (
+                          <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                        ))}
+                      </Pie>
+                      <Tooltip
+                        contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="pie-legend">
+                    {pieData.map((entry, i) => (
+                      <div key={i} className="pie-legend-item">
+                        <span className="pie-legend-dot" style={{ background: PIE_COLORS[i % PIE_COLORS.length] }} />
+                        <span className="pie-legend-label">{entry.name}</span>
+                        <span className="pie-legend-value">{entry.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="quick-actions">
+                <h3 className="section-heading">Quick Actions</h3>
+                <div className="quick-actions-grid">
+                  <button type="button" className="action-card" onClick={() => navigate("/admin/users")}>
+                    <div className="action-card__icon" style={{ background: "#e7e7ff" }}>
+                      <Users size={20} color="#696cff" />
+                    </div>
+                    <div>
+                      <p className="action-card__title">User Management</p>
+                      <p className="action-card__sub">Manage customers & vendors</p>
+                    </div>
+                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                  </button>
+                  <button type="button" className="action-card" onClick={() => navigate("/admin/review-moderation")}>
+                    <div className="action-card__icon" style={{ background: "#ffecd9" }}>
+                      <CircleAlert size={20} color="#ff9f43" />
+                    </div>
+                    <div>
+                      <p className="action-card__title">Review Moderation</p>
+                      <p className="action-card__sub">Manage user reviews</p>
+                    </div>
+                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                  </button>
+                  <button type="button" className="action-card" onClick={() => navigate("/admin/businesses")}>
+                    <div className="action-card__icon" style={{ background: "#e8f8ee" }}>
+                      <ClipboardList size={20} color="#28c76f" />
+                    </div>
+                    <div>
+                      <p className="action-card__title">Manage Businesses</p>
+                      <p className="action-card__sub">Approve & manage vendors</p>
+                    </div>
+                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Environmental Impact */}
+              {canManage(role) && (
+                <div className="impact-banner">
+                  <div className="impact-banner__item">
+                    <p className="impact-banner__label">Avg Order Value</p>
+                    <p className="impact-banner__value">EGP {avgOrder}</p>
+                  </div>
+                  <div className="impact-banner__divider" />
+                  <div className="impact-banner__item">
+                    <p className="impact-banner__label">Food Saved</p>
+                    <p className="impact-banner__value">2,450 kg</p>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ══════════════════════════════════════════
+              ORDERS SECTION
+          ══════════════════════════════════════════ */}
+          {activeSection === "orders" && (
+            <div className="orders-card">
+              {/* Header */}
+              <div className="orders-card__header">
+                <div className="orders-card__title-row">
+                  <ShoppingBag size={20} color="#696cff" />
+                  <h3>All Orders</h3>
+                  <span className="orders-count-badge">{filteredOrders.length}</span>
+                </div>
+                <div className="orders-card__controls">
+                  <div className="search-box">
+                    <Search size={14} color="#8592a3" />
+                    <input
+                      type="text"
+                      placeholder="Search ID, customer, status…"
+                      value={ordersSearch}
+                      onChange={(e) => { setOrdersSearch(e.target.value); setOrdersPage(1); }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    className="refresh-btn"
+                    onClick={() => window.location.reload()}
+                    title="Refresh"
+                  >
+                    <RefreshCw size={14} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Table */}
+              {ordersLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={18} className="spin" /> Loading orders…
+                </div>
+              ) : ordersError ? (
+                <div className="error-state">
+                  <AlertCircle size={16} />
+                  Failed to load orders: {ordersError}
+                </div>
+              ) : allOrders.length === 0 ? (
+  <div className="empty-state">
+    <ShoppingBag size={40} color="#cbd5e1" />
+    <p>No orders found.</p>
+    <span>The /api/admin/all-orders endpoint returned an empty list.</span>
+  </div>
+              ) : (
+                <>
+                  <div className="table-wrapper">
+                    <table className="orders-table">
+                      <thead>
+                        <tr>
+                          {[
+                            { label: "#",             field: "id"            },
+                            { label: "Customer",      field: "customer_name" },
+                            { label: "Total (EGP)",   field: "total_amount"  },
+                            { label: "Delivery Type", field: "delivery_type" },
+                            { label: "Status",        field: "status"        },
+                            { label: "Date",          field: "created_at"    },
+                          ].map(({ label, field }) => (
+                            <th key={field} onClick={() => handleSort(field)}>
+                              {label} <SortIcon field={field} />
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {pagedOrders.map((order, idx) => (
+                          <tr key={`order-${order.id ?? idx}-${idx}`}>
+                            <td className="order-id">#{order.id}</td>
+                            <td className="order-customer">
+                              <div className="customer-avatar">
+                                {(order.customer?.name || order.customer_name || "?")[0].toUpperCase()}
+                              </div>
+                              {order.customer?.name || order.customer_name || "—"}
+                            </td>
+                            <td className="order-amount">
+                              {parseFloat(order.total_amount || order.total || 0).toFixed(2)}
+                            </td>
+                            <td className="order-delivery">
+                              {order.delivery_type || "—"}
+                            </td>
+                            <td>
+                              <StatusBadge status={order.status} />
+                            </td>
+                            <td className="order-date">
+                              {fmtDate(order.created_at || order.order_date)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Pagination */}
+                  {totalPages > 1 && (
+                    <div className="pagination">
+                      <span className="pagination__info">
+                        Showing {(ordersPage - 1) * ORDERS_PER_PAGE + 1}–
+                        {Math.min(ordersPage * ORDERS_PER_PAGE, filteredOrders.length)} of {filteredOrders.length}
+                      </span>
+                      <div className="pagination__controls">
+                        <button
+                          onClick={() => setOrdersPage((p) => Math.max(1, p - 1))}
+                          disabled={ordersPage === 1}
+                          className="pagination__btn"
+                        >
+                          ‹ Prev
+                        </button>
+                        {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((pg) => (
+                          <button
+                            key={pg}
+                            onClick={() => setOrdersPage(pg)}
+                            className={`pagination__btn ${pg === ordersPage ? "active" : ""}`}
+                          >
+                            {pg}
+                          </button>
+                        ))}
+                        {totalPages > 5 && <span className="pagination__ellipsis">…</span>}
+                        <button
+                          onClick={() => setOrdersPage((p) => Math.min(totalPages, p + 1))}
+                          disabled={ordersPage === totalPages}
+                          className="pagination__btn"
+                        >
+                          Next ›
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
-        </div>
 
-      </div>
-      <style>{`@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}`}</style>
-    </>
+          {/* ══════════════════════════════════════════
+              ACTIVITY SECTION
+          ══════════════════════════════════════════ */}
+          {activeSection === "activity" && (
+            <div className="orders-card">
+              <div className="orders-card__header">
+                <div className="orders-card__title-row">
+                  <Activity size={20} color="#696cff" />
+                  <h3>Recent Activity</h3>
+                </div>
+              </div>
+              {activityLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={18} className="spin" /> Loading activity…
+                </div>
+              ) : activities.length === 0 ? (
+                <div className="empty-state">
+                  <Activity size={36} color="#cbd5e1" />
+                  <p>No recent activity found.</p>
+                </div>
+              ) : (
+                <div className="activity-list">
+                  {activities.map((act) => (
+                    <div key={act.uid} className="activity-item">
+                      <div className="activity-item__dot" />
+                      <div className="activity-item__body">
+                        <p className="activity-item__desc">{act.description}</p>
+                        <span className="activity-item__time">{fmtDate(act.created_at)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+        </div>
+      </main>
+
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg) } }
+        .spin { animation: spin 1s linear infinite }
+      `}</style>
+    </div>
   );
 };
 

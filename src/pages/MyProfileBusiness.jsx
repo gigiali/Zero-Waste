@@ -169,7 +169,7 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
         </span>
         {previewUrl && (
           <div style={{ position: "relative", display: "inline-block", marginBottom: "8px" }}>
-            {file?.type?.startsWith("image/") || (!file && previewUrl?.match(/\.(jpg|jpeg|png)$/i)) ? (
+            {file?.type?.startsWith("image/") || (!file && (previewUrl?.match(/\.(jpg|jpeg|png)$/i) || previewUrl?.includes("/logos/") || previewUrl?.includes("/images/"))) ? (
               <img src={previewUrl} alt={label} style={{ width: "80px", height: "80px", objectFit: "cover", borderRadius: "8px", border: "1.5px solid var(--pg-border)" }} />
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 12px", background: "var(--pg-input-bg)", border: "1.5px solid var(--pg-border)", borderRadius: "8px", fontSize: "0.85rem", color: "var(--pg-value)" }}>
@@ -196,12 +196,14 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
 export default function MyProfileBusiness() {
   const navigate = useNavigate();
   const { logout, businessStatus, user, darkMode, toggleDarkMode, role } = useAuth();
+
   useEffect(() => {
-  if (role && role !== "vendor") {
-    if (role === "super_admin" || role === "manager") navigate("/admin/profile");
-    else navigate("/profile");
-  }
-}, [role]);
+    if (role && role !== "vendor") {
+      if (role === "super_admin" || role === "manager") navigate("/admin/profile");
+      else navigate("/profile");
+    }
+  }, [role]);
+
   const [view, setView] = useState("main");
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
@@ -218,7 +220,11 @@ export default function MyProfileBusiness() {
     return null;
   });
 
-  const [vendorData, setVendorData] = useState({ business_name: "", tax_number: "" });
+  const [vendorData, setVendorData] = useState({
+    business_name: "",
+    tax_number: "",
+    vendor_type: "",
+  });
   const [editData, setEditData] = useState({ ...vendorData });
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -227,27 +233,46 @@ export default function MyProfileBusiness() {
   const [taxCardFile, setTaxCardFile] = useState(null);
   const [taxCardPreview, setTaxCardPreview] = useState("");
 
+  const getToken = () =>
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token");
+
   const fetchVendorData = async () => {
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
+      const token = getToken();
       if (!token) return;
 
-      const response = await fetch("/api/vendor/profile", {
+      // ✅ الـ route الصح من الـ backend
+      const response = await fetch("/api/myprofile", {
         method: "GET",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
 
       const data = await response.json();
-      if (response.ok && data.vendor) {
-        const v = data.vendor;
-        setVendorData({ business_name: v.business_name || "", tax_number: v.tax_number || "" });
-        setEditData({ business_name: v.business_name || "", tax_number: v.tax_number || "" });
-        if (v.logo) setLogoPreview(v.logo);
-        if (v.commercial_register) setCommercialPreview(v.commercial_register);
-        if (v.tax_card) setTaxCardPreview(v.tax_card);
+      if (response.ok) {
+        // الـ backend ممكن يرجع data.vendor أو data.user أو data مباشرةً
+            const v = data.data?.vendor || data.data || data;        setVendorData({
+          business_name: v.business_name || "",
+          tax_number: v.tax_number || "",
+          vendor_type: v.vendor_type || "",
+        });
+        setEditData({
+          business_name: v.business_name || "",
+          tax_number: v.tax_number || "",
+          vendor_type: v.vendor_type || "",
+        });
+        const baseUrl = "http://zero-waste-production.up.railway.app/storage/";
+        if (v.logo) setLogoPreview(
+          v.logo.startsWith("http") ? v.logo : baseUrl + v.logo
+        );
+        if (v.commercial_register) setCommercialPreview(
+          v.commercial_register.startsWith("http") ? v.commercial_register : baseUrl + v.commercial_register
+        );
+        if (v.tax_card) setTaxCardPreview(
+          v.tax_card.startsWith("http") ? v.tax_card : baseUrl + v.tax_card
+        );
       }
     } catch (error) {
       console.error("Fetch vendor data error:", error);
@@ -277,20 +302,18 @@ export default function MyProfileBusiness() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
+      const token = getToken();
 
       const formData = new FormData();
       formData.append("business_name", editData.business_name.trim());
       if (editData.tax_number.trim()) formData.append("tax_number", editData.tax_number.trim());
+      if (editData.vendor_type) formData.append("vendor_type", editData.vendor_type);
       if (logoFile) formData.append("logo", logoFile);
       if (commercialFile) formData.append("commercial_register", commercialFile);
       if (taxCardFile) formData.append("tax_card", taxCardFile);
-      formData.append("_method", "PUT");
 
-      const response = await fetch("/api/vendor/profile", {
+      // ✅ الـ route الصح من الـ backend
+      const response = await fetch("/api/vendor/complete-setup", {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         body: formData,
@@ -306,6 +329,7 @@ export default function MyProfileBusiness() {
         setCommercialFile(null);
         setTaxCardFile(null);
         setIsEditing(false);
+        fetchVendorData();
         alert("Business profile updated successfully!");
       } else if (response.status === 422 && data.errors) {
         const newErrors = {};
@@ -335,10 +359,7 @@ export default function MyProfileBusiness() {
 
   const handleDeleteAccount = async () => {
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
+      const token = getToken();
       const response = await fetch("/api/vendor/delete-account", {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
@@ -373,7 +394,7 @@ export default function MyProfileBusiness() {
               <button className="hero-edit-btn" onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}>
                 <Edit2 size={16} /> {isEditing ? "Cancel Editing" : "Edit"}
               </button>
-              <button className="hero-edit-btn" onClick={() => setShowPendingModal(true)}>
+              <button className="hero-edit-btn" onClick={() => navigate("/business")}>
                 Back to Business Dashboard
               </button>
             </div>
@@ -399,6 +420,7 @@ export default function MyProfileBusiness() {
                 </div>
               ))}
 
+              {/* Business Name */}
               <div className="info-row">
                 <span className="info-icon"><Building2 size={20} /></span>
                 <div className="info-text">
@@ -416,6 +438,29 @@ export default function MyProfileBusiness() {
                 </div>
               </div>
 
+              {/* Business Type */}
+              <div className="info-row">
+                <span className="info-icon"><Building2 size={20} /></span>
+                <div className="info-text">
+                  <span className="info-label">Business Type</span>
+                  {isEditing ? (
+                    <select className="info-input" value={editData.vendor_type}
+                      onChange={(e) => setEditData({ ...editData, vendor_type: e.target.value })}>
+                      <option value="">Select type</option>
+                      <option value="restaurant">Restaurant</option>
+                      <option value="supermarket">Supermarket</option>
+                      <option value="coffee-shop">Coffee Shop</option>
+                      <option value="hotel">Hotel</option>
+                      <option value="bakery">Bakery</option>
+                      <option value="dessert-shop">Dessert Shop</option>
+                    </select>
+                  ) : (
+                    <span className="info-value">{vendorData.vendor_type || "—"}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Tax Number */}
               <div className="info-row">
                 <span className="info-icon"><Hash size={20} /></span>
                 <div className="info-text">
@@ -433,6 +478,7 @@ export default function MyProfileBusiness() {
                 </div>
               </div>
 
+              {/* Logo */}
               {isEditing ? (
                 <FileUploadField label="Business Logo" icon={<Image size={20} />} accept="image/jpeg,image/png,image/jpg"
                   file={logoFile} previewUrl={logoFile ? URL.createObjectURL(logoFile) : logoPreview}
@@ -448,6 +494,7 @@ export default function MyProfileBusiness() {
                 </div>
               )}
 
+              {/* Commercial Register */}
               {isEditing ? (
                 <FileUploadField label="Commercial Register" icon={<FileText size={20} />} accept="application/pdf,image/jpeg,image/png,image/jpg"
                   file={commercialFile} previewUrl={commercialFile ? URL.createObjectURL(commercialFile) : commercialPreview}
@@ -463,6 +510,7 @@ export default function MyProfileBusiness() {
                 </div>
               )}
 
+              {/* Tax Card */}
               {isEditing ? (
                 <FileUploadField label="Tax Card" icon={<FileText size={20} />} accept="application/pdf,image/jpeg,image/png,image/jpg"
                   file={taxCardFile} previewUrl={taxCardFile ? URL.createObjectURL(taxCardFile) : taxCardPreview}

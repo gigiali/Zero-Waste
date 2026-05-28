@@ -9,10 +9,26 @@ function TermsOfService() {
 
   const sections = [
     { id: "introduction", title: t("terms.sections.introduction"), icon: "📜" },
-    { id: "user-responsibilities", title: t("terms.sections.userResponsibilities"), icon: "👤" },
-    { id: "prohibited-activities", title: t("terms.sections.prohibitedActivities"), icon: "🚫" },
-    { id: "account-security", title: t("terms.sections.accountSecurity"), icon: "🔐" },
-    { id: "liability", title: t("terms.sections.limitationOfLiability"), icon: "⚠️" },
+    {
+      id: "user-responsibilities",
+      title: t("terms.sections.userResponsibilities"),
+      icon: "👤",
+    },
+    {
+      id: "prohibited-activities",
+      title: t("terms.sections.prohibitedActivities"),
+      icon: "🚫",
+    },
+    {
+      id: "account-security",
+      title: t("terms.sections.accountSecurity"),
+      icon: "🔐",
+    },
+    {
+      id: "liability",
+      title: t("terms.sections.limitationOfLiability"),
+      icon: "⚠️",
+    },
     { id: "changes", title: t("terms.sections.changesToTerms"), icon: "🔄" },
   ];
 
@@ -53,7 +69,14 @@ function TermsOfService() {
               ))}
             </nav>
             <div className="toc-footer">
-              <p>{t("terms.lastUpdated")} {new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}</p>
+              <p>
+                {t("terms.lastUpdated")}{" "}
+                {new Date().toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </p>
             </div>
           </aside>
 
@@ -62,7 +85,8 @@ function TermsOfService() {
             {/* Introduction */}
             <section id="introduction" className="terms-section">
               <h2>
-                <span className="section-icon">📜</span> {t("terms.introduction.title")}
+                <span className="section-icon">📜</span>{" "}
+                {t("terms.introduction.title")}
               </h2>
               <p>{t("terms.introduction.description")}</p>
               <div className="highlight-box important">
@@ -77,14 +101,19 @@ function TermsOfService() {
             {/* User Responsibilities */}
             <section id="user-responsibilities" className="terms-section">
               <h2>
-                <span className="section-icon">👤</span> {t("terms.userResponsibilities.title")}
+                <span className="section-icon">👤</span>{" "}
+                {t("terms.userResponsibilities.title")}
               </h2>
               <p>{t("terms.userResponsibilities.description")}</p>
               <div className="responsibility-grid">
                 <div className="responsibility-item">
                   <div className="resp-icon">✍️</div>
-                  <h4>{t("terms.userResponsibilities.accurateInformation.title")}</h4>
-                  <p>{t("terms.userResponsibilities.accurateInformation.text")}</p>
+                  <h4>
+                    {t("terms.userResponsibilities.accurateInformation.title")}
+                  </h4>
+                  <p>
+                    {t("terms.userResponsibilities.accurateInformation.text")}
+                  </p>
                 </div>
                 <div className="responsibility-item">
                   <div className="resp-icon">🎯</div>
@@ -98,7 +127,9 @@ function TermsOfService() {
                 </div>
                 <div className="responsibility-item">
                   <div className="resp-icon">🔑</div>
-                  <h4>{t("terms.userResponsibilities.securePassword.title")}</h4>
+                  <h4>
+                    {t("terms.userResponsibilities.securePassword.title")}
+                  </h4>
                   <p>{t("terms.userResponsibilities.securePassword.text")}</p>
                 </div>
               </div>
@@ -107,29 +138,46 @@ function TermsOfService() {
             {/* Prohibited Activities */}
             <section id="prohibited-activities" className="terms-section">
               <h2>
-                <span className="section-icon">🚫</span> {t("terms.prohibitedActivities.title")}
+                <span className="section-icon">🚫</span>{" "}
+                {t("terms.prohibitedActivities.title")}
               </h2>
               <p>{t("terms.prohibitedActivities.description")}</p>
               <div className="prohibited-list">
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>{t("terms.prohibitedActivities.falseInformation.title")}</h4>
-                    <p>{t("terms.prohibitedActivities.falseInformation.text")}</p>
+                    <h4>
+                      {t("terms.prohibitedActivities.falseInformation.title")}
+                    </h4>
+                    <p>
+                      {t("terms.prohibitedActivities.falseInformation.text")}
+                    </p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>{t("terms.prohibitedActivities.illegalActivities.title")}</h4>
-                    <p>{t("terms.prohibitedActivities.illegalActivities.text")}</p>
+                    <h4>
+                      {t("terms.prohibitedActivities.illegalActivities.title")}
+                    </h4>
+                    <p>
+                      {t("terms.prohibitedActivities.illegalActivities.text")}
+                    </p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>{t("terms.prohibitedActivities.platformInterference.title")}</h4>
-                    <p>{t("terms.prohibitedActivities.platformInterference.text")}</p>
+                    <h4>
+                      {t(
+                        "terms.prohibitedActivities.platformInterference.title",
+                      )}
+                    </h4>
+                    <p>
+                      {t(
+                        "terms.prohibitedActivities.platformInterference.text",
+                      )}
+                    </p>
                   </div>
                 </div>
                 <div className="prohibited-item danger">
@@ -149,7 +197,9 @@ function TermsOfService() {
                 <div className="prohibited-item danger">
                   <span className="icon">❌</span>
                   <div>
-                    <h4>{t("terms.prohibitedActivities.ipViolations.title")}</h4>
+                    <h4>
+                      {t("terms.prohibitedActivities.ipViolations.title")}
+                    </h4>
                     <p>{t("terms.prohibitedActivities.ipViolations.text")}</p>
                   </div>
                 </div>
@@ -159,12 +209,15 @@ function TermsOfService() {
             {/* Account Security */}
             <section id="account-security" className="terms-section">
               <h2>
-                <span className="section-icon">🔐</span> {t("terms.accountSecurity.title")}
+                <span className="section-icon">🔐</span>{" "}
+                {t("terms.accountSecurity.title")}
               </h2>
               <p>{t("terms.accountSecurity.description")}</p>
               <div className="security-guidelines">
                 <div className="guideline">
-                  <h4>{t("terms.accountSecurity.immediateNotification.title")}</h4>
+                  <h4>
+                    {t("terms.accountSecurity.immediateNotification.title")}
+                  </h4>
                   <p>{t("terms.accountSecurity.immediateNotification.text")}</p>
                 </div>
                 <div className="guideline">
@@ -188,7 +241,8 @@ function TermsOfService() {
             {/* Limitation of Liability */}
             <section id="liability" className="terms-section">
               <h2>
-                <span className="section-icon">⚠️</span> {t("terms.limitationOfLiability.title")}
+                <span className="section-icon">⚠️</span>{" "}
+                {t("terms.limitationOfLiability.title")}
               </h2>
               <p>{t("terms.limitationOfLiability.description")}</p>
               <div className="liability-list">
@@ -218,7 +272,8 @@ function TermsOfService() {
             {/* Changes to Terms */}
             <section id="changes" className="terms-section">
               <h2>
-                <span className="section-icon">🔄</span> {t("terms.changesToTerms.title")}
+                <span className="section-icon">🔄</span>{" "}
+                {t("terms.changesToTerms.title")}
               </h2>
               <p>{t("terms.changesToTerms.description")}</p>
               <div className="changes-notice">
@@ -253,10 +308,12 @@ function TermsOfService() {
             {/* Additional Terms */}
             <section className="additional-section">
               <h2>{t("terms.additionalTerms.title")}</h2>
-              
+
               <div className="additional-grid">
                 <div className="additional-item">
-                  <h4>{t("terms.additionalTerms.intellectualProperty.title")}</h4>
+                  <h4>
+                    {t("terms.additionalTerms.intellectualProperty.title")}
+                  </h4>
                   <p>{t("terms.additionalTerms.intellectualProperty.text")}</p>
                 </div>
                 <div className="additional-item">

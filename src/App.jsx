@@ -1,5 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { LocationProvider } from "./Context/LocationContext";
 
 import Navigation from "./Components/Navigation";
 
@@ -29,51 +30,53 @@ import BusinessProfile from "./pages/MyProfileBusiness";
 
 // Admin
 import Admin from "./pages/Admin";
-import ReportsIssues from "./pages/ReportsIssues";
+import ReviewModeration from "./pages/ReviewModeration";
 import ManageBusinesses from "./pages/ManageBusinesses";
 import UserManagement from "./pages/UserManagement";
 import AdminProfile from "./pages/MyProfileAdmin";
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <LocationProvider>
+      <BrowserRouter>
+        <Routes>
 
-        {/* Auth */}
-        <Route path="/"                element={<><Navigation /> <HomePage /></>} />
-        <Route path="/signin"          element={<SignIn />} />
-        <Route path="/signup"          element={<SignUp />} />
-        <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/verify-code"     element={<VerifyCode />} />
-        <Route path="/reset-password"  element={<ResetPassword />} />
+          {/* Auth */}
+          <Route path="/"                element={<><Navigation /> <HomePage /></>} />
+          <Route path="/signin"          element={<SignIn />} />
+          <Route path="/signup"          element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-code"     element={<VerifyCode />} />
+          <Route path="/reset-password"  element={<ResetPassword />} />
 
-        {/* Static */}
-        <Route path="/terms"   element={<TermsOfService />} />
-        <Route path="/privacy" element={<PrivacyPolicy />} />
+          {/* Static */}
+          <Route path="/terms"   element={<TermsOfService />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
-        {/* User (with Navigation) */}
-        <Route path="/home"       element={<><Navigation /> <HomePage /></>} />
-        <Route path="/card"       element={<><Navigation /> <CartPage /></>} />
-        <Route path="/payment"    element={<><Navigation /> <PaymentMethodPage /></>} />
-        <Route path="/profile"    element={<><Navigation /> <UserProfile /></>} />   {/* ← User profile */}
-        <Route path="/offer/:id"  element={<><Navigation /> <OfferDetail /></>} />
-        <Route path="/restaurant/:id" element={<><Navigation /> <RestaurantDetail /></>} />
+          {/* User (with Navigation) */}
+          <Route path="/home"           element={<><Navigation /> <HomePage /></>} />
+          <Route path="/card"           element={<><Navigation /> <CartPage /></>} />
+          <Route path="/payment"        element={<><Navigation /> <PaymentMethodPage /></>} />
+          <Route path="/profile"        element={<><Navigation /> <UserProfile /></>} />
+          <Route path="/offer/:id"      element={<><Navigation /> <OfferDetail /></>} />
+          <Route path="/restaurant/:id" element={<><Navigation /> <RestaurantDetail /></>} />
 
-        {/* Business */}
-        <Route path="/business-setup"    element={<BusinessSetup />} />
-        <Route path="/business"          element={<Business />} />
-        <Route path="/add-branch"        element={<AddBranch />} />
-        <Route path="/business/profile"  element={<BusinessProfile />} />           {/* ← Business profile */}
+          {/* Business */}
+          <Route path="/business-setup"   element={<BusinessSetup />} />
+          <Route path="/business"         element={<Business />} />
+          <Route path="/add-branch"       element={<AddBranch />} />
+          <Route path="/business/profile" element={<BusinessProfile />} />
 
-        {/* Admin */}
-        <Route path="/admin"                  element={<Admin />} />
-        <Route path="/admin/reports-issues"   element={<ReportsIssues />} />
-        <Route path="/admin/businesses"       element={<ManageBusinesses />} />
-        <Route path="/admin/users"            element={<UserManagement />} />
-        <Route path="/admin/profile"          element={<AdminProfile />} />          {/* ← Admin profile */}
+          {/* Admin */}
+          <Route path="/admin"                     element={<Admin />} />
+          <Route path="/admin/review-moderation"   element={<ReviewModeration />} />
+          <Route path="/admin/businesses"          element={<ManageBusinesses />} />
+          <Route path="/admin/users"               element={<UserManagement />} />
+          <Route path="/admin/profile"             element={<AdminProfile />} />
 
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </LocationProvider>
   );
 }
 

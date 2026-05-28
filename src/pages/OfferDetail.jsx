@@ -49,9 +49,9 @@ const normalizeOffer = (payload) => {
     id: source.id,
     title: source.title || "Untitled Offer",
     description: source.description || "No description available",
-    image:
-      `https://zero-waste-production.up.railway.app/storage/${source.image}` ||
-      "/images/e.png",
+    image: source.image_url || (source.image
+  ? `https://zero-waste-production.up.railway.app/storage/${source.image}`
+  : "/images/e.png"),
     discount,
     originalPrice,
     discountedPrice,
@@ -151,6 +151,7 @@ const { isLoggedIn } = useAuth();
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
+          console.log("RAW offer data:", data);
           setOffer(normalizeOffer(data));
         } else {
           setOffer(null);
@@ -264,16 +265,6 @@ const { isLoggedIn } = useAuth();
 
         <div className="od-hero-bottom">
           <div className="od-restaurant-info">
-            {offer.restaurantLogo && (
-              <img
-                src={offer.restaurantLogo}
-                alt={offer.restaurantName}
-                className="od-restaurant-logo"
-                onError={(e) => {
-                  e.target.style.display = "none";
-                }}
-              />
-            )}
             <div>
               <h2 className="od-restaurant-name">{offer.title}</h2>
               <div className="od-restaurant-meta">

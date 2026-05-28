@@ -14,6 +14,8 @@ import {
 import "./MyProfileAdmin.css";
 import { useAuth } from "../Context/AuthContext";
 
+const BASE_URL = "https://zero-waste-production.up.railway.app/api";
+
 function ChangePassword({ onCancel }) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
@@ -36,12 +38,9 @@ function ChangePassword({ onCancel }) {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
+      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
 
-      const response = await fetch("/api/admin/change-password", {
+      const response = await fetch(`${BASE_URL}/admin/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -121,7 +120,8 @@ function ChangePassword({ onCancel }) {
 
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { logout, darkMode, toggleDarkMode , role  } = useAuth();
+  const { logout, darkMode, toggleDarkMode, role, token: contextToken } = useAuth();
+const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
   useEffect(() => {
   if (role && role !== "super_admin" && role !== "manager") {
     if (role === "vendor") navigate("/business/profile");
@@ -141,18 +141,23 @@ export default function UserProfile() {
 
   const fetchUserData = async () => {
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
       if (!token) return;
-      const response = await fetch("/api/myprofile", {
+      const response = await fetch(`${BASE_URL}/myprofile`, {
         method: "GET",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
       const data = await response.json();
-      if (response.ok && data.user) {
-        const u = { name: data.user.name || "", email: data.user.email || "", phone: data.user.phone || "", address: data.user.address || "" };
+      console.log("🔍 Profile API response:", data);
+
+      const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
+
+      if (response.ok && user?.name) {
+        const u = { 
+          name: user.name || "", 
+          email: user.email || "", 
+          phone: user.phone || "", 
+          address: user.address || "" 
+        };
         setUserData(u);
         setEditData(u);
       }
@@ -161,7 +166,9 @@ export default function UserProfile() {
     }
   };
 
-  useEffect(() => { fetchUserData(); }, []);
+  useEffect(() => { 
+  if (token) fetchUserData(); 
+}, [token]);
 
   const handleSave = async () => {
     const e = {};
@@ -174,11 +181,7 @@ export default function UserProfile() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-      const response = await fetch("/api/myprofile", {
+      const response = await fetch(`${BASE_URL}/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: editData.name.trim(), email: editData.email.trim(), phone: editData.phone.trim(), address: editData.address.trim() }),
@@ -206,11 +209,7 @@ export default function UserProfile() {
 
   const handleDeleteAccount = async () => {
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-      const response = await fetch("/api/profile", {
+      const response = await fetch(`${BASE_URL}/profile`, {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });

@@ -16,6 +16,7 @@ import {
   ShoppingBag,
   Truck,
   X,
+  Star,
 } from "lucide-react";
 import "./MyProfileAdmin.css";
 import { useAuth } from "../Context/AuthContext";
@@ -62,7 +63,8 @@ function ChangePassword({ onDone }) {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token") ||
+      const token =
+        localStorage.getItem("auth_token") ||
         localStorage.getItem("token") ||
         sessionStorage.getItem("auth_token") ||
         sessionStorage.getItem("token");
@@ -74,7 +76,7 @@ function ChangePassword({ onDone }) {
           Accept: "application/json",
           Authorization: `Bearer ${token}`,
         },
-       body: JSON.stringify({
+        body: JSON.stringify({
           current_password: form.current,
           password: form.next,
           password_confirmation: form.confirm,
@@ -95,7 +97,9 @@ function ChangePassword({ onDone }) {
         });
         setErrors(newErrors);
       } else {
-        setErrors({ general: data.message || "Failed to change password. Please try again." });
+        setErrors({
+          general: data.message || "Failed to change password. Please try again.",
+        });
       }
     } catch (err) {
       setErrors({ general: "Network error. Please check your connection." });
@@ -127,7 +131,11 @@ function ChangePassword({ onDone }) {
         </label>
       ))}
       {errors.general && (
-        <small className={errors.general.includes("✅") ? "profile-success" : "profile-error"}>
+        <small
+          className={
+            errors.general.includes("✅") ? "profile-success" : "profile-error"
+          }
+        >
           {errors.general}
         </small>
       )}
@@ -143,92 +151,18 @@ function ChangePassword({ onDone }) {
   );
 }
 
-function NotificationSettings({ onDone }) {
-  const [prefs, setPrefs] = useState({
-    orders: true,
-    offers: true,
-    payments: true,
-    news: false,
-  });
-  const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
-  const labels = {
-    orders: "Order updates",
-    offers: "New offers nearby",
-    payments: "Payment confirmations",
-    news: "News and promotions",
-  };
+function OrdersSection({ orders, isLoadingOrders }) {
+  if (isLoadingOrders) {
+    return (
+      <div className="profile-card">
+        <div className="profile-empty-state">
+          <Package size={30} />
+          <p>Loading your orders...</p>
+        </div>
+      </div>
+    );
+  }
 
-  const handleSave = async () => {
-    setIsLoading(true);
-    setMessage("");
-    try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-      const response = await fetch("/api/notification-preferences", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(prefs),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        setMessage("Preferences saved successfully!");
-        setTimeout(onDone, 700);
-      } else {
-        setMessage(
-          data.message || "Failed to save preferences. Please try again.",
-        );
-      }
-    } catch {
-      setMessage("Network error. Please check your connection.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <div className="profile-drawer-body">
-      {Object.entries(prefs).map(([key, value]) => (
-        <button
-          type="button"
-          className="profile-toggle-row"
-          key={key}
-          onClick={() => setPrefs((p) => ({ ...p, [key]: !p[key] }))}
-        >
-          <span>{labels[key]}</span>
-          <span className={`profile-switch ${value ? "is-on" : ""}`}>
-            <span />
-          </span>
-        </button>
-      ))}
-      {message && (
-        <small
-          className={
-            message.includes("success") ? "profile-success" : "profile-error"
-          }
-        >
-          {message}
-        </small>
-      )}
-      <button
-        type="button"
-        className="btn-save profile-full-btn"
-        onClick={handleSave}
-        disabled={isLoading}
-      >
-        {isLoading ? "Saving..." : "Save Preferences"}
-      </button>
-    </div>
-  );
-}
-
-function OrdersSection({ orders }) {
   return (
     <div className="profile-card">
       <div className="profile-section-head">
@@ -255,56 +189,73 @@ function OrdersSection({ orders }) {
             >
               <div className="profile-order-top">
                 <div>
-                  <strong>#{order.orderNumber || order.id}</strong>
-                  <span>{order.status || "Confirmed"}</span>
+                  <strong>#{order.id || order.orderNumber}</strong>
+                  <span>{order.status || order.order_status || "Confirmed"}</span>
                 </div>
-                <strong>EGP {Number(order.total || 0).toFixed(2)}</strong>
+                <strong>
+                  EGP {Number(order.total_amount || order.total || 0).toFixed(2)}
+                </strong>
               </div>
 
               <div className="profile-order-meta">
                 <span>
-                  <MapPin size={14} /> {order.businessName || "Restaurant"}
+                  <MapPin size={14} />{" "}
+                  {order.businessName || order.vendor_name || "Restaurant"}
                 </span>
                 <span>
                   <CalendarDays size={14} />{" "}
-                  {order.createdAt
-                    ? new Date(order.createdAt).toLocaleString()
+                  {order.created_at || order.createdAt
+                    ? new Date(
+                        order.created_at || order.createdAt
+                      ).toLocaleString()
                     : "Today"}
                 </span>
                 <span>
-                  {order.deliveryMethod === "delivery" ? (
+                  {order.delivery_type === "delivery" ||
+                  order.deliveryMethod === "delivery" ? (
                     <Truck size={14} />
                   ) : (
                     <ShoppingBag size={14} />
                   )}
-                  {order.deliveryMethod === "delivery" ? "Delivery" : "Pickup"}
+                  {order.delivery_type === "delivery" ||
+                  order.deliveryMethod === "delivery"
+                    ? "Delivery"
+                    : "Pickup"}
                 </span>
                 <span>
                   <CreditCard size={14} />{" "}
-                  {order.paymentMethod || "Payment selected"}
+                  {order.payment_method || order.paymentMethod || "Payment selected"}
                 </span>
               </div>
 
               <div className="profile-order-items">
-                {(order.items || []).map((item, idx) => (
+                {(order.items || order.order_items || []).map((item, idx) => (
                   <div
                     className="profile-order-item"
                     key={`${order.id}-${idx}`}
                   >
                     <span>
-                      {item.quantity}x {item.title}
+                      {item.quantity || item.quality}x{" "}
+                      {item.title || item.offer?.title || item.name}
                     </span>
-                    <strong>EGP {Number(item.price || 0).toFixed(2)}</strong>
+                    <strong>
+                      EGP{" "}
+                      {Number(
+                        item.price || item.offer?.discount_price || 0
+                      ).toFixed(2)}
+                    </strong>
                   </div>
                 ))}
               </div>
 
               <div className="profile-order-totals">
                 <span>
-                  Subtotal: EGP {Number(order.subtotal || 0).toFixed(2)}
+                  Subtotal: EGP{" "}
+                  {Number(order.subtotal || order.total_amount || 0).toFixed(2)}
                 </span>
                 <span>
-                  Delivery: EGP {Number(order.deliveryFee || 0).toFixed(2)}
+                  Delivery: EGP{" "}
+                  {Number(order.delivery_fees || order.deliveryFee || 0).toFixed(2)}
                 </span>
               </div>
             </article>
@@ -319,20 +270,28 @@ export default function UserProfile() {
   const navigate = useNavigate();
   const { logout, darkMode, toggleDarkMode } = useAuth();
   const { role } = useAuth();
+
   useEffect(() => {
-  if (role && role !== "customer") {
-    if (role === "super_admin" || role === "manager") navigate("/admin/profile");
-    else if (role === "vendor") navigate("/business/profile");
-  }
-}, [role]);
+    if (role && role !== "customer") {
+      if (role === "super_admin" || role === "manager")
+        navigate("/admin/profile");
+      else if (role === "vendor") navigate("/business/profile");
+    }
+  }, [role]);
+
   const [activePanel, setActivePanel] = useState(null);
   const [activeSection, setActiveSection] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showDeleteReviewConfirm, setShowDeleteReviewConfirm] = useState(false);
+  const [selectedReviewId, setSelectedReviewId] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [errors, setErrors] = useState({});
   const [orders, setOrders] = useState([]);
+  const [reviews, setReviews] = useState([]);
 
   const [userData, setUserData] = useState({
     name: "",
@@ -342,13 +301,22 @@ export default function UserProfile() {
   });
   const [editData, setEditData] = useState({ ...userData });
 
+  const getAuthToken = () => {
+    return localStorage.getItem("auth_token") || 
+           localStorage.getItem("token") || 
+           sessionStorage.getItem("auth_token") || 
+           sessionStorage.getItem("token");
+  };
+
   const fetchUserData = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return;
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("/api/user/profile", {
+
+      const response = await fetch("/api/myprofile", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -357,30 +325,46 @@ export default function UserProfile() {
         signal: controller.signal,
       });
       clearTimeout(timeoutId);
+      
       const data = await response.json();
 
-      if (response.ok && data.user) {
-        const u = {
-          name: data.user.name || "",
-          email: data.user.email || "",
-          phone: data.user.phone || "",
-          address: data.user.address || "",
+      if (response.ok) {
+        const u = data.user || data.data || data; 
+        
+        const freshData = {
+          name: u.name || u.full_name || u.username || "",
+          email: u.email || "",
+          phone: u.phone || u.phone_number || "",
+          address: u.address || "",
         };
-        setUserData(u);
-        setEditData(u);
+
+        setUserData(freshData);
+        setEditData(freshData);
+      } else {
+        setErrors((prev) => ({ 
+          ...prev, 
+          general: data.message || "Failed to load profile settings." 
+        }));
       }
     } catch (error) {
-      console.error("Fetch user data error:", error);
+      setErrors((prev) => ({
+        ...prev,
+        general: error.name === "AbortError" 
+          ? "Request timed out. Please try again." 
+          : "Network error. Please check your connection."
+      }));
     }
   };
 
   const fetchUserOrders = async () => {
+    const token = getAuthToken();
+    if (!token) return;
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) return;
+      setIsLoadingOrders(true);
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("/api/user/orders", {
+
+      const response = await fetch("/api/my-orders", {
         method: "GET",
         headers: {
           Accept: "application/json",
@@ -391,18 +375,78 @@ export default function UserProfile() {
       clearTimeout(timeoutId);
       const data = await response.json();
 
-      if (response.ok && data.orders) {
-        setOrders(data.orders);
+      if (response.ok) {
+        setOrders(Array.isArray(data) ? data : data.orders || []);
       }
     } catch (error) {
       console.error("Fetch user orders error:", error);
+    } finally {
+      setIsLoadingOrders(false);
+    }
+  };
+
+  const fetchUserReviews = async () => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      setIsLoadingReviews(true);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
+      const response = await fetch("/api/my-reviews", {
+        method: "GET",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+      const data = await response.json();
+
+      if (response.ok) {
+        setReviews(Array.isArray(data) ? data : data.reviews || []);
+      }
+    } catch (error) {
+      console.error("Fetch user reviews error:", error);
+    } finally {
+      setIsLoadingReviews(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    const token = getAuthToken();
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        setReviews((prev) => prev.filter((rev) => rev.id !== reviewId));
+        setShowDeleteReviewConfirm(false);
+        setSelectedReviewId(null);
+      } else {
+        const data = await response.json();
+        alert(data.message || "Failed to delete review.");
+      }
+    } catch (error) {
+      console.error("Delete review error:", error);
     }
   };
 
   useEffect(() => {
-    fetchUserData();
-    fetchUserOrders();
-  }, []);
+    const token = getAuthToken();
+    if (token) {
+      fetchUserData();
+      fetchUserOrders();
+      fetchUserReviews();
+    }
+  }, [role]);
 
   const handleSave = async () => {
     const e = {};
@@ -415,10 +459,11 @@ export default function UserProfile() {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("auth_token");
+      const token = getAuthToken();
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
-      const response = await fetch("/api/user/profile", {
+
+      const response = await fetch("/api/customer/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -435,6 +480,7 @@ export default function UserProfile() {
       });
       clearTimeout(timeoutId);
       const data = await response.json();
+
       if (response.ok) {
         setUserData({ ...editData });
         setIsEditing(false);
@@ -451,8 +497,7 @@ export default function UserProfile() {
         setErrors({ general: "This email is already in use." });
       } else {
         setErrors({
-          general:
-            data.message || "Failed to update profile. Please try again.",
+          general: data.message || "Failed to update profile. Please try again.",
         });
       }
     } catch (error) {
@@ -472,13 +517,12 @@ export default function UserProfile() {
     setErrors({});
     setIsEditing(false);
   };
+
   const handleDeleteAccount = async () => {
     try {
-      const token = localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-      const response = await fetch("/api/customer/delete-profile",{
+      const token = getAuthToken();
+
+      const response = await fetch("/api/customer/delete-profile", {
         method: "DELETE",
         headers: {
           Accept: "application/json",
@@ -502,29 +546,15 @@ export default function UserProfile() {
 
   const infoFields = [
     { icon: <User size={20} />, label: "Full Name", key: "name", type: "text" },
-    {
-      icon: <Mail size={20} />,
-      label: "Email Address",
-      key: "email",
-      type: "email",
-    },
-    {
-      icon: <Phone size={20} />,
-      label: "Phone Number",
-      key: "phone",
-      type: "tel",
-    },
-    {
-      icon: <MapPin size={20} />,
-      label: "Address",
-      key: "address",
-      type: "text",
-    },
+    { icon: <Mail size={20} />, label: "Email Address", key: "email", type: "email" },
+    { icon: <Phone size={20} />, label: "Phone Number", key: "phone", type: "tel" },
+    { icon: <MapPin size={20} />, label: "Address", key: "address", type: "text" },
   ];
 
   const profileTabs = [
     { id: "profile", label: "My Profile", icon: <User size={17} /> },
     { id: "orders", label: "My Orders", icon: <Package size={17} /> },
+    { id: "reviews", label: "My Reviews", icon: <Star size={17} /> },
     { id: "settings", label: "Account Settings", icon: <KeyRound size={17} /> },
   ];
 
@@ -543,16 +573,42 @@ export default function UserProfile() {
         </div>
 
         <div className="profile-body">
+          {/* تعديل مساحة توزيع الأزرار وإضافة حواف داخلية مريحة لتمنع التلاصق */}
           <div
             className="profile-tabs"
             role="tablist"
             aria-label="Profile sections"
+            style={{ 
+              display: "flex", 
+              flexDirection: "row", 
+              flexWrap: "nowrap", 
+              justifyContent: "space-between", 
+              alignItems: "center",
+              gap: "20px",
+              padding: "10px 15px",
+              overflowX: "auto",
+              width: "100%"
+            }}
           >
             {profileTabs.map((tab) => (
               <button
                 type="button"
                 key={tab.id}
                 className={`profile-tab ${activeSection === tab.id ? "is-active" : ""}`}
+                style={{ 
+                  whiteSpace: "nowrap", 
+                  flexShrink: 0,
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  padding: "10px 16px",
+                  borderRadius: "8px",
+                  background: activeSection === tab.id ? "transparent" : "none",
+                  border: "none",
+                  cursor: "pointer"
+                }}
                 onClick={() => {
                   if (isEditing) handleCancel();
                   setActiveSection(tab.id);
@@ -591,10 +647,7 @@ export default function UserProfile() {
                             type={type}
                             value={editData[key]}
                             onChange={(e) => {
-                              setEditData({
-                                ...editData,
-                                [key]: e.target.value,
-                              });
+                              setEditData({ ...editData, [key]: e.target.value });
                               if (errors[key])
                                 setErrors((p) => ({ ...p, [key]: "" }));
                             }}
@@ -639,7 +692,72 @@ export default function UserProfile() {
             </div>
           )}
 
-          {activeSection === "orders" && <OrdersSection orders={orders} />}
+          {activeSection === "orders" && (
+            <OrdersSection orders={orders} isLoadingOrders={isLoadingOrders} />
+          )}
+
+          {activeSection === "reviews" && (
+            <div className="profile-card">
+              <div className="profile-section-head">
+                <div>
+                  <h2 className="card-title">My Reviews</h2>
+                  <p className="profile-muted">
+                    Manage and view all your submitted application reviews.
+                  </p>
+                </div>
+                <span className="profile-count-badge">{reviews.length}</span>
+              </div>
+
+              {isLoadingReviews ? (
+                <div className="profile-empty-state">
+                  <p>Loading your reviews...</p>
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="profile-empty-state">
+                  <Star size={30} />
+                  <p>You haven't posted any reviews yet.</p>
+                </div>
+              ) : (
+                <div className="profile-orders-list">
+                  {reviews.map((review) => (
+                    <div 
+                      key={review.id} 
+                      className="profile-order-card"
+                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <div style={{ display: "flex", gap: "2px", color: "#f59e0b" }}>
+                          {Array.from({ length: review.rating || review.Rating || 5 }).map((_, i) => (
+                            <Star key={i} size={16} fill="currentColor" />
+                          ))}
+                        </div>
+                        <p style={{ margin: 0, fontSize: "14px", fontWeight: "500" }}>
+                          {review.comment || review.Comment || "No comment content provided."}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedReviewId(review.id);
+                          setShowDeleteReviewConfirm(true);
+                        }}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "#ef4444",
+                          cursor: "pointer",
+                          padding: "8px",
+                        }}
+                      >
+                        <Trash2 size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {activeSection === "settings" && (
             <div className="profile-card">
@@ -653,13 +771,14 @@ export default function UserProfile() {
                   <span className="setting-label">Change Password</span>
                   <ChevronRight size={18} className="chevron" />
                 </button>
-                <button
-                  className="setting-row"
-                  onClick={toggleDarkMode}
-                >
+                <button className="setting-row" onClick={toggleDarkMode}>
                   <span style={{ fontSize: 18 }}>{darkMode ? "☀️" : "🌙"}</span>
-                  <span className="setting-label">{darkMode ? "Light Mode" : "Dark Mode"}</span>
-                  <span className={`profile-switch ${darkMode ? "is-on" : ""}`}><span /></span>
+                  <span className="setting-label">
+                    {darkMode ? "Light Mode" : "Dark Mode"}
+                  </span>
+                  <span className={`profile-switch ${darkMode ? "is-on" : ""}`}>
+                    <span />
+                  </span>
                 </button>
                 <button
                   className="setting-row setting-red"
@@ -690,6 +809,22 @@ export default function UserProfile() {
         </SettingsDrawer>
       )}
 
+      {showDeleteReviewConfirm && (
+        <div className="profile-drawer-overlay" onClick={() => setShowDeleteReviewConfirm(false)}>
+          <div className="logout-confirm-box" onClick={(e) => e.stopPropagation()}>
+            <div className="profile-logout-icon" style={{ color: "#ef4444" }}>
+              <Trash2 size={28} />
+            </div>
+            <h3>Delete Review?</h3>
+            <p>Are you sure you want to delete this review from the system?</p>
+            <div className="profile-confirm-actions">
+              <button className="btn-cancel" onClick={() => setShowDeleteReviewConfirm(false)}>Cancel</button>
+              <button className="btn-save profile-danger-btn" onClick={() => handleDeleteReview(selectedReviewId)}>Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {showDeleteConfirm && (
         <div
           className="profile-drawer-overlay"
@@ -703,7 +838,10 @@ export default function UserProfile() {
               <Trash2 size={28} />
             </div>
             <h3>Delete Account?</h3>
-            <p>This action is permanent and cannot be undone. All your data will be deleted.</p>
+            <p>
+              This action is permanent and cannot be undone. All your data will
+              be deleted.
+            </p>
             <div className="profile-confirm-actions">
               <button
                 className="btn-cancel"

@@ -85,10 +85,8 @@ function SignUp() {
         }
 
         if (formData.role === "vendor") {
-          // Set business status to pending and redirect to profile
-          setBusinessStatus("pending");
-          localStorage.setItem("businessStatus", "pending");
-          navigate("/business/profile");
+          // ✅ بعد الـ register كـ vendor → روح على business-setup
+          navigate("/business-setup");
         } else {
           navigate("/home");
         }
@@ -155,7 +153,6 @@ function SignUp() {
   return (
     <main className="auth-page">
       <div className="auth-card su-card">
-        {/* ── header band ── */}
         <div className="auth-card-header">
           <h2>{t("auth.createAccount")}</h2>
           <p>
@@ -165,10 +162,8 @@ function SignUp() {
           </p>
         </div>
 
-        {/* ── form body ── */}
         <div className="auth-card-body">
           <form onSubmit={handleSubmit} noValidate>
-            {/* Full Name */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="su-name">
                 {t("auth.fullName")}
@@ -186,7 +181,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Email */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="su-email">
                 {t("auth.emailAddress")}
@@ -204,7 +198,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Password */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="su-password">
                 {t("auth.password")}
@@ -222,7 +215,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Address */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="su-address">
                 {t("auth.address")}
@@ -240,7 +232,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Phone */}
             <div className="auth-field">
               <label className="auth-label" htmlFor="su-phone">
                 {t("auth.phoneNumber")}
@@ -258,7 +249,6 @@ function SignUp() {
               )}
             </div>
 
-            {/* Role switcher */}
             <div className="su-role-section">
               <p className="auth-label su-role-label">{t("auth.iAm")}</p>
               <div className="auth-role-switcher">
@@ -279,7 +269,6 @@ function SignUp() {
               </div>
             </div>
 
-            {/* Terms */}
             <div className="auth-field su-terms">
               <label className="auth-checkbox-label">
                 <input

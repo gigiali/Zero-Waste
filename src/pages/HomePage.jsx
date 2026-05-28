@@ -20,6 +20,7 @@ import {
   Star,
 } from "lucide-react";
 import { useCart } from "../Context/CartContext";
+import { useLocationContext } from "../Context/LocationContext";
 
 // ── Countdown Timer ───────────────────────────────────────────────────────────
 function CountdownTimer({ pickupTime }) {
@@ -112,13 +113,22 @@ function OrderTrackingStrip({ order, onDismiss }) {
 
   const handleSubmitReview = async () => {
     const token =
-      localStorage.getItem("auth_token") ||
       localStorage.getItem("token") ||
-      sessionStorage.getItem("auth_token") ||
-      sessionStorage.getItem("token");
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("auth_token");
+
+    if (!token) {
+      alert("Please sign in to submit a review.");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append("offer_id", order.offerId || 1);
+    if (!order.offerId && !order.id) {
+  alert("Cannot submit review: missing offer ID.");
+  return;
+}
+formData.append("offer_id", order.offerId ?? order.id);
     formData.append("rating", rating);
     formData.append("comment", reviewText);
     formData.append("order_id", order.orderNumber);
@@ -308,10 +318,24 @@ const sortOptions = [
 ];
 
 // ── HomePage ──────────────────────────────────────────────────────────────────
+function calculateDistance(lat1, lng1, lat2, lng2) {
+  if (!lat1 || !lng1 || !lat2 || !lng2) return null;
+  const R = 6371;
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1));
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
+const { userLat, userLng } = useLocationContext();
 const { isLoggedIn } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -343,6 +367,13 @@ const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const fetchOffers = async () => {
+      // TEMP: test nearby branches
+try {
+  const res = await fetch(`/api/branches/nearby?lat=30.04&lng=31.23`, { headers: { Accept: "application/json" } });
+  const data = await res.json();
+  console.log("nearby branches:", data);
+} catch(e) { console.log("nearby error:", e); }
+// END TEMP
       setLoading(true);
       setError(null);
       try {
@@ -352,7 +383,7 @@ const { isLoggedIn } = useAuth();
           sessionStorage.getItem("auth_token") ||
           sessionStorage.getItem("token");
 
-        const vendorType = selectedCategory === "All" ? "" : selectedCategory.toLowerCase();
+          const vendorType = selectedCategory === "All" ? "" : selectedCategory;
         const endpoints = [
           `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
         ];
@@ -434,12 +465,10 @@ const { isLoggedIn } = useAuth();
                 source.branch?.store_address ||
                 source.vendor?.business_name ||
                 "Unknown",
-              distance: 0,
-              rating: 4.5,
-              category:
-                source.branch?.type ||
-                source.branch?.vendor?.business_name ||
-                "Restaurant",
+                branchLat: source.branch?.lat,
+              branchLng: source.branch?.lng,
+              rating: source.average_rating ?? source.rating ?? 0,
+              category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
             };
           });
 
@@ -466,12 +495,19 @@ const { isLoggedIn } = useAuth();
         offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
       return matchesSearch;
     })
+    .map((offer) => ({
+      ...offer,
+      distance: calculateDistance(userLat, userLng, offer.branchLat, offer.branchLng),
+    }))
     .sort((a, b) => {
       switch (sortOption) {
         case "highest_discount":
           return b.discount - a.discount;
         case "nearest":
-          return (a.distance || 0) - (b.distance || 0);
+          if (a.distance === null && b.distance === null) return 0;
+          if (a.distance === null) return 1;
+          if (b.distance === null) return -1;
+          return a.distance - b.distance;
         case "rating":
           return (b.rating || 0) - (a.rating || 0);
         default:
@@ -545,6 +581,15 @@ const { isLoggedIn } = useAuth();
           </div>
           <div className="filter-right">
             <div className="sort-text">Sort by:</div>
+            {sortOption === "nearest" && !userLat && (
+              <div style={{
+                fontSize: "0.8rem", color: "#92400e",
+                background: "#fef3c7", border: "1px solid #fcd34d",
+                borderRadius: "8px", padding: "4px 10px",
+              }}>
+                📍 Set your location first
+              </div>
+            )}
             <div className="dropdown-container">
               <button
                 className="dropdown-button"
@@ -670,7 +715,7 @@ const { isLoggedIn } = useAuth();
                     <div className="offer-location">
                       <MapPin size={13} />
                       <span>{offer.location}</span>
-                      {offer.distance > 0 && (
+                      {offer.distance !== null && offer.distance !== undefined && (
                         <span className="offer-distance">
                           · {offer.distance} km
                         </span>

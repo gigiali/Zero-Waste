@@ -72,8 +72,8 @@ function BusinessSetup() {
         const responseData = await response.json();
 
         if (response.ok) {
-          setSubmitMessage(t("businessSetup.success.vendorSetupCompleted"));
-          setTimeout(() => navigate("/signin"), 2000);
+          // Navigate directly to business profile after successful setup (Doc 5)
+          navigate("/business/profile");
         } else {
           if (response.status === 401) {
             setSubmitMessage(t("businessSetup.errors.loginToContinue"));
@@ -295,6 +295,7 @@ function BusinessSetup() {
               </div>
             )}
 
+            {/* No onClick needed — form's onSubmit handles submission */}
             <Button
               text={
                 isSubmitting

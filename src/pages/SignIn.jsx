@@ -6,6 +6,9 @@ import Button from "../Components/Button";
 import "../auth-theme.css";
 import "./SignIn.css";
 
+// ✅ الرابط الصحيح والمباشر للباك إند على Railway لمنع خطأ الـ 401 والـ Localhost
+const BASE_URL = "https://zero-waste-production.up.railway.app/api";
+
 function SignIn() {
   const { login } = useAuth();
   const [email, setEmail]           = useState("");
@@ -37,15 +40,22 @@ function SignIn() {
 
     setIsLoading(true);
     try {
-      const response = await fetch("/api/login", {
+      // ✅ ضرب الـ API الفعلي مباشرة بـ JSON المضمون 100% للسيرفر
+      const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", Accept: "application/json" },
-        body: new URLSearchParams({ email, password }).toString(),
+        headers: { 
+          "Content-Type": "application/json", 
+          "Accept": "application/json" 
+        },
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
 
       if (response.ok) {
         login(data.user, data.token, rememberMe);
+
+        // ✅ استخراج الـ Role الصح بناءً على الـ ER Diagram (حيث الحقل هو role_type)
+        const userRole = data.user?.role_type || data.user?.role || "customer";
 
         if (rememberMe) {
           localStorage.setItem("rememberMe", "true");
@@ -54,7 +64,7 @@ function SignIn() {
           localStorage.setItem("auth_token", data.token);
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
-          localStorage.setItem("userRole", data.user.role);
+          localStorage.setItem("userRole", userRole);
           sessionStorage.removeItem("auth_token");
           sessionStorage.removeItem("token");
           sessionStorage.removeItem("user");
@@ -66,16 +76,21 @@ function SignIn() {
           sessionStorage.setItem("auth_token", data.token);
           sessionStorage.setItem("token", data.token);
           sessionStorage.setItem("user", JSON.stringify(data.user));
-          sessionStorage.setItem("userRole", data.user.role);
+          sessionStorage.setItem("userRole", userRole);
           localStorage.removeItem("auth_token");
           localStorage.removeItem("token");
           localStorage.removeItem("user");
           localStorage.removeItem("userRole");
         }
 
-        if (data.user.role === "vendor")     navigate("/business/profile");
-        else if (data.user.role === "admin") navigate("/admin");
-        else                                 navigate("/home");
+        // ✅ التوجيه الصحيح بناءً على الـ role_type الفعلي الجاي من الداتا
+        if (userRole === "vendor") {
+          navigate("/business/profile");
+        } else if (userRole === "super_admin" || userRole === "manager" || userRole === "admin") {
+          navigate("/admin");
+        } else {
+          navigate("/home");
+        }
       } else {
         setErrors({
           general:
@@ -84,7 +99,8 @@ function SignIn() {
             data.message || "Login failed. Please try again.",
         });
       }
-    } catch {
+    } catch (err) {
+      console.error("Login Error:", err);
       setErrors({ general: "Login failed. Please check your connection and try again." });
     } finally {
       setIsLoading(false);

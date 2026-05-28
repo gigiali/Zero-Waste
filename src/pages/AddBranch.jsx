@@ -33,38 +33,49 @@ export default function AddBranch() {
     contactEmail: "",
     contactPhone: "",
   });
-  const [errors, setErrors]                           = useState({});
-  const [showMap, setShowMap]                         = useState(false);
-  const [locationError, setLocationError]             = useState("");
-  const [selectedCoordinates, setSelectedCoordinates] = useState({ lat: null, long: null });
-  const [searchQuery, setSearchQuery]                 = useState("");
-  const [suggestions, setSuggestions]                 = useState([]);
-  const [isSearching, setIsSearching]                 = useState(false);
-  const [showSuggestions, setShowSuggestions]         = useState(false);
-  const [isSubmitting, setIsSubmitting]               = useState(false);
-  const [submitMessage, setSubmitMessage]             = useState("");
-  const [customType, setCustomType]                   = useState("");
+  const [errors, setErrors] = useState({});
+  const [showMap, setShowMap] = useState(false);
+  const [locationError, setLocationError] = useState("");
+  const [selectedCoordinates, setSelectedCoordinates] = useState({
+    lat: null,
+    long: null,
+  });
+  const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitMessage, setSubmitMessage] = useState("");
+  const [customType, setCustomType] = useState("");
 
   const searchTimeoutRef = useRef(null);
-  const mapRef           = useRef(null);
-  const mapInstanceRef   = useRef(null);
-  const markerRef        = useRef(null);
+  const mapRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const markerRef = useRef(null);
 
   const handleChange = (field, value) => {
-    setBranch(prev => ({ ...prev, [field]: value }));
-    if (errors[field]) setErrors(prev => ({ ...prev, [field]: "" }));
+    setBranch((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) setErrors((prev) => ({ ...prev, [field]: "" }));
   };
 
   const validate = () => {
     const e = {};
-    if (!branch.branchName.trim())  e.branchName   = t("addBranch.errors.branchNameRequired");
-    if (!branch.branchType)         e.branchType   = t("addBranch.errors.branchTypeRequired");
-    if (branch.branchType === "others" && !customType.trim()) e.branchType = t("addBranch.errors.branchTypeOtherRequired");
-    if (!branch.fullAddress.trim()) e.fullAddress  = t("addBranch.errors.branchAddressRequired");
-    if (!branch.locationPin.trim()) e.locationPin  = t("addBranch.errors.locationRequired");
-    if (!branch.workingFrom || !branch.workingTo) e.workingHours = t("addBranch.errors.workingHoursRequired");
-    if (!branch.contactEmail.trim()) e.contactEmail = t("addBranch.errors.contactEmailRequired");
-    if (!branch.contactPhone.trim()) e.contactPhone = t("addBranch.errors.contactPhoneRequired");
+    if (!branch.branchName.trim())
+      e.branchName = t("addBranch.errors.branchNameRequired");
+    if (!branch.branchType)
+      e.branchType = t("addBranch.errors.branchTypeRequired");
+    if (branch.branchType === "others" && !customType.trim())
+      e.branchType = t("addBranch.errors.branchTypeOtherRequired");
+    if (!branch.fullAddress.trim())
+      e.fullAddress = t("addBranch.errors.branchAddressRequired");
+    if (!branch.locationPin.trim())
+      e.locationPin = t("addBranch.errors.locationRequired");
+    if (!branch.workingFrom || !branch.workingTo)
+      e.workingHours = t("addBranch.errors.workingHoursRequired");
+    if (!branch.contactEmail.trim())
+      e.contactEmail = t("addBranch.errors.contactEmailRequired");
+    if (!branch.contactPhone.trim())
+      e.contactPhone = t("addBranch.errors.contactPhoneRequired");
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -77,31 +88,40 @@ export default function AddBranch() {
     setSubmitMessage("");
 
     try {
-      const token = localStorage.getItem("auth_token");
-      if (!token) {
-        setSubmitMessage(t("addBranch.errors.loginToContinue"));
-        setIsSubmitting(false);
-        return;
-      }
+      // Multi-source token retrieval (Doc 1 logic)
+      const token =
+        localStorage.getItem("auth_token") ||
+        sessionStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("token");
 
       const body = new FormData();
-      body.append("branch_name",   branch.branchName);
-      body.append("branch_type",   branch.branchType === "others" ? customType : branch.branchType);
+      body.append("branch_name", branch.branchName);
+      body.append(
+        "branch_type",
+        branch.branchType === "others" ? customType : branch.branchType,
+      );
       body.append("store_address", branch.fullAddress);
-      body.append("location_pin",  branch.locationPin);
-      body.append("opening_hours", `${branch.workingFrom} - ${branch.workingTo}`);
+      body.append("location_pin", branch.locationPin);
+      body.append(
+        "opening_hours",
+        `${branch.workingFrom} - ${branch.workingTo}`,
+      );
       body.append("contact_email", branch.contactEmail);
       body.append("contact_phone", branch.contactPhone);
-      if (branch.lat !== null) body.append("lat",  branch.lat);
+      if (branch.lat !== null) body.append("lat", branch.lat);
       if (branch.lng !== null) body.append("long", branch.lng);
 
       const response = await fetch(
-        "/api/vendor/complete-setup",
+        "https://zero-waste-production.up.railway.app/api/branches",
         {
           method: "POST",
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body,
-        }
+        },
       );
 
       const data = await response.json();
@@ -139,11 +159,13 @@ export default function AddBranch() {
       const vb = `${CAIRO_BOUNDS.west},${CAIRO_BOUNDS.south},${CAIRO_BOUNDS.east},${CAIRO_BOUNDS.north}`;
       const res = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query + " Cairo Egypt")}&limit=6&addressdetails=1&accept-language=en&viewbox=${vb}&bounded=1`,
-        { headers: { "User-Agent": "ZeroWasteApp/1.0" } }
+        { headers: { "User-Agent": "ZeroWasteApp/1.0" } },
       );
       if (!res.ok) throw new Error("Search failed");
-      const json    = await res.json();
-      const results = json.filter(r => isWithinCairo(parseFloat(r.lat), parseFloat(r.lon)));
+      const json = await res.json();
+      const results = json.filter((r) =>
+        isWithinCairo(parseFloat(r.lat), parseFloat(r.lon)),
+      );
       setSuggestions(results);
       setShowSuggestions(results.length > 0);
     } catch {
@@ -166,9 +188,12 @@ export default function AddBranch() {
     if (!mapInstanceRef.current) return;
 
     mapInstanceRef.current.setView([lat, lon], 17);
-    if (markerRef.current) mapInstanceRef.current.removeLayer(markerRef.current);
+    if (markerRef.current)
+      mapInstanceRef.current.removeLayer(markerRef.current);
 
-    const marker = L.marker([lat, lon], { draggable: true }).addTo(mapInstanceRef.current);
+    const marker = L.marker([lat, lon], { draggable: true }).addTo(
+      mapInstanceRef.current,
+    );
     marker.bindPopup(result.display_name).openPopup();
     markerRef.current = marker;
 
@@ -181,11 +206,16 @@ export default function AddBranch() {
         return;
       }
       setLocationError("");
-      setBranch(prev => ({ ...prev, lat: dlat, lng: dlng }));
+      setBranch((prev) => ({ ...prev, lat: dlat, lng: dlng }));
       setSelectedCoordinates({ lat: dlat, long: dlng });
     });
 
-    setBranch(prev => ({ ...prev, lat, lng: lon, locationPin: result.display_name }));
+    setBranch((prev) => ({
+      ...prev,
+      lat,
+      lng: lon,
+      locationPin: result.display_name,
+    }));
     setSelectedCoordinates({ lat, long: lon });
   };
 
@@ -199,20 +229,31 @@ export default function AddBranch() {
 
       const osmLayer = L.tileLayer(
         "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-        { attribution: "© OpenStreetMap contributors", maxZoom: 19 }
+        { attribution: "© OpenStreetMap contributors", maxZoom: 19 },
       );
       const satelliteLayer = L.tileLayer(
         "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-        { attribution: "© Esri", maxZoom: 19 }
+        { attribution: "© Esri", maxZoom: 19 },
       );
       osmLayer.addTo(map);
-      L.control.layers({ "Street Map": osmLayer, Satellite: satelliteLayer }).addTo(map);
+      L.control
+        .layers({ "Street Map": osmLayer, Satellite: satelliteLayer })
+        .addTo(map);
       L.control.zoom({ position: "topright" }).addTo(map);
       L.control.scale().addTo(map);
 
       L.rectangle(
-        [[CAIRO_BOUNDS.south, CAIRO_BOUNDS.west], [CAIRO_BOUNDS.north, CAIRO_BOUNDS.east]],
-        { color: "#28a745", weight: 2, fill: false, dashArray: "6 4", opacity: 0.6 }
+        [
+          [CAIRO_BOUNDS.south, CAIRO_BOUNDS.west],
+          [CAIRO_BOUNDS.north, CAIRO_BOUNDS.east],
+        ],
+        {
+          color: "#28a745",
+          weight: 2,
+          fill: false,
+          dashArray: "6 4",
+          opacity: 0.6,
+        },
       ).addTo(map);
 
       map.on("click", function (ev) {
@@ -237,24 +278,28 @@ export default function AddBranch() {
             return;
           }
           setLocationError("");
-          setBranch(prev => ({ ...prev, lat: dlat, lng: dlng }));
+          setBranch((prev) => ({ ...prev, lat: dlat, lng: dlng }));
           setSelectedCoordinates({ lat: dlat, long: dlng });
         });
 
-        setBranch(prev => ({ ...prev, lat, lng }));
+        setBranch((prev) => ({ ...prev, lat, lng }));
         setSelectedCoordinates({ lat, long: lng });
 
         fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`
+          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
         )
-          .then(r => r.json())
-          .then(data => {
-            const address = data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-            setBranch(prev => ({ ...prev, locationPin: address }));
+          .then((r) => r.json())
+          .then((data) => {
+            const address =
+              data.display_name || `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            setBranch((prev) => ({ ...prev, locationPin: address }));
             setShowMap(false);
           })
           .catch(() => {
-            setBranch(prev => ({ ...prev, locationPin: `${lat.toFixed(6)}, ${lng.toFixed(6)}` }));
+            setBranch((prev) => ({
+              ...prev,
+              locationPin: `${lat.toFixed(6)}, ${lng.toFixed(6)}`,
+            }));
             setShowMap(false);
           });
       });
@@ -294,9 +339,11 @@ export default function AddBranch() {
                   placeholder={t("addBranch.branchNamePlaceholder")}
                   className="form-input"
                   value={branch.branchName}
-                  onChange={e => handleChange("branchName", e.target.value)}
+                  onChange={(e) => handleChange("branchName", e.target.value)}
                 />
-                {errors.branchName && <span className="error-text">{errors.branchName}</span>}
+                {errors.branchName && (
+                  <span className="error-text">{errors.branchName}</span>
+                )}
               </div>
 
               {/* Branch Type */}
@@ -305,15 +352,21 @@ export default function AddBranch() {
                 <select
                   className="form-input"
                   value={branch.branchType}
-                  onChange={e => handleChange("branchType", e.target.value)}
+                  onChange={(e) => handleChange("branchType", e.target.value)}
                 >
                   <option value="">{t("addBranch.selectBranchType")}</option>
-                  <option value="restaurant">{t("addBranch.type.restaurant")}</option>
-                  <option value="supermarket">{t("addBranch.type.supermarket")}</option>
+                  <option value="restaurant">
+                    {t("addBranch.type.restaurant")}
+                  </option>
+                  <option value="supermarket">
+                    {t("addBranch.type.supermarket")}
+                  </option>
                   <option value="hotel">{t("addBranch.type.hotel")}</option>
                   <option value="bakery">{t("addBranch.type.bakery")}</option>
                   <option value="cafe">{t("addBranch.type.cafe")}</option>
-                  <option value="dessert-shop">{t("addBranch.type.dessertShop")}</option>
+                  <option value="dessert-shop">
+                    {t("addBranch.type.dessertShop")}
+                  </option>
                   <option value="others">{t("addBranch.type.others")}</option>
                 </select>
                 {branch.branchType === "others" && (
@@ -323,10 +376,12 @@ export default function AddBranch() {
                     className="form-input"
                     style={{ marginTop: "8px" }}
                     value={customType}
-                    onChange={e => setCustomType(e.target.value)}
+                    onChange={(e) => setCustomType(e.target.value)}
                   />
                 )}
-                {errors.branchType && <span className="error-text">{errors.branchType}</span>}
+                {errors.branchType && (
+                  <span className="error-text">{errors.branchType}</span>
+                )}
               </div>
 
               {/* Contact Email */}
@@ -337,9 +392,11 @@ export default function AddBranch() {
                   placeholder={t("addBranch.contactEmailPlaceholder")}
                   className="form-input"
                   value={branch.contactEmail}
-                  onChange={e => handleChange("contactEmail", e.target.value)}
+                  onChange={(e) => handleChange("contactEmail", e.target.value)}
                 />
-                {errors.contactEmail && <span className="error-text">{errors.contactEmail}</span>}
+                {errors.contactEmail && (
+                  <span className="error-text">{errors.contactEmail}</span>
+                )}
               </div>
 
               {/* Contact Phone */}
@@ -350,9 +407,11 @@ export default function AddBranch() {
                   placeholder={t("addBranch.contactPhonePlaceholder")}
                   className="form-input"
                   value={branch.contactPhone}
-                  onChange={e => handleChange("contactPhone", e.target.value)}
+                  onChange={(e) => handleChange("contactPhone", e.target.value)}
                 />
-                {errors.contactPhone && <span className="error-text">{errors.contactPhone}</span>}
+                {errors.contactPhone && (
+                  <span className="error-text">{errors.contactPhone}</span>
+                )}
               </div>
 
               {/* Full Address */}
@@ -363,9 +422,11 @@ export default function AddBranch() {
                   placeholder={t("addBranch.fullAddressPlaceholder")}
                   className="form-input"
                   value={branch.fullAddress}
-                  onChange={e => handleChange("fullAddress", e.target.value)}
+                  onChange={(e) => handleChange("fullAddress", e.target.value)}
                 />
-                {errors.fullAddress && <span className="error-text">{errors.fullAddress}</span>}
+                {errors.fullAddress && (
+                  <span className="error-text">{errors.fullAddress}</span>
+                )}
               </div>
 
               {/* Location Pin */}
@@ -387,39 +448,55 @@ export default function AddBranch() {
                         (position) => {
                           const { latitude, longitude } = position.coords;
                           if (!isWithinCairo(latitude, longitude)) {
-                            setLocationError(t("addBranch.errors.notAvailableInArea"));
+                            setLocationError(
+                              t("addBranch.errors.notAvailableInArea"),
+                            );
                             return;
                           }
-                          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
-                            .then(res => res.json())
-                            .then(data => {
-                              const address = data.display_name || `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
-                              setBranch(prev => ({
+                          fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`,
+                          )
+                            .then((res) => res.json())
+                            .then((data) => {
+                              const address =
+                                data.display_name ||
+                                `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`;
+                              setBranch((prev) => ({
                                 ...prev,
                                 lat: latitude,
                                 lng: longitude,
                                 locationPin: address,
                               }));
-                              setSelectedCoordinates({ lat: latitude, long: longitude });
+                              setSelectedCoordinates({
+                                lat: latitude,
+                                long: longitude,
+                              });
                               setLocationError("");
                             })
                             .catch(() => {
-                              setBranch(prev => ({
+                              setBranch((prev) => ({
                                 ...prev,
                                 lat: latitude,
                                 lng: longitude,
                                 locationPin: `${latitude.toFixed(6)}, ${longitude.toFixed(6)}`,
                               }));
-                              setSelectedCoordinates({ lat: latitude, long: longitude });
+                              setSelectedCoordinates({
+                                lat: latitude,
+                                long: longitude,
+                              });
                               setLocationError("");
                             });
                         },
                         () => {
-                          setLocationError(t("addBranch.errors.enableLocation"));
-                        }
+                          setLocationError(
+                            t("addBranch.errors.enableLocation"),
+                          );
+                        },
                       );
                     } else {
-                      setLocationError(t("addBranch.errors.geolocationUnsupported"));
+                      setLocationError(
+                        t("addBranch.errors.geolocationUnsupported"),
+                      );
                     }
                   }}
                 >
@@ -430,21 +507,26 @@ export default function AddBranch() {
                     📍 {t("addBranch.locationSelected")}: {branch.locationPin}
                   </div>
                 )}
-                {errors.locationPin && <span className="error-text">{errors.locationPin}</span>}
+                {errors.locationPin && (
+                  <span className="error-text">{errors.locationPin}</span>
+                )}
               </div>
 
               {/* Working Hours */}
               <div className="form-group">
                 <label>{t("addBranch.workingHours")}</label>
-                <div className={`working-hours-wrapper ${errors.workingHours ? "error" : ""}`}>
+                <div
+                  className={`working-hours-wrapper ${errors.workingHours ? "error" : ""}`}
+                >
                   <div className="working-hours-slot">
                     <span>{t("addBranch.from")}</span>
                     <input
                       type="time"
                       value={branch.workingFrom}
-                      onChange={e => {
+                      onChange={(e) => {
                         handleChange("workingFrom", e.target.value);
-                        if (errors.workingHours) setErrors(prev => ({ ...prev, workingHours: "" }));
+                        if (errors.workingHours)
+                          setErrors((prev) => ({ ...prev, workingHours: "" }));
                       }}
                     />
                   </div>
@@ -454,9 +536,10 @@ export default function AddBranch() {
                     <input
                       type="time"
                       value={branch.workingTo}
-                      onChange={e => {
+                      onChange={(e) => {
                         handleChange("workingTo", e.target.value);
-                        if (errors.workingHours) setErrors(prev => ({ ...prev, workingHours: "" }));
+                        if (errors.workingHours)
+                          setErrors((prev) => ({ ...prev, workingHours: "" }));
                       }}
                     />
                   </div>
@@ -470,9 +553,12 @@ export default function AddBranch() {
             {submitMessage && (
               <div
                 className={`submit-message ${
-                  submitMessage.includes("successfully") ? "success" :
-                  submitMessage.includes("error") || submitMessage.includes("failed") ? "error" :
-                  "warning"
+                  submitMessage.includes("successfully")
+                    ? "success"
+                    : submitMessage.includes("error") ||
+                        submitMessage.includes("failed")
+                      ? "error"
+                      : "warning"
                 }`}
               >
                 {submitMessage}
@@ -492,7 +578,9 @@ export default function AddBranch() {
                 className={`save-branch-btn ${isSubmitting ? "disabled" : ""}`}
                 disabled={isSubmitting}
               >
-                {isSubmitting ? t("addBranch.saving") : t("addBranch.saveBranch")}
+                {isSubmitting
+                  ? t("addBranch.saving")
+                  : t("addBranch.saveBranch")}
               </button>
             </div>
           </form>
@@ -502,7 +590,12 @@ export default function AddBranch() {
               <div className="map-modal-content">
                 <div className="map-modal-header">
                   <h3>{t("addBranch.mapModalTitle")}</h3>
-                  <button className="close-map-btn" onClick={() => setShowMap(false)}>✕</button>
+                  <button
+                    className="close-map-btn"
+                    onClick={() => setShowMap(false)}
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="map-search-container">
@@ -514,10 +607,14 @@ export default function AddBranch() {
                         className="search-input"
                         value={searchQuery}
                         onChange={handleSearchChange}
-                        onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                        onFocus={() =>
+                          suggestions.length > 0 && setShowSuggestions(true)
+                        }
                         autoComplete="off"
                       />
-                      {isSearching && <span className="search-spinner">⏳</span>}
+                      {isSearching && (
+                        <span className="search-spinner">⏳</span>
+                      )}
                     </div>
                     {showSuggestions && suggestions.length > 0 && (
                       <ul className="autocomplete-dropdown">
@@ -528,14 +625,17 @@ export default function AddBranch() {
                             onMouseDown={() => handleSelectSuggestion(result)}
                           >
                             <span className="autocomplete-icon">📍</span>
-                            <span className="autocomplete-text">{result.display_name}</span>
+                            <span className="autocomplete-text">
+                              {result.display_name}
+                            </span>
                           </li>
                         ))}
                       </ul>
                     )}
                   </div>
                   <p className="cairo-only-hint">
-                    🟢 Only locations within Cairo are selectable. The green dashed border shows the available area.
+                    🟢 Only locations within Cairo are selectable. The green
+                    dashed border shows the available area.
                   </p>
                 </div>
 
@@ -548,7 +648,8 @@ export default function AddBranch() {
                 </div>
 
                 <div className="coordinate-display">
-                  {selectedCoordinates.lat !== null && selectedCoordinates.long !== null ? (
+                  {selectedCoordinates.lat !== null &&
+                  selectedCoordinates.long !== null ? (
                     <div className="coordinates-info">
                       <div className="coordinate-values">
                         <div className="coordinate-item">
@@ -563,7 +664,8 @@ export default function AddBranch() {
                     </div>
                   ) : (
                     <div className="coordinate-warning">
-                      ⚠️ Click anywhere inside the green border to select your location.
+                      ⚠️ Click anywhere inside the green border to select your
+                      location.
                     </div>
                   )}
                 </div>

@@ -699,7 +699,7 @@
   },
   "businessDashboard": {
     "notifications": "الإشعارات",
-    "languageEnglish": "English",
+    "languageEnglish": "الإنجليزية",
     "languageArabic": "العربية",
     "myProfile": "حسابي",
     "branches": "الفروع",
@@ -754,7 +754,7 @@
       "status": "الحالة",
       "pricePlaceholder": "أدخل السعر"
     },
-    "currency": "EGP",
+    "currency": "ج.م",
     "status": {
       "active": "نشط",
       "expired": "منتهي",
@@ -863,5 +863,59 @@
     "newOffers": "عروض جديدة بالقرب منك",
     "paymentConfirmations": "تأكيدات الدفع",
     "newsPromotions": "الأخبار والعروض"
+  },
+  "userManagement": {
+    "title": "إدارة المستخدمين",
+    "subtitle": "عرض وإدارة جميع مستخدمي المنصة",
+    "backToDashboard": "→ العودة إلى لوحة الإدارة",
+    "loading": "جاري تحميل المستخدمين...",
+    "na": "غير متاح",
+    "stats": {
+      "totalRegistries": "إجمالي المستخدمين",
+      "activeAccounts": "الحسابات النشطة",
+      "activeVendors": "البائعون النشطون"
+    },
+    "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني...",
+    "filters": {
+      "allAccessStates": "كل الحالات",
+      "allClearanceTiers": "كل الأدوار"
+    },
+    "table": {
+      "identityLabel": "الاسم",
+      "emailRoute": "البريد الإلكتروني",
+      "tierClassification": "الدور",
+      "stateStatus": "الحالة",
+      "joined": "تاريخ الانضمام",
+      "actions": "الإجراءات",
+      "empty": "لا يوجد مستخدمون"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "blocked": "محظور",
+      "suspended": "موقوف",
+      "unknown": "غير معروف"
+    },
+    "type": {
+      "vendor": "بائع",
+      "customer": "عميل",
+      "admin": "مسؤول",
+      "unknown": "غير معروف"
+    },
+    "actions": {
+      "viewRecord": "عرض التفاصيل",
+      "blockAccess": "حظر المستخدم",
+      "unblockAccess": "رفع الحظر",
+      "deleteRecord": "حذف المستخدم"
+    },
+    "alert": {
+      "blockError": "فشل في حظر المستخدم",
+      "unblockError": "فشل في رفع الحظر",
+      "deleteError": "فشل في حذف المستخدم",
+      "viewUser": "عرض: {{name}}"
+    },
+    "confirm": {
+      "deleteUser": "حذف \"{{name}}\" بشكل دائم؟"
+    }
   }
 }

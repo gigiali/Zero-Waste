@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import Navigation from "../Components/Navigation";
-import { Search, MoreVertical, Eye, UserX, UserCheck, Trash2, Loader2, Mail } from "lucide-react";
+import {
+  Search, MoreVertical, Eye, UserX, UserCheck,
+  Trash2, Loader2, Mail, Users, ShoppingBag,
+  ShieldCheck, ShieldOff, RefreshCw, ChevronLeft,
+  CheckCircle, XCircle, X,
+} from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
 import "./UserManagement.css";
 
@@ -13,263 +16,495 @@ const isManager    = (r) => r === "manager";
 const canManage    = (r) => isSuperAdmin(r) || isManager(r);
 const canDelete    = (r) => isSuperAdmin(r);
 
-const statusConfig = {
-  active:    { bg: "#d1fae5", text: "#065f46", icon: "●", label: "userManagement.status.active"    },
-  inactive:  { bg: "#f3f4f6", text: "#4b5563", icon: "●", label: "userManagement.status.inactive"  },
-  blocked:   { bg: "#fee2e2", text: "#991b1b", icon: "●", label: "userManagement.status.blocked"   },
-  suspended: { bg: "#fee2e2", text: "#991b1b", icon: "●", label: "userManagement.status.suspended" },
+const STATUS_CFG = {
+  active:    { bg: "#dcfce7", text: "#166534", label: "Active"    },
+  inactive:  { bg: "#f3f4f6", text: "#4b5563", label: "Inactive"  },
+  blocked:   { bg: "#fee2e2", text: "#991b1b", label: "Blocked"   },
+  suspended: { bg: "#fee2e2", text: "#991b1b", label: "Suspended" },
+  pending:   { bg: "#fef9c3", text: "#854d0e", label: "Pending"   },
+  approved:  { bg: "#dcfce7", text: "#166534", label: "Approved"  },
+  rejected:  { bg: "#fee2e2", text: "#991b1b", label: "Rejected"  },
 };
-const fallbackStatus = { bg: "#f3f4f6", text: "#374151", icon: "*", label: "userManagement.status.unknown" };
-const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
+const getStatus = (s) => STATUS_CFG[s?.toLowerCase?.()] ?? { bg: "#f3f4f6", text: "#374151", label: s ?? "Unknown" };
 
-const userTypeConfig = {
-  vendor:   { bg: "#f3e8ff", text: "#6b21a8", icon: "🏢", label: "userManagement.type.vendor"   },
-  customer: { bg: "#eff6ff", text: "#0c4a6e", icon: "👤", label: "userManagement.type.customer" },
-  admin:    { bg: "#fef3c7", text: "#92400e", icon: "👑", label: "userManagement.type.admin"    },
+const TYPE_CFG = {
+  vendor:   { bg: "#f3e8ff", text: "#6b21a8", label: "Vendor"   },
+  customer: { bg: "#e0f2fe", text: "#0c4a6e", label: "Customer" },
+  admin:    { bg: "#fef3c7", text: "#92400e", label: "Admin"    },
 };
-const fallbackType = { bg: "#f3f4f6", text: "#374151", icon: "*", label: "userManagement.type.unknown" };
-const getType = (r) => userTypeConfig[r?.toLowerCase?.()] ?? fallbackType;
+const getType = (r) => TYPE_CFG[r?.toLowerCase?.()] ?? { bg: "#f3f4f6", text: "#374151", label: r ?? "Unknown" };
+
+/* ── TOAST ── */
+function Toast({ toasts, removeToast }) {
+  return (
+    <div className="um-toast-container">
+      {toasts.map((t) => (
+        <div key={t.id} className={`um-toast um-toast--${t.type}`}>
+          {t.type === "success" ? <CheckCircle size={16} /> : <XCircle size={16} />}
+          <span>{t.msg}</span>
+          <button onClick={() => removeToast(t.id)}><X size={14} /></button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/* ── DELETE CONFIRM MODAL ── */
+function DeleteModal({ user, onConfirm, onCancel }) {
+  return (
+    <div className="um-modal-overlay" onClick={onCancel}>
+      <div className="um-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="um-modal__icon">🗑️</div>
+        <h3 className="um-modal__title">Delete User?</h3>
+        <p className="um-modal__text">
+          Are you sure you want to delete <strong>{user?.name}</strong>? This action cannot be undone.
+        </p>
+        <div className="um-modal__btns">
+          <button className="um-modal__cancel" onClick={onCancel}>Cancel</button>
+          <button className="um-modal__confirm" onClick={onConfirm}>Yes, Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 /* ── ACTION MENU ── */
-function ActionMenu({ user, role, token, onStatusChange, onDelete }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
+function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
+  const [open,        setOpen]        = useState(false);
+  const [busy,        setBusy]        = useState(false);
+  const [showDelete,  setShowDelete]  = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
     if (!open) return;
-    const handleOutsideClick = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const doRequest = async (url, method = "POST") => {
+  const doRequest = async (url, method = "PATCH") => {
     setBusy(true);
     try {
       const res = await fetch(url, {
         method,
-        headers: { 
+        headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`,
         },
       });
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        console.error("API error:", res.status, errData);
+      }
       return res.ok;
-    } catch { 
-      return false; 
-    } finally { 
-      setBusy(false); 
+    } catch (err) {
+      console.error("Request failed:", err);
+      return false;
+    } finally {
+      setBusy(false);
     }
   };
 
   const isBlocked = ["blocked", "suspended"].includes(user.status?.toLowerCase());
 
   const handleBlock = async () => {
-    const ok = await doRequest(`${BASE_URL}/admin/users/${user.id}/block`, "PATCH");
-    if (ok) onStatusChange(user.id, "blocked");
-    else alert(t("userManagement.alert.blockError"));
     setOpen(false);
+    const ok = await doRequest(`${BASE_URL}/admin/users/${user.role === "vendor" ? user.user_id : user.id}/block`);
+    if (ok) {
+      onStatusChange(user.id, "blocked");
+      addToast("success", `${user.name} has been blocked.`);
+    } else {
+      addToast("error", `Failed to block ${user.name}.`);
+    }
   };
 
   const handleUnblock = async () => {
-    const ok = await doRequest(`${BASE_URL}/admin/users/${user.id}/unblock`, "PATCH");
-    if (ok) onStatusChange(user.id, "active");
-    else alert(t("userManagement.alert.unblockError"));
     setOpen(false);
+    const ok = await doRequest(`${BASE_URL}/admin/users/${user.role === "vendor" ? user.user_id : user.id}/unblock`);
+    if (ok) {
+      onStatusChange(user.id, "active");
+      addToast("success", `${user.name} has been unblocked.`);
+    } else {
+      addToast("error", `Failed to unblock ${user.name}.`);
+    }
   };
 
-  const handleDelete = async () => {
-    if (!window.confirm(t("userManagement.confirm.deleteUser", { name: user.name }))) return;
-    const ok = await doRequest(`${BASE_URL}/admin/customers/${user.id}`, "DELETE");
-    if (ok) onDelete(user.id);
-    else alert(t("userManagement.alert.deleteError"));
-    setOpen(false);
+  const handleDeleteConfirm = async () => {
+    setShowDelete(false);
+    const endpoint = user.role === "vendor"
+  ? `${BASE_URL}/admin/vendor/${user.id}`
+  : `${BASE_URL}/admin/customers/${user.id}`;
+
+console.log("Deleting:", user.role, user.id, endpoint);
+    const ok = await doRequest(endpoint, "DELETE");
+    if (ok) {
+      onDelete(user.id);
+      addToast("success", `${user.name} has been deleted.`);
+    } else {
+      addToast("error", `Failed to delete ${user.name}.`);
+    }
   };
 
   const actions = [
-    { icon: <Eye size={15} />,         label: t("userManagement.actions.viewRecord"), color: "#374151", onClick: () => { alert(t("userManagement.alert.viewUser", { name: user.name })); setOpen(false); }, show: true },
-    { icon: <UserX size={15} />,      label: t("userManagement.actions.blockAccess"),   color: "#f59e0b", onClick: handleBlock,   show: canManage(role) && !isBlocked },
-    { icon: <UserCheck size={15} />,  label: t("userManagement.actions.unblockAccess"), color: "#10b981", onClick: handleUnblock, show: canManage(role) && isBlocked },
-    { icon: <Trash2 size={15} />,      label: t("userManagement.actions.deleteRecord"),  color: "#ef4444", onClick: handleDelete,  show: canDelete(role), divider: true },
+    {
+      icon: <ShieldOff size={15} />,
+      label: "Block User",
+      color: "#f59e0b",
+      onClick: handleBlock,
+      show: canManage(role) && !isBlocked,
+    },
+    {
+      icon: <ShieldCheck size={15} />,
+      label: "Unblock User",
+      color: "#10b981",
+      onClick: handleUnblock,
+      show: canManage(role) && isBlocked,
+    },
+    {
+      icon: <Trash2 size={15} />,
+      label: "Delete User",
+      color: "#ef4444",
+      onClick: () => { setOpen(false); setShowDelete(true); },
+      show: canDelete(role),
+      divider: true,
+    },
   ].filter((a) => a.show);
 
   return (
-    <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-      <button className="action-menu-btn" onClick={() => setOpen((v) => !v)} disabled={busy}>
-        {busy ? <Loader2 size={16} className="spin" /> : <MoreVertical size={16} />}
-      </button>
+    <>
+      <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
+        <button className="um-action-btn" onClick={() => setOpen((v) => !v)} disabled={busy}>
+          {busy ? <Loader2 size={16} className="um-spin" /> : <MoreVertical size={16} />}
+        </button>
+        {open && actions.length > 0 && (
+          <div className="um-dropdown">
+            {actions.map((a, i) => (
+              <React.Fragment key={i}>
+                {a.divider && <div className="um-dropdown__divider" />}
+                <button className="um-dropdown__item" style={{ color: a.color }} onClick={a.onClick}>
+                  {a.icon}<span>{a.label}</span>
+                </button>
+              </React.Fragment>
+            ))}
+          </div>
+        )}
+      </div>
 
-      {open && (
-        <div className="action-dropdown">
-          {actions.map((a, i) => (
-            <React.Fragment key={i}>
-              {a.divider && <div className="action-dropdown__divider" />}
-              <button className="action-dropdown__item" style={{ color: a.color }} onClick={a.onClick}>
-                {a.icon}<span>{a.label}</span>
-              </button>
-            </React.Fragment>
-          ))}
-        </div>
+      {showDelete && (
+        <DeleteModal
+          user={user}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setShowDelete(false)}
+        />
       )}
-    </div>
+    </>
   );
 }
 
-/* ── MAIN COMPONENT ── */
+/* ── AVATAR ── */
+const Avatar = ({ name, role }) => {
+  const colors = {
+    vendor:   ["#f3e8ff", "#7c3aed"],
+    customer: ["#e0f2fe", "#0369a1"],
+    admin:    ["#fef3c7", "#b45309"],
+  };
+  const [bg, text] = colors[role?.toLowerCase()] ?? ["#f1f5f9", "#475569"];
+  return (
+    <div className="um-avatar" style={{ background: bg, color: text }}>
+      {(name || "?")[0].toUpperCase()}
+    </div>
+  );
+};
+
+/* ── MAIN ── */
 export default function UserManagement() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
   const { role, token: contextToken } = useAuth();
   const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
 
   const [users,        setUsers]        = useState([]);
-  const [dataLoading,  setDataLoading]  = useState(false);
+  const [loading,      setLoading]      = useState(false);
   const [searchQuery,  setSearchQuery]  = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterType,   setFilterType]   = useState("all");
+  const [page,         setPage]         = useState(1);
+  const [toasts,       setToasts]       = useState([]);
+  const PER_PAGE = 10;
 
-  useEffect(() => {
+  const addToast = useCallback((type, msg) => {
+    const id = Date.now();
+    setToasts((prev) => [...prev, { id, type, msg }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3500);
+  }, []);
+
+  const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+  const fetchUsers = async () => {
     if (!token) return;
-    (async () => {
-      setDataLoading(true);
-      try {
-        const res = await fetch(`${BASE_URL}/admin/customers`, {
+    setLoading(true);
+    try {
+      const [custRes, vendRes] = await Promise.all([
+        fetch(`${BASE_URL}/admin/customers`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) throw new Error(`HTTP Error Status: ${res.status}`);
-        const data = await res.json();
-        const raw  = data?.customers ?? data?.users ?? data?.data ?? (Array.isArray(data) ? data : []);
+        }),
+        fetch(`${BASE_URL}/vendors?per_page=100`, {
+  headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+}),
+      ]);
 
-        setUsers(raw.map((u) => ({
-          id:         u.id,
-          name:       u.name       ?? "System Client",
-          email:      u.email      ?? "No Email Address",
-          role:       u.role       ?? "customer",
-          status:     u.status     ?? "active",
-          joined:     u.created_at ?? null,
-          orders:     u.orders_count ?? 0,
-        })));
-      } catch (err) {
-        console.error("Live Synchronization Error:", err);
-      } finally {
-        setDataLoading(false);
-      }
-    })();
-  }, [token]);
+      const custData = await custRes.json();
+      const vendData = await vendRes.json();
+
+      console.log("📦 Customers raw:", custData);
+      console.log("🏢 Vendors raw:",   vendData);
+
+      // ── Parse customers ──
+      const custList = custData?.customers
+        ?? custData?.data?.customers
+        ?? custData?.data
+        ?? (Array.isArray(custData) ? custData : []);
+
+      const customers = (Array.isArray(custList) ? custList : []).map((u) => ({
+  id:     u.id ?? u._id ?? u.customer_id,
+        name:   u.name      ?? "Unknown",
+        email:  u.email     ?? "—",
+        role:   "customer",
+        status: u.status    ?? u.user_status ?? "active",
+        joined: u.created_at ?? null,
+      }));
+
+      // ── Parse vendors ──
+      const vendList = vendData?.data?.data
+  ?? vendData?.data?.vendors
+  ?? (Array.isArray(vendData) ? vendData : []);
+
+      const vendors = (Array.isArray(vendList) ? vendList : []).map((v) => ({
+  id:      v.id,
+  user_id: v.user_id,
+  name:    v.business_name ?? v.name ?? "Unknown",
+  email:   v.email         ?? v.contact_email ?? "—",
+  role:    "vendor",
+  status:  v.status        ?? v.vendor_status ?? v.approval_status ?? "active",
+  joined:  v.created_at    ?? null,
+}));
+      console.log("✅ Customers parsed:", customers.length, "| sample status:", customers[0]?.status);
+      console.log("✅ Vendors parsed:",   vendors.length,   "| sample status:", vendors[0]?.status);
+
+      setUsers([...customers, ...vendors]);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      addToast("error", "Failed to load users.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { fetchUsers(); }, [token]);
 
   const handleStatusChange = (id, status) =>
-    setUsers((prev) => prev.map((u) => u.id === id ? { ...u, status } : u));
+    setUsers((prev) => prev.map((u) => (u.id === id ? { ...u, status } : u)));
 
   const handleDelete = (id) =>
     setUsers((prev) => prev.filter((u) => u.id !== id));
 
   const filtered = users.filter((u) => {
-    const match   = u.name.toLowerCase().includes(searchQuery.toLowerCase()) || u.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const bySt    = filterStatus === "all" || u.status === filterStatus;
-    const byType  = filterType   === "all" || u.role   === filterType;
-    return match && bySt && byType;
+    const q     = searchQuery.toLowerCase();
+    const match = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+    const bySt  = filterStatus === "all" || u.status === filterStatus;
+    const byTp  = filterType   === "all" || u.role   === filterType;
+    return match && bySt && byTp;
   });
 
-  const statuses  = [...new Set(users.map((u) => u.status))];
-  const roleTypes = [...new Set(users.map((u) => u.role))];
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE));
+  const paged      = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
+
+  const statuses  = [...new Set(users.map((u) => u.status))].filter(Boolean);
+  const roleTypes = [...new Set(users.map((u) => u.role))].filter(Boolean);
+
+  const fmtDate = (v) => {
+    if (!v) return "—";
+    return new Date(v).toLocaleDateString("en-EG", { day: "2-digit", month: "short", year: "numeric" });
+  };
 
   return (
-    <>
-      <Navigation hideCart hideLocation hideProfile />
-      <div className="users-page container mt-4 mb-5">
+    <div className="um-shell">
+      <Toast toasts={toasts} removeToast={removeToast} />
 
-        <div className="users-header">
-          <div>
-            <h1 className="users-title">{t("userManagement.title")}</h1>
-            <p className="users-subtitle">{t("userManagement.subtitle")}</p>
-          </div>
-          <button type="button" className="users-back-btn" onClick={() => navigate("/admin") }>
-            {t("userManagement.backToDashboard")}
+      {/* ── Header ── */}
+      <div className="um-header">
+        <div className="um-header__left">
+          <button className="um-back-btn" onClick={() => navigate("/admin")}>
+            <ChevronLeft size={16} /> Dashboard
           </button>
-        </div>
-
-        <div className="users-stats">
-          <div className="user-stat">
-            <p className="user-stat__label">{t("userManagement.stats.totalRegistries")}</p>
-            <p className="user-stat__value">{users.length}</p>
-          </div>
-          <div className="user-stat">
-            <p className="user-stat__label">{t("userManagement.stats.activeAccounts")}</p>
-            <p className="user-stat__value">{users.filter((u) => u.status === "active").length}</p>
-          </div>
-          <div className="user-stat">
-            <p className="user-stat__label">{t("userManagement.stats.activeVendors")}</p>
-            <p className="user-stat__value">{users.filter((u) => u.role === "vendor").length}</p>
+          <div>
+            <h1 className="um-title">User Management</h1>
+            <p className="um-subtitle">Manage customers & vendors</p>
           </div>
         </div>
+        <button className="um-refresh-btn" onClick={fetchUsers} disabled={loading}>
+          <RefreshCw size={15} className={loading ? "um-spin" : ""} />
+          Refresh
+        </button>
+      </div>
 
-        <div className="users-controls">
-          <div className="search-box">
-            <Search size={18} />
-            <input type="text" placeholder={t("userManagement.searchPlaceholder")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
+      {/* ── Stat Cards ── */}
+      <div className="um-stats">
+        <div className="um-stat">
+          <div className="um-stat__icon" style={{ background: "#e7e7ff" }}>
+            <Users size={20} color="#696cff" />
           </div>
-          <div className="filters">
-            <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="filter-select">
-              <option value="all">{t("userManagement.filters.allAccessStates")}</option>
-              {statuses.map((s) => <option key={s} value={s}>{t(getStatus(s).label)}</option>)}
-            </select>
-            <select value={filterType} onChange={(e) => setFilterType(e.target.value)} className="filter-select">
-              <option value="all">{t("userManagement.filters.allClearanceTiers")}</option>
-              {roleTypes.map((tpe) => <option key={tpe} value={tpe}>{t(getType(tpe).label)}</option>)}
-            </select>
+          <div>
+            <p className="um-stat__label">Total Users</p>
+            <p className="um-stat__value">{users.length}</p>
+          </div>
+        </div>
+        <div className="um-stat">
+          <div className="um-stat__icon" style={{ background: "#dcfce7" }}>
+            <ShieldCheck size={20} color="#16a34a" />
+          </div>
+          <div>
+            <p className="um-stat__label">Active</p>
+            <p className="um-stat__value">{users.filter((u) => u.status === "active").length}</p>
+          </div>
+        </div>
+        <div className="um-stat">
+          <div className="um-stat__icon" style={{ background: "#fee2e2" }}>
+            <ShieldOff size={20} color="#dc2626" />
+          </div>
+          <div>
+            <p className="um-stat__label">Blocked</p>
+            <p className="um-stat__value">{users.filter((u) => ["blocked","suspended"].includes(u.status)).length}</p>
+          </div>
+        </div>
+        <div className="um-stat">
+          <div className="um-stat__icon" style={{ background: "#f3e8ff" }}>
+            <ShoppingBag size={20} color="#7c3aed" />
+          </div>
+          <div>
+            <p className="um-stat__label">Vendors</p>
+            <p className="um-stat__value">{users.filter((u) => u.role === "vendor").length}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Controls ── */}
+      <div className="um-controls">
+        <div className="um-search">
+          <Search size={16} color="#8592a3" />
+          <input
+            type="text"
+            placeholder="Search by name or email…"
+            value={searchQuery}
+            onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
+          />
+        </div>
+        <select className="um-select" value={filterStatus} onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}>
+          <option value="all">All Statuses</option>
+          {statuses.map((s) => <option key={s} value={s}>{getStatus(s).label}</option>)}
+        </select>
+        <select className="um-select" value={filterType} onChange={(e) => { setFilterType(e.target.value); setPage(1); }}>
+          <option value="all">All Types</option>
+          {roleTypes.map((t) => <option key={t} value={t}>{getType(t).label}</option>)}
+        </select>
+      </div>
+
+      {/* ── Table ── */}
+      <div className="um-table-card">
+        <div className="um-table-header">
+          <div className="um-table-title-row">
+            <Users size={18} color="#696cff" />
+            <span>All Users</span>
+            <span className="um-count-badge">{filtered.length}</span>
           </div>
         </div>
 
-        <div className="users-table-wrapper">
-          {dataLoading ? (
-            <div style={{ textAlign: "center", padding: "40px", color: "#64748b" }}>
-              <Loader2 size={20} className="spin" /> {t("userManagement.loading")}
-            </div>
-          ) : (
-            <table className="users-table">
+        {loading ? (
+          <div className="um-loading">
+            <Loader2 size={20} className="um-spin" /> Loading users…
+          </div>
+        ) : (
+          <div className="um-table-wrapper">
+            <table className="um-table">
               <thead>
                 <tr>
-                  <th>{t("userManagement.table.identityLabel")}</th><th>{t("userManagement.table.emailRoute")}</th><th>{t("userManagement.table.tierClassification")}</th><th>{t("userManagement.table.stateStatus")}</th><th>{t("userManagement.table.joined")}</th><th>{t("userManagement.table.actions")}</th>
+                  <th>User</th>
+                  <th>Email</th>
+                  <th>Type</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filtered.length > 0 ? filtered.map((user) => {
+                {paged.length > 0 ? paged.map((user) => {
                   const st = getStatus(user.status);
                   const tp = getType(user.role);
                   return (
-                    <tr key={user.id}>
-                      <td className="table-name"><strong>{user.name}</strong></td>
+                    <tr key={`${user.role}-${user.id ?? user.email}`}>
                       <td>
-                        <div className="email-cell">
-                          <Mail size={14} /><span>{user.email}</span>
+                        <div className="um-user-cell">
+                          <Avatar name={user.name} role={user.role} />
+                          <span className="um-user-name">{user.name}</span>
                         </div>
                       </td>
                       <td>
-                        <span className="type-badge" style={{ backgroundColor: tp.bg, color: tp.text }}>
-                          {tp.icon} {t(tp.label)}
+                        <div className="um-email-cell">
+                          <Mail size={13} color="#8592a3" />
+                          <span>{user.email}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className="um-badge" style={{ background: tp.bg, color: tp.text }}>
+                          {tp.label}
                         </span>
                       </td>
                       <td>
-                        <span className="status-badge" style={{ backgroundColor: st.bg, color: st.text }}>
-                          {st.icon} {t(st.label)}
+                        <span className="um-badge" style={{ background: st.bg, color: st.text }}>
+                          {st.label}
                         </span>
                       </td>
-                      <td>{user.joined ? new Date(user.joined).toLocaleDateString() : t("userManagement.na")}</td>
+                      <td className="um-date">{fmtDate(user.joined)}</td>
                       <td>
-                        <ActionMenu user={user} role={role} token={token} onStatusChange={handleStatusChange} onDelete={handleDelete} />
+                        <ActionMenu
+                          user={user}
+                          role={role}
+                          token={token}
+                          onStatusChange={handleStatusChange}
+                          onDelete={handleDelete}
+                          addToast={addToast}
+                        />
                       </td>
                     </tr>
                   );
                 }) : (
-                  <tr><td colSpan="6" className="table-empty">{t("userManagement.table.empty")}</td></tr>
+                  <tr>
+                    <td colSpan={6} className="um-empty">No users found.</td>
+                  </tr>
                 )}
               </tbody>
             </table>
-          )}
-        </div>
+          </div>
+        )}
+
+        {totalPages > 1 && (
+          <div className="um-pagination">
+            <span className="um-pagination__info">
+              {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
+            </span>
+            <div className="um-pagination__btns">
+              <button className="um-page-btn" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}>‹ Prev</button>
+              {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((pg) => (
+                <button key={pg} className={`um-page-btn ${pg === page ? "active" : ""}`} onClick={() => setPage(pg)}>{pg}</button>
+              ))}
+              {totalPages > 5 && <span style={{ color: "#8592a3" }}>…</span>}
+              <button className="um-page-btn" onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}>Next ›</button>
+            </div>
+          </div>
+        )}
       </div>
-      <style>{`.spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}`}</style>
-    </>
+
+      <style>{`@keyframes um-spin{to{transform:rotate(360deg)}}.um-spin{animation:um-spin 1s linear infinite}`}</style>
+    </div>
   );
 }
