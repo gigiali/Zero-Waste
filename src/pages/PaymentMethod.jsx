@@ -9,70 +9,47 @@ import { useCart } from "../Context/CartContext";
 
 // ── Animated Order Review Modal ───────────────────────────────────────────────
 function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone }) {
-  const [phase, setPhase] = useState(1); // 1 = order details, 2 = order summary, 3 = actions, 4 = confirmed
+  const [phase, setPhase] = useState(1);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
 
-  // Auto-advance through phases (10 seconds each)
   useEffect(() => {
     let elapsed = 0;
     const interval = setInterval(() => {
       elapsed += 100;
       const phaseProgress = (elapsed % 10000) / 10000 * 100;
       setProgress(phaseProgress);
-
-      if (elapsed === 10000) {
-        setPhase(2);
-        setProgress(0);
-      } else if (elapsed === 20000) {
-        setPhase(3);
-        setProgress(100);
-        clearInterval(interval);
-      }
+      if (elapsed === 10000) { setPhase(2); setProgress(0); }
+      else if (elapsed === 20000) { setPhase(3); setProgress(100); clearInterval(interval); }
     }, 100);
     return () => clearInterval(interval);
   }, []);
 
-  const handleConfirm = () => {
-    setConfirmed(true);
-    onConfirm();
-  };
+  const handleConfirm = () => { setConfirmed(true); onConfirm(); };
 
   return (
     <div className="orm-overlay">
       <div className="orm-modal">
-
-        {/* Header */}
         <div className="orm-header">
-          <div className="orm-header-icon">
-            <Package size={20} />
-          </div>
-          <div className="orm-header-text">
-            <h2>Review Your Order</h2>
-          </div>
+          <div className="orm-header-icon"><Package size={20} /></div>
+          <div className="orm-header-text"><h2>Review Your Order</h2></div>
           {phase < 3 && (
             <button className="orm-skip-btn" onClick={() => {
               if (phase === 1) { setPhase(2); setProgress(0); }
               else { setPhase(3); setProgress(100); }
-            }}>
-              Skip <ChevronRight size={14} />
-            </button>
+            }}>Skip <ChevronRight size={14} /></button>
           )}
         </div>
 
-        {/* Progress bar */}
         {phase < 3 && (
           <div className="orm-progress-wrap">
             <div className="orm-progress-track">
               <div className="orm-progress-fill" style={{ width: `${progress}%` }} />
             </div>
-            <span className="orm-progress-label">
-              {phase === 1 ? "Order Details" : "Order Summary"}
-            </span>
+            <span className="orm-progress-label">{phase === 1 ? "Order Details" : "Order Summary"}</span>
           </div>
         )}
 
-        {/* Step indicators */}
         <div className="orm-steps">
           {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
             const stepNum = idx + 1;
@@ -80,9 +57,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
             const active = phase === stepNum;
             return (
               <div key={label} className={`orm-step ${done ? "done" : active ? "active" : "pending"}`}>
-                <div className="orm-step-node">
-                  {done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}
-                </div>
+                <div className="orm-step-node">{done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}</div>
                 <span className="orm-step-label">{label}</span>
                 {idx < 2 && <div className={`orm-step-line ${done ? "done" : ""}`} />}
               </div>
@@ -90,211 +65,106 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           })}
         </div>
 
-        {/* ── Phase 1: Order Details ── */}
         {phase === 1 && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Details</h3>
-
             <div className="orm-detail-row">
-              <div className="orm-detail-icon">
-                {deliveryMethod === "delivery" ? <Truck size={16} /> : <ShoppingBag size={16} />}
-              </div>
+              <div className="orm-detail-icon">{deliveryMethod === "delivery" ? <Truck size={16} /> : <ShoppingBag size={16} />}</div>
               <div>
                 <span className="orm-detail-label">Delivery Method</span>
-                <span className="orm-detail-value">
-                  {deliveryMethod === "delivery" ? "Home Delivery" : "Pickup from Restaurant"}
-                </span>
+                <span className="orm-detail-value">{deliveryMethod === "delivery" ? "Home Delivery" : "Pickup from Restaurant"}</span>
               </div>
             </div>
-
             <div className="orm-detail-row">
               <div className="orm-detail-icon"><Clock size={16} /></div>
               <div>
                 <span className="orm-detail-label">Estimated Time</span>
-                <span className="orm-detail-value">
-                  {deliveryMethod === "delivery" ? "30–45 minutes" : "15–20 minutes"}
-                </span>
+                <span className="orm-detail-value">{deliveryMethod === "delivery" ? "30-45 minutes" : "15-20 minutes"}</span>
               </div>
             </div>
-
             <div className="orm-detail-row">
               <div className="orm-detail-icon"><MapPin size={16} /></div>
               <div>
-                <span className="orm-detail-label">
-                  {deliveryMethod === "delivery" ? "Delivery Address" : "Pickup Location"}
-                </span>
-                <span className="orm-detail-value">
-                  {deliveryMethod === "delivery"
-                    ? "Your saved address"
-                    : "Restaurant address shown in app"}
-                </span>
+                <span className="orm-detail-label">{deliveryMethod === "delivery" ? "Delivery Address" : "Pickup Location"}</span>
+                <span className="orm-detail-value">{deliveryMethod === "delivery" ? "Your saved address" : "Restaurant address shown in app"}</span>
               </div>
             </div>
-
             <div className="orm-detail-row">
               <div className="orm-detail-icon"><Package size={16} /></div>
               <div>
                 <span className="orm-detail-label">Items</span>
-                <span className="orm-detail-value">
-                  {cartItems.reduce((sum, i) => sum + i.quantity, 0)} item(s)
-                </span>
+                <span className="orm-detail-value">{cartItems.reduce((sum, i) => sum + i.quantity, 0)} item(s)</span>
               </div>
             </div>
           </div>
         )}
 
-        {/* ── Phase 2: Order Summary ── */}
         {phase === 2 && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Summary</h3>
-
             <div className="orm-items-list">
               {cartItems.map((item, idx) => (
                 <div key={idx} className="orm-item-row">
                   <div className="orm-item-left">
-                    <span className="orm-item-qty">{item.quantity}×</span>
+                    <span className="orm-item-qty">{item.quantity}x</span>
                     <span className="orm-item-name">{item.title}</span>
                   </div>
-                  <span className="orm-item-price">
-                    EGP {(Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0)).toFixed(2)}
-                  </span>
+                  <span className="orm-item-price">EGP {(Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0)).toFixed(2)}</span>
                 </div>
               ))}
             </div>
-
             <div className="orm-totals">
-              <div className="orm-total-row">
-                <span>Subtotal</span>
-                <span>EGP {cartTotal.toFixed(2)}</span>
-              </div>
-              {deliveryFee > 0 && (
-                <div className="orm-total-row">
-                  <span>Delivery Fee</span>
-                  <span>EGP {deliveryFee.toFixed(2)}</span>
-                </div>
-              )}
+              <div className="orm-total-row"><span>Subtotal</span><span>EGP {cartTotal.toFixed(2)}</span></div>
+              {deliveryFee > 0 && <div className="orm-total-row"><span>Delivery Fee</span><span>EGP {deliveryFee.toFixed(2)}</span></div>}
               <div className="orm-total-divider" />
-              <div className="orm-total-row orm-total-final">
-                <span>Total</span>
-                <span>EGP {total.toFixed(2)}</span>
-              </div>
+              <div className="orm-total-row orm-total-final"><span>Total</span><span>EGP {total.toFixed(2)}</span></div>
             </div>
           </div>
         )}
 
-        {/* ── Phase 3: Confirm / Cancel ── */}
         {phase === 3 && !confirmed && (
           <div className="orm-body orm-fade-in">
-            <div className="orm-confirm-icon">
-              <CheckCircle size={40} />
-            </div>
+            <div className="orm-confirm-icon"><CheckCircle size={40} /></div>
             <h3 className="orm-confirm-title">Everything looks good?</h3>
-            <p className="orm-confirm-subtitle">
-              Total: <strong>EGP {total.toFixed(2)}</strong> ·{" "}
-              {deliveryMethod === "delivery" ? "Home Delivery" : "Pickup"}
-            </p>
-
+            <p className="orm-confirm-subtitle">Total: <strong>EGP {total.toFixed(2)}</strong> · {deliveryMethod === "delivery" ? "Home Delivery" : "Pickup"}</p>
             <div className="orm-actions">
-              <button className="orm-cancel-btn" onClick={onCancel} disabled={isSubmitting}>
-                <X size={16} /> Cancel
-              </button>
+              <button className="orm-cancel-btn" onClick={onCancel} disabled={isSubmitting}><X size={16} /> Cancel</button>
               <button className="orm-confirm-btn" onClick={handleConfirm} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <><span className="orm-spinner" /> Placing Order...</>
-                ) : (
-                  <><CheckCircle size={16} /> Confirm Order</>
-                )}
+                {isSubmitting ? <><span className="orm-spinner" /> Placing Order...</> : <><CheckCircle size={16} /> Confirm Order</>}
               </button>
             </div>
           </div>
         )}
 
-        {/* ── Phase 4: Order Confirmed ── */}
         {confirmed && (
           <div className="orm-body orm-fade-in">
-            <div className="orm-confirm-icon orm-success">
-              <CheckCircle size={48} />
-            </div>
+            <div className="orm-confirm-icon orm-success"><CheckCircle size={48} /></div>
             <h3 className="orm-confirm-title">Order Confirmed!</h3>
-            <p className="orm-confirm-subtitle">
-              Your order has been placed successfully
-            </p>
-
+            <p className="orm-confirm-subtitle">Your order has been placed successfully</p>
             <div className="orm-success-details">
-              <div className="orm-success-row">
-                <span>Order ID</span>
-                <strong>ORD-2026-001</strong>
-              </div>
-              <div className="orm-success-row">
-                <span>Total</span>
-                <strong>EGP {total.toFixed(2)}</strong>
-              </div>
-              <div className="orm-success-row">
-                <span>Payment</span>
-                <strong>Cash on {deliveryMethod === "delivery" ? "Delivery" : "Pickup"}</strong>
-              </div>
+              <div className="orm-success-row"><span>Total</span><strong>EGP {total.toFixed(2)}</strong></div>
+              <div className="orm-success-row"><span>Payment</span><strong>Cash on {deliveryMethod === "delivery" ? "Delivery" : "Pickup"}</strong></div>
             </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <button className="orm-track-btn" onClick={onTrackOrder}>
-                <MapPin size={18} /> Track Order
-              </button>
-
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+              <button className="orm-track-btn" onClick={onTrackOrder}><MapPin size={18} /> Track Order</button>
               {businessPhone && (
-                <a
-                  href={`tel:${businessPhone}`}
-                  className="orm-contact-btn"
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '0.5rem',
-                    padding: '1rem',
-                    borderRadius: '12px',
-                    background: '#f3f4f6',
-                    color: '#374151',
-                    textDecoration: 'none',
-                    fontSize: '0.95rem',
-                    fontWeight: '600',
-                    transition: 'all 0.2s',
-                    animation: 'orm-slide-up 0.4s ease',
-                    border: '1.5px solid #e5e7eb'
-                  }}
-                >
+                <a href={`tel:${businessPhone}`} className="orm-contact-btn"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", borderRadius: "12px", background: "#f3f4f6", color: "#374151", textDecoration: "none", fontSize: "0.95rem", fontWeight: "600", border: "1.5px solid #e5e7eb" }}>
                   <Phone size={18} />
                   <span>Contact Restaurant: {businessPhone}</span>
-                  <span style={{
-                    marginLeft: '0.5rem',
-                    padding: '0.25rem 0.5rem',
-                    background: '#10b981',
-                    color: 'white',
-                    borderRadius: '6px',
-                    fontSize: '0.75rem',
-                    fontWeight: '700'
-                  }}>Call</span>
+                  <span style={{ marginLeft: "0.5rem", padding: "0.25rem 0.5rem", background: "#10b981", color: "white", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" }}>Call</span>
                 </a>
               )}
             </div>
           </div>
         )}
-
       </div>
     </div>
   );
 }
 
-// ── PaymentMethodPage ─────────────────────────────────────────────────────────
-const saveUserOrder = ({
-  orderId,
-  cartItems,
-  deliveryMethod,
-  selectedMethod,
-  cartTotal,
-  deliveryFee,
-  total,
-  businessName,
-  businessPhone,
-}) => {
+// ── saveUserOrder ─────────────────────────────────────────────────────────────
+const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone }) => {
   const orderNumber = String(orderId || `ORD-${Date.now()}`);
   const storedOrders = JSON.parse(localStorage.getItem("zw_user_orders") || "[]");
   const orderSnapshot = {
@@ -311,6 +181,7 @@ const saveUserOrder = ({
     total,
     items: cartItems.map((item) => ({
       id: item.id,
+      offer_id: item.id,        // ✅ ضافت offer_id
       title: item.title,
       quantity: item.quantity,
       unitPrice: item.discountedPrice || item.discountPrice || 0,
@@ -319,12 +190,12 @@ const saveUserOrder = ({
       category: item.category,
     })),
   };
-
   localStorage.setItem("zw_user_orders", JSON.stringify([orderSnapshot, ...storedOrders]));
   window.dispatchEvent(new Event("zw-user-orders-updated"));
   return orderSnapshot;
 };
 
+// ── PaymentMethodPage ─────────────────────────────────────────────────────────
 export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -335,38 +206,27 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const [showReviewModal, setShowReviewModal] = useState(false);
 
   const deliveryMethod = searchParams.get("method") || "pickup";
-
-  const subtotal = cartItems.reduce(
-    (sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
-    0
-  );
+  const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
   const cartTotal = propCartTotal || subtotal;
   const total = cartTotal + deliveryFee;
 
-  const [cardDetails, setCardDetails] = useState({
-    cardNumber: "",
-    cardName: "",
-    expiry: "",
-    cvv: "",
-  });
+  const [cardDetails, setCardDetails] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
 
-  const paymentMethods =
-    deliveryMethod === "delivery"
-      ? [
-          { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
-          { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Delivery", desc: "Pay with cash when your order is delivered" },
-        ]
-      : [
-          { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
-          { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Pickup", desc: "Pay with cash when you collect your order" },
-        ];
+  const paymentMethods = deliveryMethod === "delivery"
+    ? [
+        { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
+        { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Delivery", desc: "Pay with cash when your order is delivered" },
+      ]
+    : [
+        { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
+        { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Pickup", desc: "Pay with cash when you collect your order" },
+      ];
 
   const handleCardInput = (e) => {
     const { name, value } = e.target;
     let formatted = value;
-    if (name === "cardNumber")
-      formatted = value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
+    if (name === "cardNumber") formatted = value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
     if (name === "expiry") {
       formatted = value.replace(/\D/g, "").slice(0, 4);
       if (formatted.length >= 2) formatted = formatted.slice(0, 2) + "/" + formatted.slice(2);
@@ -377,13 +237,8 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
   const canContinue =
     selectedMethod === "cash" ||
-    (selectedMethod === "card" &&
-      cardDetails.cardNumber.length === 19 &&
-      cardDetails.cardName &&
-      cardDetails.expiry.length === 5 &&
-      cardDetails.cvv.length === 3);
+    (selectedMethod === "card" && cardDetails.cardNumber.length === 19 && cardDetails.cardName && cardDetails.expiry.length === 5 && cardDetails.cvv.length === 3);
 
-  // Opens the review modal instead of submitting directly
   const handleConfirmClick = () => {
     if (!selectedMethod) { setSubmitError("Please select a payment method"); return; }
     if (cartItems.length === 0) { setSubmitError("Your cart is empty"); return; }
@@ -391,39 +246,27 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     setShowReviewModal(true);
   };
 
-  // Called when user hits "Confirm Order" inside the modal
   const handleFinalConfirm = async () => {
     setIsSubmitting(true);
     setSubmitError("");
 
-    // ========== DEMO MODE: Skip API & Login ==========
-    const DEMO_MODE = false; // Set to false when backend is ready
+    // ✅ DEMO_MODE = false — بيبعت للـ API الحقيقي
+    const DEMO_MODE = false;
 
     if (DEMO_MODE) {
-      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1000));
-
-      saveUserOrder({
-        orderId: `ORD-${Date.now()}`,
-        cartItems,
-        deliveryMethod,
-        selectedMethod,
-        cartTotal,
-        subtotal: cartTotal,
-        deliveryFee,
-        total,
-        businessName: cartItems[0]?.location,
-        businessPhone: cartItems[0]?.phone || cartItems[0]?.vendor_phone,
-      });
-
-      // Stay on modal - don't navigate away
+      saveUserOrder({ orderId: `ORD-${Date.now()}`, cartItems, deliveryMethod, selectedMethod, cartTotal, subtotal: cartTotal, deliveryFee, total, businessName: cartItems[0]?.location, businessPhone: cartItems[0]?.phone || cartItems[0]?.vendor_phone });
       setIsSubmitting(false);
       return;
     }
-    // ========== END DEMO MODE ==========
 
     try {
-      const token = localStorage.getItem("auth_token");
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
       const customerLat = localStorage.getItem("userLocationLat");
@@ -437,16 +280,12 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
       submitData.append("delivery_type", deliveryMethod);
 
       if (deliveryMethod === "delivery") {
-        if (!customerLat || !customerLong) {
-          setSubmitError("Please set your location first");
-          setIsSubmitting(false);
-          return;
-        }
+        if (!customerLat || !customerLong) { setSubmitError("Please set your location first"); setIsSubmitting(false); return; }
         submitData.append("customer_lat", customerLat);
         submitData.append("customer_long", customerLong);
       }
 
-      const response = await fetch("/api/orders", {
+      const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         body: submitData,
@@ -456,50 +295,22 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
       if (response.ok) {
         const firstItem = cartItems[0];
-        const businessName =
-          firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
-        const businessPhone =
-          firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
-
-        const itemsSnapshot = cartItems.map((item) => ({
-          id: item.id,
-          title: item.title,
-          quantity: item.quantity,
-          price: Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
-          location: item.location,
-          category: item.category,
-        }));
+        const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
+        const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
 
         const savedOrder = saveUserOrder({
-          orderId: data.order?.id || "ORD-2026-001",
-          cartItems,
-          deliveryMethod,
-          selectedMethod,
-          cartTotal,
-          deliveryFee,
-          total,
-          businessName,
-          businessPhone,
+          orderId: data.order?.id || `ORD-${Date.now()}`,
+          cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone,
         });
 
         clearCart();
 
         navigate("/order-confirmation", {
-          state: {
-            deliveryMethod,
-            cartTotal,
-            deliveryFee,
-            total,
-            orderId: savedOrder.orderNumber,
-            items: itemsSnapshot,
-            businessName,
-            businessPhone,
-          },
+          state: { deliveryMethod, cartTotal, deliveryFee, total, orderId: savedOrder.orderNumber, businessName, businessPhone },
         });
       } else {
         if (response.status === 422 && data.errors) {
-          const errorMessages = Object.values(data.errors).flat().join("\n");
-          setSubmitError(errorMessages || "Please fix the errors below");
+          setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
         } else if (response.status === 401) {
           setSubmitError("Please login to continue");
         } else {
@@ -516,23 +327,15 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     }
   };
 
-  // Cancel inside modal → just close modal, stay on payment page
-  const handleModalCancel = () => {
-    setShowReviewModal(false);
-  };
+  const handleModalCancel = () => setShowReviewModal(false);
 
   return (
     <>
       <div className="payment-container">
         <div className="payment-header">
           <div className="payment-header-inner">
-            <button className="payment-back-btn" onClick={onBack}>
-              <ArrowLeft size={18} /> Back to Cart
-            </button>
-            <div className="payment-header-title">
-              <CreditCard size={32} />
-              <h1>Payment Method</h1>
-            </div>
+            <button className="payment-back-btn" onClick={onBack}><ArrowLeft size={18} /> Back to Cart</button>
+            <div className="payment-header-title"><CreditCard size={32} /><h1>Payment Method</h1></div>
             <p className="payment-header-subtitle">Choose how you'd like to pay</p>
           </div>
         </div>
@@ -548,19 +351,10 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
             <p className="payment-section-title">Select Payment Method</p>
             <div className="payment-methods">
               {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className={`payment-method-card ${selectedMethod === method.id ? "selected" : ""}`}
-                  onClick={() => setSelectedMethod(method.id)}
-                >
+                <div key={method.id} className={`payment-method-card ${selectedMethod === method.id ? "selected" : ""}`} onClick={() => setSelectedMethod(method.id)}>
                   <div className="payment-method-icon">{method.icon}</div>
-                  <div className="payment-method-info">
-                    <h3>{method.title}</h3>
-                    <p>{method.desc}</p>
-                  </div>
-                  <div className="payment-radio">
-                    <div className="payment-radio-dot" />
-                  </div>
+                  <div className="payment-method-info"><h3>{method.title}</h3><p>{method.desc}</p></div>
+                  <div className="payment-radio"><div className="payment-radio-dot" /></div>
                 </div>
               ))}
             </div>
@@ -604,7 +398,6 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
         </div>
       </div>
 
-      {/* Animated Review Modal */}
       {showReviewModal && (
         <OrderReviewModal
           cartItems={cartItems}
@@ -620,8 +413,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
               state: {
                 trackingActive: true,
                 orderNumber: latestOrder?.orderNumber || "ORD-2026-001",
-                deliveryMethod,
-                total,
+                deliveryMethod, total,
                 orderTime: latestOrder?.createdAt || new Date().toISOString(),
                 offerId: cartItems[0]?.id || 1,
               },

@@ -22,13 +22,8 @@ import {
 import { useCart } from "../Context/CartContext";
 import { useLocationContext } from "../Context/LocationContext";
 
-// ── Countdown Timer ───────────────────────────────────────────────────────────
 function CountdownTimer({ pickupTime }) {
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
 
   useEffect(() => {
@@ -71,7 +66,6 @@ function CountdownTimer({ pickupTime }) {
   );
 }
 
-// ── Order Tracking Strip ──────────────────────────────────────────────────────
 function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
@@ -108,8 +102,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
     { id: 4, label: "Delivered", icon: <CheckCircle size={14} /> },
   ];
 
-  const steps =
-    order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
+  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
   const handleSubmitReview = async () => {
     const token =
@@ -118,17 +111,11 @@ function OrderTrackingStrip({ order, onDismiss }) {
       localStorage.getItem("auth_token") ||
       sessionStorage.getItem("auth_token");
 
-    if (!token) {
-      alert("Please sign in to submit a review.");
-      return;
-    }
+    if (!token) { alert("Please sign in to submit a review."); return; }
 
     const formData = new FormData();
-    if (!order.offerId && !order.id) {
-  alert("Cannot submit review: missing offer ID.");
-  return;
-}
-formData.append("offer_id", order.offerId ?? order.id);
+    if (!order.offerId && !order.id) { alert("Cannot submit review: missing offer ID."); return; }
+    formData.append("offer_id", order.offerId ?? order.items?.[0]?.offer_id ?? order.items?.[0]?.id);
     formData.append("rating", rating);
     formData.append("comment", reviewText);
     formData.append("order_id", order.orderNumber);
@@ -138,15 +125,8 @@ formData.append("offer_id", order.offerId ?? order.id);
     try {
       const headers = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-
-      const response = await fetch("/api/reviews", {
-        method: "POST",
-        headers,
-        body: formData,
-      });
-
+      const response = await fetch("/api/reviews", { method: "POST", headers, body: formData });
       if (!response.ok) throw new Error("Failed to submit review");
-
       setSubmitted(true);
       setShowReview(false);
       removeImage();
@@ -162,14 +142,8 @@ formData.append("offer_id", order.offerId ?? order.id);
     const file = e.target.files[0];
     if (!file) return;
     const validTypes = ["image/jpeg", "image/jpg", "image/png"];
-    if (!validTypes.includes(file.type)) {
-      alert("Please select JPG, JPEG, or PNG image only");
-      return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be less than 2MB");
-      return;
-    }
+    if (!validTypes.includes(file.type)) { alert("Please select JPG, JPEG, or PNG image only"); return; }
+    if (file.size > 2 * 1024 * 1024) { alert("Image must be less than 2MB"); return; }
     setReviewImage(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -182,12 +156,9 @@ formData.append("offer_id", order.offerId ?? order.id);
 
   return (
     <div className="order-strip">
-      {/* Header row */}
       <div className="order-strip-header">
         <div className="order-strip-meta">
-          <div className="order-strip-icon-wrap">
-            <Package size={13} />
-          </div>
+          <div className="order-strip-icon-wrap"><Package size={13} /></div>
           <span className="order-strip-number">#{order.orderNumber}</span>
           <span className="order-strip-dot" />
           <span className="order-strip-method-badge">
@@ -195,52 +166,31 @@ formData.append("offer_id", order.offerId ?? order.id);
           </span>
         </div>
         <div className="order-strip-right">
-          <span className="order-strip-total">
-            EGP {Number(order.total ?? 0).toFixed(2)}
-          </span>
-          <button
-            className="order-strip-dismiss"
-            onClick={onDismiss}
-            title="Dismiss"
-          >
-            <X size={12} />
-          </button>
+          <span className="order-strip-total">EGP {Number(order.total ?? 0).toFixed(2)}</span>
+          <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss"><X size={12} /></button>
         </div>
       </div>
 
-      {/* Progress track */}
       <div className="order-strip-track">
         {steps.map((step, idx) => {
           const done = step.id < currentStep;
           const active = step.id === currentStep;
           return (
             <React.Fragment key={step.id}>
-              <div
-                className={`ost-step ${done ? "done" : active ? "active" : "pending"}`}
-              >
-                <div className="ost-node">
-                  {done ? <CheckCircle size={13} /> : step.icon}
-                </div>
+              <div className={`ost-step ${done ? "done" : active ? "active" : "pending"}`}>
+                <div className="ost-node">{done ? <CheckCircle size={13} /> : step.icon}</div>
                 <span className="ost-label">{step.label}</span>
               </div>
-              {idx < steps.length - 1 && (
-                <div className={`ost-line ${done ? "done" : ""}`} />
-              )}
+              {idx < steps.length - 1 && <div className={`ost-line ${done ? "done" : ""}`} />}
             </React.Fragment>
           );
         })}
       </div>
 
-      {/* Review Modal */}
       {showReview && (
         <div className="review-overlay" onClick={() => setShowReview(false)}>
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="review-close"
-              onClick={() => setShowReview(false)}
-            >
-              <X size={18} />
-            </button>
+            <button className="review-close" onClick={() => setShowReview(false)}><X size={18} /></button>
             <div className="review-header">
               <div className="review-icon">🎉</div>
               <h3>Order Delivered!</h3>
@@ -248,31 +198,17 @@ formData.append("offer_id", order.offerId ?? order.id);
             </div>
             <div className="review-stars">
               {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  className={`review-star ${star <= rating ? "filled" : ""}`}
-                  onClick={() => handleStarClick(star)}
-                >
+                <button key={star} className={`review-star ${star <= rating ? "filled" : ""}`} onClick={() => handleStarClick(star)}>
                   <Star size={18} fill={star <= rating ? "#fbbf24" : "none"} />
                 </button>
               ))}
             </div>
-            <textarea
-              className="review-textarea"
-              placeholder="Write your comment... (optional, max 500 chars)"
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value.slice(0, 500))}
-              rows={2}
-            />
+            <textarea className="review-textarea" placeholder="Write your comment... (optional, max 500 chars)"
+              value={reviewText} onChange={(e) => setReviewText(e.target.value.slice(0, 500))} rows={2} />
             <div className="review-image-section">
               {!imagePreview ? (
                 <label className="review-image-upload">
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/jpg,image/png"
-                    onChange={handleImageChange}
-                    style={{ display: "none" }}
-                  />
+                  <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleImageChange} style={{ display: "none" }} />
                   <span className="upload-icon">📷</span>
                   <span className="upload-text">Add Photo (optional)</span>
                   <span className="upload-hint">JPG, PNG - Max 2MB</span>
@@ -280,19 +216,11 @@ formData.append("offer_id", order.offerId ?? order.id);
               ) : (
                 <div className="review-image-preview">
                   <img src={imagePreview} alt="Preview" />
-                  <button className="remove-image-btn" onClick={removeImage}>
-                    <X size={16} />
-                  </button>
+                  <button className="remove-image-btn" onClick={removeImage}><X size={16} /></button>
                 </div>
               )}
             </div>
-            <button
-              className="review-submit-btn"
-              onClick={handleSubmitReview}
-              disabled={rating === 0}
-            >
-              Submit Review
-            </button>
+            <button className="review-submit-btn" onClick={handleSubmitReview} disabled={rating === 0}>Submit Review</button>
           </div>
         </div>
       )}
@@ -300,7 +228,6 @@ formData.append("offer_id", order.offerId ?? order.id);
   );
 }
 
-// ── Constants ─────────────────────────────────────────────────────────────────
 const categoryIcons = {
   All: <Store size={16} />,
   Restaurant: <Utensils size={16} />,
@@ -317,7 +244,6 @@ const sortOptions = [
   { label: "Rating", value: "rating" },
 ];
 
-// ── HomePage ──────────────────────────────────────────────────────────────────
 function calculateDistance(lat1, lng1, lat2, lng2) {
   if (!lat1 || !lng1 || !lat2 || !lng2) return null;
   const R = 6371;
@@ -335,8 +261,8 @@ export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
-const { userLat, userLng } = useLocationContext();
-const { isLoggedIn } = useAuth();
+  const { userLat, userLng } = useLocationContext();
+  const { isLoggedIn } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
@@ -356,8 +282,7 @@ const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (isDropdownOpen && !e.target.closest(".dropdown-container"))
-        setIsDropdownOpen(false);
+      if (isDropdownOpen && !e.target.closest(".dropdown-container")) setIsDropdownOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -367,7 +292,6 @@ const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const fetchOffers = async () => {
-      
       setLoading(true);
       setError(null);
       try {
@@ -377,7 +301,7 @@ const { isLoggedIn } = useAuth();
           sessionStorage.getItem("auth_token") ||
           sessionStorage.getItem("token");
 
-          const vendorType = selectedCategory === "All" ? "" : selectedCategory;
+        const vendorType = selectedCategory === "All" ? "" : selectedCategory;
         const endpoints = [
           `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
         ];
@@ -388,44 +312,32 @@ const { isLoggedIn } = useAuth();
           try {
             const headers = { Accept: "application/json" };
             if (token) headers["Authorization"] = `Bearer ${token}`;
-
-            const response = await fetch(endpoint, {
-              method: "GET",
-              headers,
-            });
+            const response = await fetch(endpoint, { method: "GET", headers });
             const data = await response.json();
             console.log("RAW API DATA:", data);
             if (response.ok && (data.data || data.offers)) {
               const dataToCheck = data.data || data.offers;
-              if (dataToCheck.length > 0) {
-                offersData = dataToCheck;
-                break;
-              }
+              if (dataToCheck.length > 0) { offersData = dataToCheck; break; }
             }
-          } catch {
-            // Try the next supported offers endpoint.
-          }
+          } catch { /* Try next endpoint */ }
         }
 
         if (offersData && offersData.length > 0) {
+          const BASE_URL = "https://zero-waste-production.up.railway.app";
           const transformedOffers = offersData.map((offer, idx) => {
             const source = offer;
-            const resolvedId = offer.id ?? idx;
-            const safeId = resolvedId;
+            const safeId = offer.id ?? idx;
 
-            // ── Fix: build image URL correctly ──────────────────────────────
-            const BASE_URL = "https://zero-waste-production.up.railway.app";
             let imageUrl = null;
             if (source.image) {
               const raw = source.image.trim();
               if (raw.startsWith("http")) {
-  imageUrl = raw;
-} else {
-  const cleaned = raw.replace(/^\/+/, "");
-  imageUrl = `${BASE_URL}/${cleaned}`;
-}
+                imageUrl = raw;
+              } else {
+                const cleaned = raw.replace(/^\/+/, "");
+                imageUrl = `${BASE_URL}/${cleaned}`;
+              }
             }
-            // ────────────────────────────────────────────────────────────────
 
             return {
               id: safeId,
@@ -434,34 +346,25 @@ const { isLoggedIn } = useAuth();
               description: source.description,
               image: imageUrl,
               discount: source.discount_price
-                ? Math.round(
-                    ((source.original_price - source.discount_price) /
-                      source.original_price) *
-                      100,
-                  )
+                ? Math.round(((source.original_price - source.discount_price) / source.original_price) * 100)
                 : 0,
               originalPrice: source.original_price || 0,
               discountedPrice: source.discount_price || 0,
               quantity: source.quantity_available || 0,
               pickupTime: source.expiration_time
-                ? new Date(source.expiration_time).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: true,
-                  })
+                ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
                 : "Today",
               location:
                 source.branch?.branch_name ||
                 source.branch?.store_address ||
                 source.vendor?.business_name ||
                 "Unknown",
-                branchLat: source.branch?.lat,
-              branchLng: source.branch?.lng,
+              branchLat: source.branch?.lat,
+              branchLng: source.branch?.long,   // ✅ fixed: long not lng
               rating: source.average_rating ?? source.rating ?? 0,
               category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
             };
           });
-
           setOffers(transformedOffers);
         } else {
           setError("No offers available right now");
@@ -473,7 +376,6 @@ const { isLoggedIn } = useAuth();
         setLoading(false);
       }
     };
-
     fetchOffers();
   }, [selectedCategory]);
 
@@ -491,26 +393,21 @@ const { isLoggedIn } = useAuth();
     }))
     .sort((a, b) => {
       switch (sortOption) {
-        case "highest_discount":
-          return b.discount - a.discount;
+        case "highest_discount": return b.discount - a.discount;
         case "nearest":
           if (a.distance === null && b.distance === null) return 0;
           if (a.distance === null) return 1;
           if (b.distance === null) return -1;
           return a.distance - b.distance;
-        case "rating":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return 0;
+        case "rating": return (b.rating || 0) - (a.rating || 0);
+        default: return 0;
       }
     });
 
-  const currentSortLabel =
-    sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
+  const currentSortLabel = sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
 
   return (
     <div className="homepage-container">
-      {/* ── Hero ── */}
       <section className="hero-section">
         <div className="hero-bg-shapes">
           <div className="shape shape-1" />
@@ -520,49 +417,28 @@ const { isLoggedIn } = useAuth();
         <div className="hero-content">
           <div className="hero-badge">🌱 Zero Waste, Maximum Taste</div>
           <h1 className="hero-title">
-            Save Food,
-            <br />
+            Save Food,<br />
             <span className="hero-title-accent">Save Money</span>
           </h1>
-          <p className="hero-subtitle">
-            Discover amazing food deals from local restaurants and reduce food
-            waste
-          </p>
+          <p className="hero-subtitle">Discover amazing food deals from local restaurants and reduce food waste</p>
           <div className="search-wrapper">
-            <div className="search-icon-left">
-              <Search size={20} />
-            </div>
-            <input
-              type="text"
-              placeholder="Search food, restaurants, or deals..."
-              className="search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            <div className="search-icon-left"><Search size={20} /></div>
+            <input type="text" placeholder="Search food, restaurants, or deals..." className="search-input"
+              value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             <button className="search-btn">Search</button>
           </div>
-
-          {activeOrder && (
-            <OrderTrackingStrip
-              order={activeOrder}
-              onDismiss={() => setActiveOrder(null)}
-            />
-          )}
+          {activeOrder && <OrderTrackingStrip order={activeOrder} onDismiss={() => setActiveOrder(null)} />}
         </div>
       </section>
 
-      {/* ── Filter bar ── */}
       <section className="filter-section" style={{ overflow: "visible" }}>
         <div className="filter-inner" style={{ overflow: "visible" }}>
           <div className="filter-left">
             <h2 className="filter-title">Filter :</h2>
             <div className="categories-container">
               {categories.map((category) => (
-                <button
-                  key={category}
-                  className={`category-button ${selectedCategory === category ? "active" : ""}`}
-                  onClick={() => setSelectedCategory(category)}
-                >
+                <button key={category} className={`category-button ${selectedCategory === category ? "active" : ""}`}
+                  onClick={() => setSelectedCategory(category)}>
                   <span className="cat-icon">{categoryIcons[category]}</span>
                   {category}
                 </button>
@@ -572,39 +448,20 @@ const { isLoggedIn } = useAuth();
           <div className="filter-right">
             <div className="sort-text">Sort by:</div>
             {sortOption === "nearest" && !userLat && (
-              <div style={{
-                fontSize: "0.8rem", color: "#92400e",
-                background: "#fef3c7", border: "1px solid #fcd34d",
-                borderRadius: "8px", padding: "4px 10px",
-              }}>
+              <div style={{ fontSize: "0.8rem", color: "#92400e", background: "#fef3c7", border: "1px solid #fcd34d", borderRadius: "8px", padding: "4px 10px" }}>
                 📍 Set your location first
               </div>
             )}
             <div className="dropdown-container">
-              <button
-                className="dropdown-button"
-                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              >
+              <button className="dropdown-button" onClick={() => setIsDropdownOpen(!isDropdownOpen)}>
                 <span>{currentSortLabel}</span>
-                <ChevronDown
-                  size={16}
-                  style={{
-                    transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)",
-                    transition: "0.2s",
-                  }}
-                />
+                <ChevronDown size={16} style={{ transform: isDropdownOpen ? "rotate(180deg)" : "rotate(0)", transition: "0.2s" }} />
               </button>
               {isDropdownOpen && (
                 <div className="dropdown-menu">
                   {sortOptions.map((opt) => (
-                    <div
-                      key={opt.value}
-                      className={`dropdown-item ${sortOption === opt.value ? "dropdown-item-active" : ""}`}
-                      onClick={() => {
-                        setSortOption(opt.value);
-                        setIsDropdownOpen(false);
-                      }}
-                    >
+                    <div key={opt.value} className={`dropdown-item ${sortOption === opt.value ? "dropdown-item-active" : ""}`}
+                      onClick={() => { setSortOption(opt.value); setIsDropdownOpen(false); }}>
                       {opt.label}
                     </div>
                   ))}
@@ -615,17 +472,10 @@ const { isLoggedIn } = useAuth();
         </div>
       </section>
 
-      {/* ── Offers ── */}
       <section className="offers-section">
         <div className="offers-header">
-          <h2 className="offers-title">
-            {selectedCategory === "All"
-              ? "All Offers"
-              : selectedCategory + " Offers"}
-          </h2>
-          <span className="offers-count">
-            {filteredOffers.length} available
-          </span>
+          <h2 className="offers-title">{selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}</h2>
+          <span className="offers-count">{filteredOffers.length} available</span>
         </div>
 
         {loading && (
@@ -640,12 +490,7 @@ const { isLoggedIn } = useAuth();
             <AlertCircle size={48} className="error-icon" />
             <h3 className="error-title">Error Loading Offers</h3>
             <p className="error-message">{error}</p>
-            <button
-              className="retry-button"
-              onClick={() => window.location.reload()}
-            >
-              Retry
-            </button>
+            <button className="retry-button" onClick={() => window.location.reload()}>Retry</button>
           </div>
         )}
 
@@ -653,103 +498,54 @@ const { isLoggedIn } = useAuth();
           <div className="empty-container">
             <Package size={64} className="empty-icon" />
             <h3 className="empty-title">No Offers Found</h3>
-            <p className="empty-message">
-              {searchQuery
-                ? "Try a different search term."
-                : "No offers available right now."}
-            </p>
+            <p className="empty-message">{searchQuery ? "Try a different search term." : "No offers available right now."}</p>
           </div>
         )}
 
         {!loading && !error && filteredOffers.length > 0 && (
           <div className="offers-grid">
             {filteredOffers.map((offer) => (
-              <div
-                key={offer.id}
-                className="offer-card"
-                onClick={() => navigate(`/offer/${offer.id}`)}
-                style={{ cursor: "pointer" }}
-              >
+              <div key={offer.id} className="offer-card" onClick={() => navigate(`/offer/${offer.id}`)} style={{ cursor: "pointer" }}>
                 <div className="offer-image-container">
                   {offer.image ? (
-                    <img
-                      src={offer.image}
-                      alt={offer.title}
-                      className="offer-image"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = "/assets/images/e.png";
-                      }}
-                    />
+                    <img src={offer.image} alt={offer.title} className="offer-image"
+                      onError={(e) => { e.target.onerror = null; e.target.src = "/assets/images/e.png"; }} />
                   ) : (
                     <div className="offer-image-placeholder">🍽️</div>
                   )}
-                  {offer.discount > 0 && (
-                    <div className="discount-badge">-{offer.discount}%</div>
-                  )}
+                  {offer.discount > 0 && <div className="discount-badge">-{offer.discount}%</div>}
                   <div className="image-bottom-bar">
                     <CountdownTimer pickupTime={offer.pickupTime} />
                     {offer.quantity > 0 && (
-                      <div className="quantity-badge">
-                        <Package size={12} />
-                        <span>{offer.quantity} left</span>
-                      </div>
+                      <div className="quantity-badge"><Package size={12} /><span>{offer.quantity} left</span></div>
                     )}
                   </div>
                 </div>
                 <div className="offer-content">
-                  <h3 className="offer-title">
-                    {offer.title || "Untitled Offer"}
-                  </h3>
+                  <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
                   {offer.location && (
                     <div className="offer-location">
                       <MapPin size={13} />
                       <span>{offer.location}</span>
                       {offer.distance !== null && offer.distance !== undefined && (
-                        <span className="offer-distance">
-                          · {offer.distance} km
-                        </span>
+                        <span className="offer-distance">· {offer.distance} km</span>
                       )}
                     </div>
                   )}
                   {offer.rating > 0 && (
-  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
-    <Star size={13} fill="#f59e0b" color="#f59e0b" />
-    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>
-      {Number(offer.rating).toFixed(1)}
-    </span>
-  </div>
-)}
-                  <p className="offer-description">
-                    {offer.description || "No description available"}
-                  </p>
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+                      <Star size={13} fill="#f59e0b" color="#f59e0b" />
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>{Number(offer.rating).toFixed(1)}</span>
+                    </div>
+                  )}
+                  <p className="offer-description">{offer.description || "No description available"}</p>
                   <div className="offer-footer">
                     <div className="price-container">
-                      <span className="discounted-price">
-                        EGP {offer.discountedPrice || offer.price}
-                      </span>
-                      {offer.originalPrice > 0 && (
-                        <span className="original-price">
-                          EGP {offer.originalPrice}
-                        </span>
-                      )}
+                      <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
+                      {offer.originalPrice > 0 && <span className="original-price">EGP {offer.originalPrice}</span>}
                     </div>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        addToCart(offer, 1, isLoggedIn);
-                      }}
-                      style={{
-                        background: "#10b981",
-                        color: "white",
-                        border: "none",
-                        borderRadius: "8px",
-                        padding: "0.4rem 0.8rem",
-                        fontSize: "0.8rem",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                      }}
-                    >
+                    <button onClick={(e) => { e.stopPropagation(); addToCart(offer, 1, isLoggedIn); }}
+                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
                       + Add
                     </button>
                   </div>
@@ -758,30 +554,29 @@ const { isLoggedIn } = useAuth();
             ))}
           </div>
         )}
-</section>
+      </section>
 
-    {showSignInPopup && (
-      <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
-        onClick={() => setShowSignInPopup(false)}>
-        <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
-          onClick={(e) => e.stopPropagation()}>
-          <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
-          <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
-          <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>You need to sign in first to add items to your cart.</p>
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            <button onClick={() => setShowSignInPopup(false)}
-              style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
-              Cancel
-            </button>
-            <button onClick={() => { setShowSignInPopup(false); navigate("/signin"); }}
-              style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
-              Sign In
-            </button>
+      {showSignInPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowSignInPopup(false)}>
+          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>You need to sign in first to add items to your cart.</p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button onClick={() => setShowSignInPopup(false)}
+                style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
+                Cancel
+              </button>
+              <button onClick={() => { setShowSignInPopup(false); navigate("/signin"); }}
+                style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
+                Sign In
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    )}
-
+      )}
     </div>
   );
 }
