@@ -1,46 +1,70 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Phone, Mail, Star, Navigation as NavigationIcon, Package } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package, Heart } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
 import './RestaurantDetail.css';
 
 export default function RestaurantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [offer, setOffer] = useState(null);
+  const [offer, setOffer]               = useState(null);
   const [vendorOffers, setVendorOffers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [branches, setBranches]         = useState([]);
+  const [loading, setLoading]           = useState(true);
+  const [isFavorite, setIsFavorite]     = useState(false);
+  const [favLoading, setFavLoading]     = useState(false);
+  const [vendorId, setVendorId]         = useState(null);
+
+  const getToken = () =>
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("token")      ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token");
+
+  const getLat = () => parseFloat(localStorage.getItem("userLocationLat")) || 30.0444;
+  const getLng = () => parseFloat(localStorage.getItem("userLocationLng")) || 31.2357;
 
   useEffect(() => {
     let mounted = true;
     (async () => {
       try {
-        const token = localStorage.getItem("auth_token") ||
-          localStorage.getItem("token") ||
-          sessionStorage.getItem("auth_token") ||
-          sessionStorage.getItem("token");
+        const token   = getToken();
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        // Fetch the offer to get vendor/branch info
         const res = await fetch(`/api/offers/${id}`, { headers });
         if (!mounted) return;
         if (!res.ok) { setLoading(false); return; }
 
-        const data = await res.json();
+        const data   = await res.json();
         const source = data.data || data.offer || data;
         setOffer(source);
 
-        // Fetch all offers to filter by same vendor
-        const vendorId = source.branch?.vendor?.id;
-        if (vendorId) {
+        const currentVendorId = source.branch?.vendor?.id;
+        setVendorId(currentVendorId);
+
+        if (currentVendorId) {
+          const vendorRes = await fetch(`/api/vendor/${currentVendorId}`, { headers });
+          if (vendorRes.ok) {
+            const vendorData = await vendorRes.json();
+            const v = vendorData.data || vendorData.vendor || vendorData;
+            setBranches(v.branches || []);
+          }
+        }
+
+        // Check favorites from localStorage
+        if (currentVendorId) {
+          const savedFavs = JSON.parse(localStorage.getItem("favorites") || "[]");
+          setIsFavorite(savedFavs.includes(currentVendorId));
+        }
+
+        if (currentVendorId) {
           const allRes = await fetch(`/api/offers`, { headers });
           if (!mounted) return;
           if (allRes.ok) {
             const allData = await allRes.json();
-            const all = allData.data || allData.offers || [];
-            const filtered = all.filter(o => o.branch?.vendor?.id === vendorId);
-            setVendorOffers(filtered);
+            const all     = allData.data || allData.offers || [];
+            setVendorOffers(all.filter(o => o.branch?.vendor?.id === currentVendorId));
           }
         }
       } catch (err) {
@@ -51,6 +75,50 @@ export default function RestaurantDetail() {
     })();
     return () => { mounted = false; };
   }, [id]);
+
+  const handleFavoriteToggle = useCallback(async () => {
+    const token = getToken();
+    if (!token) { navigate('/signin'); return; }
+    if (favLoading || !vendorId) return;
+
+    const newState = !isFavorite;
+    setIsFavorite(newState);
+    setFavLoading(true);
+
+    const savedFavs = JSON.parse(localStorage.getItem("favorites") || "[]");
+    if (newState) {
+      if (!savedFavs.includes(vendorId))
+        localStorage.setItem("favorites", JSON.stringify([...savedFavs, vendorId]));
+    } else {
+      localStorage.setItem("favorites", JSON.stringify(savedFavs.filter(fid => fid !== vendorId)));
+    }
+
+    try {
+      const res = await fetch(`/api/favorites/toggle`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ vendor_id: vendorId }),
+      });
+
+      if (!res.ok) {
+        setIsFavorite(!newState);
+        const reverted = JSON.parse(localStorage.getItem("favorites") || "[]");
+        if (!newState) {
+          localStorage.setItem("favorites", JSON.stringify([...reverted, vendorId]));
+        } else {
+          localStorage.setItem("favorites", JSON.stringify(reverted.filter(fid => fid !== vendorId)));
+        }
+      }
+    } catch {
+      setIsFavorite(!newState);
+    } finally {
+      setFavLoading(false);
+    }
+  }, [vendorId, isFavorite, favLoading, navigate]);
 
   if (loading) {
     return (
@@ -76,20 +144,18 @@ export default function RestaurantDetail() {
 
   const branch = offer.branch || {};
   const vendor = branch.vendor || {};
-  const lat = branch.lat;
-  const lng = branch.long;
+  const lat    = branch.lat;
+  const lng    = branch.long;
 
   return (
     <div className="restaurant-detail-container">
 
-      {/* ── Back Bar ── */}
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-btn">
           <ArrowLeft size={18} /> Back
         </button>
       </div>
 
-      {/* ── Hero ── */}
       <div className="detail-hero">
         <img
           src={vendor.logo || "/images/e.png"}
@@ -98,6 +164,20 @@ export default function RestaurantDetail() {
           onError={(e) => { e.target.src = "/images/e.png"; }}
         />
         <div className="detail-hero-overlay" />
+
+        <button
+          className={`favorite-btn ${isFavorite ? 'active' : ''} ${favLoading ? 'fav-loading' : ''}`}
+          onClick={handleFavoriteToggle}
+          aria-label={isFavorite ? "Remove from favorites" : "Add to favorites"}
+          disabled={favLoading}
+        >
+          <Heart
+            size={22}
+            fill={isFavorite ? '#ef4444' : 'none'}
+            color={isFavorite ? '#ef4444' : '#ffffff'}
+          />
+        </button>
+
         <div className="detail-hero-content">
           <div className="detail-hero-text">
             <h1>{vendor.business_name || "Restaurant"}</h1>
@@ -111,7 +191,6 @@ export default function RestaurantDetail() {
         </div>
       </div>
 
-      {/* ── Info Strip ── */}
       <div className="detail-info-strip">
         <div className="detail-info-strip-inner">
           <div className="info-strip-item">
@@ -138,10 +217,8 @@ export default function RestaurantDetail() {
         </div>
       </div>
 
-      {/* ── Body ── */}
       <div className="detail-body">
 
-        {/* Branch Info */}
         <div className="description-section">
           <h2>About {vendor.business_name}</h2>
           <p className="restaurant-description">
@@ -149,7 +226,51 @@ export default function RestaurantDetail() {
           </p>
         </div>
 
-        {/* Offers */}
+        {branches.length > 0 && (
+          <div className="branches-section">
+            <h2>Our Branches ({branches.length})</h2>
+            <div className="branches-list">
+              {branches.map((b) => (
+                <div key={b.id} className="branch-card">
+                  <div className="branch-card-header">
+                    <MapPin size={16} />
+                    <span className="branch-name">{b.branch_name}</span>
+                    <span className={`branch-status ${b.status === 'active' ? 'active' : 'inactive'}`}>
+                      {b.status}
+                    </span>
+                  </div>
+                  <div className="branch-card-body">
+                    <div className="branch-info-row">
+                      <MapPin size={13} />
+                      <span>{b.store_address}</span>
+                    </div>
+                    {b.opening_hours && (
+                      <div className="branch-info-row">
+                        <Clock size={13} />
+                        <span>{b.opening_hours}</span>
+                      </div>
+                    )}
+                    {b.contact_phone && (
+                      <div className="branch-info-row">
+                        <Phone size={13} />
+                        <span>{b.contact_phone}</span>
+                      </div>
+                    )}
+                  </div>
+                  {b.lat && b.lng && (
+                    <button
+                      className="branch-directions-btn"
+                      onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`, '_blank')}
+                    >
+                      <NavigationIcon size={14} /> Get Directions
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <div className="offers-section">
           <h2>Available Offers ({vendorOffers.length})</h2>
           {vendorOffers.length === 0 ? (
@@ -167,7 +288,13 @@ export default function RestaurantDetail() {
               return (
                 <div key={o.id} className="offer-card" onClick={() => navigate(`/offer/${o.id}`)}>
                   <img
-                    src={`https://zero-waste-production.up.railway.app/storage/${o.image}` || "/images/e.png"}
+                    src={(() => {
+                      const BASE = "https://zero-waste-production.up.railway.app";
+                      if (!o.image) return "/images/e.png";
+                      const raw = o.image.trim();
+                      if (raw.startsWith("http")) return raw.replace(`${BASE}/storage/`, `${BASE}/`);
+                      return `${BASE}/${raw.replace(/^\/+/, "").replace(/^storage\//, "")}`;
+                    })()}
                     alt={o.title}
                     className="offer-card-image"
                     onError={(e) => { e.target.src = "/images/e.png"; }}
@@ -199,7 +326,6 @@ export default function RestaurantDetail() {
           )}
         </div>
 
-        {/* Directions */}
         {lat && lng && (
           <div className="navigation-section">
             <button

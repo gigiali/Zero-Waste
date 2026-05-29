@@ -372,3 +372,14 @@
 @media (max-width: 480px) {
   .businesses-stats { grid-template-columns: 1fr; }
 }
+.biz-stat--red {
+  border-left: 4px solid #ef4444;
+  background: #fff5f5;
+}
+.biz-stat--red .biz-stat__icon {
+  background: #ffeaea;
+  color: #ef4444;
+}
+.businesses-table-wrapper {
+  overflow: visible !important;
+}

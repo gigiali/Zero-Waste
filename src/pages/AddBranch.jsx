@@ -320,7 +320,9 @@ export default function AddBranch() {
     <div className="business-setup-page">
       <div className="business-setup-container">
         <div className="business-setup-header">
-          <h2>{t("addBranch.title")}</h2>
+          <h2 style={{ color: "white", fontSize: "24px", fontWeight: "bold" }}>
+            {t("addBranch.title")}
+          </h2>
           <p>{t("addBranch.subtitle")}</p>
         </div>
 

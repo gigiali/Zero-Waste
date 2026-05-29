@@ -1,80 +1,49 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Edit2,
-  LogOut,
-  Trash2,
-  ChevronRight,
-  KeyRound,
-  Package,
-  CalendarDays,
-  CreditCard,
-  ShoppingBag,
-  Truck,
-  X,
-  Star,
+  User, Mail, Phone, MapPin, Edit2, LogOut, Trash2,
+  ChevronRight, KeyRound, Package, CalendarDays,
+  CreditCard, ShoppingBag, Truck, Star, X,
 } from "lucide-react";
-import "./MyProfileAdmin.css";
+import "./MyProfileUser.css";
 import { useAuth } from "../Context/AuthContext";
 
-function SettingsDrawer({ title, children, onClose }) {
-  return (
-    <div className="profile-drawer-overlay" onClick={onClose}>
-      <aside className="profile-drawer" onClick={(e) => e.stopPropagation()}>
-        <div className="profile-drawer-header">
-          <h2>{title}</h2>
-          <button
-            type="button"
-            className="profile-icon-btn"
-            onClick={onClose}
-            aria-label="Close"
-          >
-            <X size={18} />
-          </button>
-        </div>
-        {children}
-      </aside>
-    </div>
-  );
-}
+const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 
-function ChangePassword({ onDone }) {
+const getToken = () =>
+  localStorage.getItem("auth_token") ||
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("auth_token") ||
+  sessionStorage.getItem("token");
+
+/* ─────────────────────────────────────────────
+   Change Password Drawer
+───────────────────────────────────────────── */
+function ChangePasswordDrawer({ onClose }) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [success, setSuccess] = useState("");
 
   const handleChange = async () => {
     const e = {};
     if (!form.current) e.current_password = "Current password is required";
     if (!form.next) e.new_password = "New password is required";
-    else if (form.next.length < 6)
-      e.new_password = "Password must be at least 6 characters";
-    if (!form.confirm)
-      e.new_password_confirmation = "Please confirm your password";
-    else if (form.next !== form.confirm)
-      e.new_password_confirmation = "Passwords do not match";
-
+    else if (form.next.length < 6) e.new_password = "At least 6 characters";
+    if (!form.confirm) e.new_password_confirmation = "Please confirm password";
+    else if (form.next !== form.confirm) e.new_password_confirmation = "Passwords do not match";
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
     setIsLoading(true);
     try {
-      const token =
-        localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-
-      const response = await fetch("/api/profile/change-password", {
+      // PUT /api/profile/change-password — customer change password route
+      const res = await fetch(`${BASE_URL}/profile/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
           current_password: form.current,
@@ -82,26 +51,20 @@ function ChangePassword({ onDone }) {
           password_confirmation: form.confirm,
         }),
       });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setErrors({ general: "✅ Password changed successfully!" });
-        setTimeout(() => onDone(), 1500);
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess("✅ Password changed successfully!");
+        setTimeout(() => onClose(), 1500);
       } else if (data.errors) {
         const newErrors = {};
         Object.keys(data.errors).forEach((f) => {
-          newErrors[f] = Array.isArray(data.errors[f])
-            ? data.errors[f][0]
-            : data.errors[f];
+          newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f];
         });
         setErrors(newErrors);
       } else {
-        setErrors({
-          general: data.message || "Failed to change password. Please try again.",
-        });
+        setErrors({ general: data.message || "Failed to change password." });
       }
-    } catch (err) {
+    } catch {
       setErrors({ general: "Network error. Please check your connection." });
     } finally {
       setIsLoading(false);
@@ -109,154 +72,128 @@ function ChangePassword({ onDone }) {
   };
 
   return (
-    <div className="profile-drawer-body">
-      {[
-        ["current", "current_password", "Current password"],
-        ["next", "new_password", "New password"],
-        ["confirm", "new_password_confirmation", "Confirm new password"],
-      ].map(([formKey, errorKey, placeholder]) => (
-        <label className="profile-form-field" key={formKey}>
-          <span>{placeholder}</span>
-          <input
-            type="password"
-            value={form[formKey]}
-            onChange={(e) =>
-              setForm((p) => ({ ...p, [formKey]: e.target.value }))
-            }
-            style={{ borderColor: errors[errorKey] ? "#ef4444" : undefined }}
-          />
-          {errors[errorKey] && (
-            <small className="profile-error">{errors[errorKey]}</small>
-          )}
-        </label>
-      ))}
-      {errors.general && (
-        <small
-          className={
-            errors.general.includes("✅") ? "profile-success" : "profile-error"
-          }
+    <div className="usr-drawer-overlay" onClick={onClose}>
+      <aside className="usr-drawer" onClick={(e) => e.stopPropagation()}>
+        <div className="usr-drawer-header">
+          <h2>Change Password</h2>
+          <button className="usr-drawer-close" onClick={onClose} type="button">
+            <X size={17} />
+          </button>
+        </div>
+
+        {[
+          ["current", "current_password", "Current password"],
+          ["next", "new_password", "New password"],
+          ["confirm", "new_password_confirmation", "Confirm new password"],
+        ].map(([fk, ek, ph]) => (
+          <div key={fk} className="usr-pw-wrap">
+            <input
+              type="password"
+              placeholder={ph}
+              value={form[fk]}
+              className={errors[ek] ? "has-error" : ""}
+              onChange={(e) => setForm((p) => ({ ...p, [fk]: e.target.value }))}
+            />
+            {errors[ek] && <span className="usr-pw-error">{errors[ek]}</span>}
+          </div>
+        ))}
+
+        {errors.general && <span className="usr-pw-error">{errors.general}</span>}
+        {success && <span className="usr-pw-success">{success}</span>}
+
+        <button
+          className="usr-btn-save"
+          onClick={handleChange}
+          disabled={isLoading}
+          style={{ width: "100%", marginTop: "4px" }}
         >
-          {errors.general}
-        </small>
-      )}
-      <button
-        type="button"
-        className="btn-save profile-full-btn"
-        onClick={handleChange}
-        disabled={isLoading}
-      >
-        {isLoading ? "Changing..." : "Save Password"}
-      </button>
+          {isLoading ? "Saving…" : "Save Password"}
+        </button>
+      </aside>
     </div>
   );
 }
 
-function OrdersSection({ orders, isLoadingOrders }) {
-  if (isLoadingOrders) {
-    return (
-      <div className="profile-card">
-        <div className="profile-empty-state">
-          <Package size={30} />
-          <p>Loading your orders...</p>
+/* ─────────────────────────────────────────────
+   Confirm Modal
+───────────────────────────────────────────── */
+function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel }) {
+  return (
+    <div className="usr-overlay" onClick={onCancel}>
+      <div className="usr-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="usr-modal-emoji">{emoji}</div>
+        <h3>{title}</h3>
+        <p>{message}</p>
+        <div className="usr-modal-actions">
+          <button className="usr-modal-cancel" onClick={onCancel}>Cancel</button>
+          <button className="usr-modal-confirm" onClick={onConfirm}>{confirmLabel}</button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Orders Tab
+───────────────────────────────────────────── */
+function OrdersTab({ orders, isLoading }) {
+  if (isLoading) {
+    return (
+      <div className="usr-card">
+        <div className="usr-empty"><Package size={28} /><p>Loading orders…</p></div>
       </div>
     );
   }
 
   return (
-    <div className="profile-card">
-      <div className="profile-section-head">
+    <div className="usr-card">
+      <div className="usr-section-head">
         <div>
-          <h2 className="card-title">My Orders</h2>
-          <p className="profile-muted">
-            Every confirmed order will appear here with its full details.
-          </p>
+          <h2 className="usr-card-title">My Orders</h2>
+          <p className="usr-muted">All your confirmed orders appear here.</p>
         </div>
-        <span className="profile-count-badge">{orders.length}</span>
+        <span className="usr-count-badge">{orders.length}</span>
       </div>
 
       {orders.length === 0 ? (
-        <div className="profile-empty-state">
-          <Package size={30} />
-          <p>No orders yet</p>
-        </div>
+        <div className="usr-empty"><Package size={28} /><p>No orders yet</p></div>
       ) : (
-        <div className="profile-orders-list">
+        <div className="usr-orders-list">
           {orders.map((order) => (
-            <article
-              className="profile-order-card"
-              key={order.id || order.orderNumber}
-            >
-              <div className="profile-order-top">
-                <div>
-                  <strong>#{order.id || order.orderNumber}</strong>
-                  <span>{order.status || order.order_status || "Confirmed"}</span>
+            <article className="usr-order-card" key={order.id}>
+              <div className="usr-order-top">
+                <div className="usr-order-top-left">
+                  <strong>#{order.id}</strong>
+                  <span className="usr-order-badge">{order.status || order.order_status || "Confirmed"}</span>
                 </div>
-                <strong>
-                  EGP {Number(order.total_amount || order.total || 0).toFixed(2)}
-                </strong>
+                <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
               </div>
 
-              <div className="profile-order-meta">
+              <div className="usr-order-meta">
+                <span><MapPin size={13} /> {order.vendor_name || "Restaurant"}</span>
                 <span>
-                  <MapPin size={14} />{" "}
-                  {order.businessName || order.vendor_name || "Restaurant"}
+                  <CalendarDays size={13} />
+                  {order.created_at ? new Date(order.created_at).toLocaleString() : "Today"}
                 </span>
                 <span>
-                  <CalendarDays size={14} />{" "}
-                  {order.created_at || order.createdAt
-                    ? new Date(
-                        order.created_at || order.createdAt
-                      ).toLocaleString()
-                    : "Today"}
+                  {order.delivery_type === "delivery" ? <Truck size={13} /> : <ShoppingBag size={13} />}
+                  {order.delivery_type === "delivery" ? "Delivery" : "Pickup"}
                 </span>
-                <span>
-                  {order.delivery_type === "delivery" ||
-                  order.deliveryMethod === "delivery" ? (
-                    <Truck size={14} />
-                  ) : (
-                    <ShoppingBag size={14} />
-                  )}
-                  {order.delivery_type === "delivery" ||
-                  order.deliveryMethod === "delivery"
-                    ? "Delivery"
-                    : "Pickup"}
-                </span>
-                <span>
-                  <CreditCard size={14} />{" "}
-                  {order.payment_method || order.paymentMethod || "Payment selected"}
-                </span>
+                <span><CreditCard size={13} /> {order.payment_method || "—"}</span>
               </div>
 
-              <div className="profile-order-items">
+              <div className="usr-order-items">
                 {(order.items || order.order_items || []).map((item, idx) => (
-                  <div
-                    className="profile-order-item"
-                    key={`${order.id}-${idx}`}
-                  >
-                    <span>
-                      {item.quantity || item.quality}x{" "}
-                      {item.title || item.offer?.title || item.name}
-                    </span>
-                    <strong>
-                      EGP{" "}
-                      {Number(
-                        item.price || item.offer?.discount_price || 0
-                      ).toFixed(2)}
-                    </strong>
+                  <div className="usr-order-item" key={idx}>
+                    <span>{item.quantity || item.quality}× {item.title || item.offer?.title || item.name}</span>
+                    <strong>EGP {Number(item.price || item.offer?.discount_price || 0).toFixed(2)}</strong>
                   </div>
                 ))}
               </div>
 
-              <div className="profile-order-totals">
-                <span>
-                  Subtotal: EGP{" "}
-                  {Number(order.subtotal || order.total_amount || 0).toFixed(2)}
-                </span>
-                <span>
-                  Delivery: EGP{" "}
-                  {Number(order.delivery_fees || order.deliveryFee || 0).toFixed(2)}
-                </span>
+              <div className="usr-order-totals">
+                <span>Subtotal: EGP {Number(order.subtotal || order.total_amount || 0).toFixed(2)}</span>
+                <span>Delivery: EGP {Number(order.delivery_fees || order.deliveryFee || 0).toFixed(2)}</span>
               </div>
             </article>
           ))}
@@ -266,188 +203,160 @@ function OrdersSection({ orders, isLoadingOrders }) {
   );
 }
 
-export default function UserProfile() {
+/* ─────────────────────────────────────────────
+   Reviews Tab
+───────────────────────────────────────────── */
+function ReviewsTab({ reviews, isLoading, onDelete }) {
+  const [confirmId, setConfirmId] = useState(null);
+
+  if (isLoading) {
+    return (
+      <div className="usr-card">
+        <div className="usr-empty"><Star size={28} /><p>Loading reviews…</p></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="usr-card">
+      <div className="usr-section-head">
+        <div>
+          <h2 className="usr-card-title">My Reviews</h2>
+          <p className="usr-muted">Reviews you've submitted for offers.</p>
+        </div>
+        <span className="usr-count-badge">{reviews.length}</span>
+      </div>
+
+      {reviews.length === 0 ? (
+        <div className="usr-empty"><Star size={28} /><p>No reviews yet</p></div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+          {reviews.map((rev) => (
+            <div className="usr-review-card" key={rev.id}>
+              <div>
+                <div className="usr-stars">
+                  {Array.from({ length: rev.rating || rev.Rating || 5 }).map((_, i) => (
+                    <Star key={i} size={15} fill="currentColor" />
+                  ))}
+                </div>
+                <p className="usr-review-comment">
+                  {rev.comment || rev.Comment || "No comment provided."}
+                </p>
+              </div>
+              <button
+                className="usr-review-delete"
+                onClick={() => setConfirmId(rev.id)}
+                type="button"
+              >
+                <Trash2 size={17} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {confirmId && (
+        <ConfirmModal
+          emoji="🗑️"
+          title="Delete Review?"
+          message="Are you sure you want to delete this review?"
+          confirmLabel="Delete"
+          onConfirm={() => { onDelete(confirmId); setConfirmId(null); }}
+          onCancel={() => setConfirmId(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
+   Main User Profile
+───────────────────────────────────────────── */
+export default function MyProfileUser() {
   const navigate = useNavigate();
-  const { logout, darkMode, toggleDarkMode } = useAuth();
-  const { role } = useAuth();
+  const { logout } = useAuth();
 
-  useEffect(() => {
-    if (role && role !== "customer") {
-      if (role === "super_admin" || role === "manager")
-        navigate("/admin/profile");
-      else if (role === "vendor") navigate("/business/profile");
-    }
-  }, [role]);
-
-  const [activePanel, setActivePanel] = useState(null);
-  const [activeSection, setActiveSection] = useState("profile");
+  const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
-  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [showDeleteReviewConfirm, setShowDeleteReviewConfirm] = useState(false);
-  const [selectedReviewId, setSelectedReviewId] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showLogout, setShowLogout] = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingOrders, setIsLoadingOrders] = useState(false);
-  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
   const [errors, setErrors] = useState({});
+
+  const [userData, setUserData] = useState({ name: "", email: "", phone: "", address: "" });
+  const [editData, setEditData] = useState({ ...userData });
   const [orders, setOrders] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
+  const [loadingReviews, setLoadingReviews] = useState(false);
 
-  const [userData, setUserData] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    address: "",
-  });
-  const [editData, setEditData] = useState({ ...userData });
-
-  const getAuthToken = () => {
-    return localStorage.getItem("auth_token") || 
-           localStorage.getItem("token") || 
-           sessionStorage.getItem("auth_token") || 
-           sessionStorage.getItem("token");
-  };
-
-  const fetchUserData = async () => {
-    const token = getAuthToken();
-    if (!token) return;
-
+  /* ── Fetch profile ── */
+  // GET /api/myprofile
+  const fetchProfile = async () => {
     try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch("/api/myprofile", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        signal: controller.signal,
+      const res = await fetch(`${BASE_URL}/myprofile`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
-      clearTimeout(timeoutId);
-      
-      const data = await response.json();
-
-      if (response.ok) {
-        const u = data.user || data.data || data; 
-        
-        const freshData = {
-          name: u.name || u.full_name || u.username || "",
+      const data = await res.json();
+      if (res.ok) {
+        const u = data.user || data.data?.user || data.data || data;
+        const fresh = {
+          name: u.name || "",
           email: u.email || "",
-          phone: u.phone || u.phone_number || "",
+          phone: u.phone || "",
           address: u.address || "",
         };
-
-        setUserData(freshData);
-        setEditData(freshData);
-      } else {
-        setErrors((prev) => ({ 
-          ...prev, 
-          general: data.message || "Failed to load profile settings." 
-        }));
+        setUserData(fresh);
+        setEditData(fresh);
       }
-    } catch (error) {
-      setErrors((prev) => ({
-        ...prev,
-        general: error.name === "AbortError" 
-          ? "Request timed out. Please try again." 
-          : "Network error. Please check your connection."
-      }));
+    } catch (err) {
+      console.error("Fetch profile error:", err);
     }
   };
 
-  const fetchUserOrders = async () => {
-    const token = getAuthToken();
-    if (!token) return;
+  /* ── Fetch orders ── */
+  // GET /api/my-orders
+  const fetchOrders = async () => {
+    setLoadingOrders(true);
     try {
-      setIsLoadingOrders(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch("/api/my-orders", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        signal: controller.signal,
+      const res = await fetch(`${BASE_URL}/my-orders`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
-      clearTimeout(timeoutId);
-      const data = await response.json();
-
-      if (response.ok) {
-        setOrders(Array.isArray(data) ? data : data.orders || []);
-      }
-    } catch (error) {
-      console.error("Fetch user orders error:", error);
+      const data = await res.json();
+      if (res.ok) setOrders(Array.isArray(data) ? data : data.orders || []);
+    } catch (err) {
+      console.error("Fetch orders error:", err);
     } finally {
-      setIsLoadingOrders(false);
+      setLoadingOrders(false);
     }
   };
 
-  const fetchUserReviews = async () => {
-    const token = getAuthToken();
-    if (!token) return;
+  /* ── Fetch reviews ── */
+  // GET /api/my-reviews
+  const fetchReviews = async () => {
+    setLoadingReviews(true);
     try {
-      setIsLoadingReviews(true);
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch("/api/my-reviews", {
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        signal: controller.signal,
+      const res = await fetch(`${BASE_URL}/my-reviews`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
-      clearTimeout(timeoutId);
-      const data = await response.json();
-
-      if (response.ok) {
-        setReviews(Array.isArray(data) ? data : data.reviews || []);
-      }
-    } catch (error) {
-      console.error("Fetch user reviews error:", error);
+      const data = await res.json();
+      if (res.ok) setReviews(Array.isArray(data) ? data : data.reviews || []);
+    } catch (err) {
+      console.error("Fetch reviews error:", err);
     } finally {
-      setIsLoadingReviews(false);
-    }
-  };
-
-  const handleDeleteReview = async (reviewId) => {
-    const token = getAuthToken();
-    if (!token) return;
-    try {
-      const response = await fetch(`/api/reviews/${reviewId}`, {
-        method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setReviews((prev) => prev.filter((rev) => rev.id !== reviewId));
-        setShowDeleteReviewConfirm(false);
-        setSelectedReviewId(null);
-      } else {
-        const data = await response.json();
-        alert(data.message || "Failed to delete review.");
-      }
-    } catch (error) {
-      console.error("Delete review error:", error);
+      setLoadingReviews(false);
     }
   };
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
-      fetchUserData();
-      fetchUserOrders();
-      fetchUserReviews();
-    }
-  }, [role]);
+    fetchProfile();
+    fetchOrders();
+    fetchReviews();
+  }, []);
 
+  /* ── Save profile ── */
+  // PUT /api/customer/profile
   const handleSave = async () => {
     const e = {};
     if (!editData.name.trim()) e.name = "Name is required";
@@ -459,16 +368,12 @@ export default function UserProfile() {
 
     setIsLoading(true);
     try {
-      const token = getAuthToken();
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-
-      const response = await fetch("/api/customer/profile", {
+      const res = await fetch(`${BASE_URL}/customer/profile`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${token}`,
+          Authorization: `Bearer ${getToken()}`,
         },
         body: JSON.stringify({
           name: editData.name.trim(),
@@ -476,37 +381,23 @@ export default function UserProfile() {
           phone: editData.phone.trim(),
           address: editData.address.trim(),
         }),
-        signal: controller.signal,
       });
-      clearTimeout(timeoutId);
-      const data = await response.json();
-
-      if (response.ok) {
+      const data = await res.json();
+      if (res.ok) {
         setUserData({ ...editData });
         setIsEditing(false);
-        alert("Profile updated successfully!");
-      } else if (response.status === 422 && data.errors) {
+        await fetchProfile();
+      } else if (res.status === 422 && data.errors) {
         const newErrors = {};
         Object.keys(data.errors).forEach((f) => {
-          newErrors[f] = Array.isArray(data.errors[f])
-            ? data.errors[f][0]
-            : data.errors[f];
+          newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f];
         });
         setErrors(newErrors);
-      } else if (response.status === 409) {
-        setErrors({ general: "This email is already in use." });
       } else {
-        setErrors({
-          general: data.message || "Failed to update profile. Please try again.",
-        });
+        setErrors({ general: data.message || "Failed to update profile." });
       }
-    } catch (error) {
-      setErrors({
-        general:
-          error.name === "AbortError"
-            ? "Request timed out. Please try again."
-            : "Network error. Please check your connection.",
-      });
+    } catch {
+      setErrors({ general: "Network error. Please check your connection." });
     } finally {
       setIsLoading(false);
     }
@@ -518,173 +409,143 @@ export default function UserProfile() {
     setIsEditing(false);
   };
 
-  const handleDeleteAccount = async () => {
+  /* ── Delete account ── */
+  // DELETE /api/customer/delete-profile
+  const handleDelete = async () => {
     try {
-      const token = getAuthToken();
-
-      const response = await fetch("/api/customer/delete-profile", {
+      const res = await fetch(`${BASE_URL}/customer/delete-profile`, {
         method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
-      if (response.ok) {
-        logout();
-        navigate("/home");
-      }
-    } catch (err) {
-      console.error("Delete account error:", err);
+      if (res.ok) { logout(); navigate("/home"); }
+    } catch (err) { console.error(err); }
+  };
+
+  /* ── Logout ── */
+  // POST /api/logout
+  const handleLogout = async () => {
+    try {
+      await fetch(`${BASE_URL}/logout`, {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+      });
+    } finally {
+      logout();
+      setShowLogout(false);
+      navigate("/home");
     }
   };
 
-  const handleLogout = () => {
-    logout();
-    setShowLogoutConfirm(false);
-    navigate("/home");
+  /* ── Delete review ── */
+  // DELETE /api/reviews/{id}
+  const handleDeleteReview = async (id) => {
+    try {
+      const res = await fetch(`${BASE_URL}/reviews/${id}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+      });
+      if (res.ok) setReviews((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) { console.error(err); }
   };
 
+  const initials = userData.name
+    ? userData.name.split(" ").slice(0, 2).map((w) => w[0]).join("").toUpperCase()
+    : "?";
+
   const infoFields = [
-    { icon: <User size={20} />, label: "Full Name", key: "name", type: "text" },
-    { icon: <Mail size={20} />, label: "Email Address", key: "email", type: "email" },
-    { icon: <Phone size={20} />, label: "Phone Number", key: "phone", type: "tel" },
-    { icon: <MapPin size={20} />, label: "Address", key: "address", type: "text" },
+    { icon: <User size={17} />, label: "Full Name", key: "name", type: "text" },
+    { icon: <Mail size={17} />, label: "Email Address", key: "email", type: "email" },
+    { icon: <Phone size={17} />, label: "Phone Number", key: "phone", type: "tel" },
+    { icon: <MapPin size={17} />, label: "Address", key: "address", type: "text" },
   ];
 
-  const profileTabs = [
-    { id: "profile", label: "My Profile", icon: <User size={17} /> },
-    { id: "orders", label: "My Orders", icon: <Package size={17} /> },
-    { id: "reviews", label: "My Reviews", icon: <Star size={17} /> },
-    { id: "settings", label: "Account Settings", icon: <KeyRound size={17} /> },
+  const tabs = [
+    { id: "profile", label: "Profile", icon: <User size={16} /> },
+    { id: "orders", label: "Orders", icon: <Package size={16} /> },
+    { id: "reviews", label: "Reviews", icon: <Star size={16} /> },
+    { id: "settings", label: "Settings", icon: <KeyRound size={16} /> },
   ];
 
   return (
     <>
-      <div className="profile-page">
-        <div className="profile-hero">
-          <div className="hero-inner">
-            <div>
-              <h1 className="hero-title">My Profile</h1>
-              <p className="hero-subtitle">
-                Manage your account, orders, and settings
-              </p>
+      <div className="usr-page">
+        {/* ── Hero ── */}
+        <div className="usr-hero">
+          <div className="usr-hero-inner">
+            <div className="usr-hero-left">
+              <div className="usr-avatar">{initials}</div>
+              <div>
+                <h1 className="usr-hero-title">{userData.name || "My Profile"}</h1>
+                <p className="usr-hero-sub">Manage your account, orders & reviews</p>
+              </div>
             </div>
+            {activeTab === "profile" && (
+              <button
+                className="usr-edit-btn"
+                onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}
+              >
+                <Edit2 size={14} />
+                {isEditing ? "Cancel" : "Edit Profile"}
+              </button>
+            )}
           </div>
         </div>
 
-        <div className="profile-body">
-          {/* تعديل مساحة توزيع الأزرار وإضافة حواف داخلية مريحة لتمنع التلاصق */}
-          <div
-            className="profile-tabs"
-            role="tablist"
-            aria-label="Profile sections"
-            style={{ 
-              display: "flex", 
-              flexDirection: "row", 
-              flexWrap: "nowrap", 
-              justifyContent: "space-between", 
-              alignItems: "center",
-              gap: "20px",
-              padding: "10px 15px",
-              overflowX: "auto",
-              width: "100%"
-            }}
-          >
-            {profileTabs.map((tab) => (
+        <div className="usr-body">
+          {/* ── Tabs ── */}
+          <div className="usr-tabs">
+            {tabs.map((tab) => (
               <button
-                type="button"
                 key={tab.id}
-                className={`profile-tab ${activeSection === tab.id ? "is-active" : ""}`}
-                style={{ 
-                  whiteSpace: "nowrap", 
-                  flexShrink: 0,
-                  flex: 1,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "8px",
-                  padding: "10px 16px",
-                  borderRadius: "8px",
-                  background: activeSection === tab.id ? "transparent" : "none",
-                  border: "none",
-                  cursor: "pointer"
-                }}
-                onClick={() => {
-                  if (isEditing) handleCancel();
-                  setActiveSection(tab.id);
-                }}
+                className={`usr-tab${activeTab === tab.id ? " is-active" : ""}`}
+                onClick={() => { if (isEditing) handleCancel(); setActiveTab(tab.id); }}
+                type="button"
               >
                 {tab.icon}
-                <span>{tab.label}</span>
+                {tab.label}
               </button>
             ))}
           </div>
 
-          {activeSection === "profile" && (
-            <div className="profile-card">
-              <div className="profile-section-head">
-                <h2 className="card-title">Personal Information</h2>
-                <button
-                  className="hero-edit-btn profile-card-action"
-                  onClick={() =>
-                    isEditing ? handleCancel() : setIsEditing(true)
-                  }
-                >
-                  <Edit2 size={16} /> {isEditing ? "Cancel" : "Edit"}
-                </button>
-              </div>
-
-              <div className="info-list">
+          {/* ── Profile Tab ── */}
+          {activeTab === "profile" && (
+            <div className="usr-card">
+              <h2 className="usr-card-title">Personal Information</h2>
+              <div className="usr-info-list">
                 {infoFields.map(({ icon, label, key, type }) => (
-                  <div className="info-row" key={key}>
-                    <span className="info-icon">{icon}</span>
-                    <div className="info-text">
-                      <span className="info-label">{label}</span>
+                  <div className="usr-info-row" key={key}>
+                    <span className="usr-info-icon">{icon}</span>
+                    <div className="usr-info-text">
+                      <span className="usr-info-label">{label}</span>
                       {isEditing ? (
                         <div>
                           <input
-                            className="info-input"
+                            className={`usr-input${errors[key] ? " has-error" : ""}`}
                             type={type}
                             value={editData[key]}
                             onChange={(e) => {
                               setEditData({ ...editData, [key]: e.target.value });
-                              if (errors[key])
-                                setErrors((p) => ({ ...p, [key]: "" }));
-                            }}
-                            style={{
-                              borderColor: errors[key] ? "#ef4444" : undefined,
+                              if (errors[key]) setErrors((p) => ({ ...p, [key]: "" }));
                             }}
                           />
-                          {errors[key] && (
-                            <span className="profile-error">{errors[key]}</span>
-                          )}
+                          {errors[key] && <span className="usr-input-error">{errors[key]}</span>}
                         </div>
                       ) : (
-                        <span className="info-value">
-                          {userData[key] || "-"}
-                        </span>
+                        <span className="usr-info-value">{userData[key] || "—"}</span>
                       )}
                     </div>
                   </div>
                 ))}
               </div>
-              {errors.general && (
-                <div className="profile-error">{errors.general}</div>
-              )}
+
+              {errors.general && <div className="usr-general-error">{errors.general}</div>}
+
               {isEditing && (
-                <div className="edit-actions">
-                  <button
-                    className="btn-save"
-                    onClick={handleSave}
-                    disabled={isLoading}
-                  >
-                    {isLoading ? "Saving..." : "Save Changes"}
+                <div className="usr-edit-actions">
+                  <button className="usr-btn-save" onClick={handleSave} disabled={isLoading}>
+                    {isLoading ? "Saving…" : "Save Changes"}
                   </button>
-                  <button
-                    className="btn-cancel"
-                    onClick={handleCancel}
-                    disabled={isLoading}
-                  >
+                  <button className="usr-btn-cancel" onClick={handleCancel} disabled={isLoading}>
                     Cancel
                   </button>
                 </div>
@@ -692,204 +553,68 @@ export default function UserProfile() {
             </div>
           )}
 
-          {activeSection === "orders" && (
-            <OrdersSection orders={orders} isLoadingOrders={isLoadingOrders} />
+          {/* ── Orders Tab ── */}
+          {activeTab === "orders" && (
+            <OrdersTab orders={orders} isLoading={loadingOrders} />
           )}
 
-          {activeSection === "reviews" && (
-            <div className="profile-card">
-              <div className="profile-section-head">
-                <div>
-                  <h2 className="card-title">My Reviews</h2>
-                  <p className="profile-muted">
-                    Manage and view all your submitted application reviews.
-                  </p>
-                </div>
-                <span className="profile-count-badge">{reviews.length}</span>
-              </div>
-
-              {isLoadingReviews ? (
-                <div className="profile-empty-state">
-                  <p>Loading your reviews...</p>
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="profile-empty-state">
-                  <Star size={30} />
-                  <p>You haven't posted any reviews yet.</p>
-                </div>
-              ) : (
-                <div className="profile-orders-list">
-                  {reviews.map((review) => (
-                    <div 
-                      key={review.id} 
-                      className="profile-order-card"
-                      style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}
-                    >
-                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                        <div style={{ display: "flex", gap: "2px", color: "#f59e0b" }}>
-                          {Array.from({ length: review.rating || review.Rating || 5 }).map((_, i) => (
-                            <Star key={i} size={16} fill="currentColor" />
-                          ))}
-                        </div>
-                        <p style={{ margin: 0, fontSize: "14px", fontWeight: "500" }}>
-                          {review.comment || review.Comment || "No comment content provided."}
-                        </p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedReviewId(review.id);
-                          setShowDeleteReviewConfirm(true);
-                        }}
-                        style={{
-                          background: "none",
-                          border: "none",
-                          color: "#ef4444",
-                          cursor: "pointer",
-                          padding: "8px",
-                        }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+          {/* ── Reviews Tab ── */}
+          {activeTab === "reviews" && (
+            <ReviewsTab reviews={reviews} isLoading={loadingReviews} onDelete={handleDeleteReview} />
           )}
 
-          {activeSection === "settings" && (
-            <div className="profile-card">
-              <h2 className="card-title">Account Settings</h2>
-              <div className="settings-list">
-                <button
-                  className="setting-row"
-                  onClick={() => setActivePanel("password")}
-                >
-                  <KeyRound size={18} />
-                  <span className="setting-label">Change Password</span>
-                  <ChevronRight size={18} className="chevron" />
-                </button>
-                <button className="setting-row" onClick={toggleDarkMode}>
-                  <span style={{ fontSize: 18 }}>{darkMode ? "☀️" : "🌙"}</span>
-                  <span className="setting-label">
-                    {darkMode ? "Light Mode" : "Dark Mode"}
-                  </span>
-                  <span className={`profile-switch ${darkMode ? "is-on" : ""}`}>
-                    <span />
-                  </span>
-                </button>
-                <button
-                  className="setting-row setting-red"
-                  onClick={() => setShowLogoutConfirm(true)}
-                >
-                  <LogOut size={18} />
-                  <span className="setting-label">Log Out</span>
-                </button>
-                <button
-                  className="setting-row setting-red"
-                  onClick={() => setShowDeleteConfirm(true)}
-                >
-                  <Trash2 size={18} />
-                  <span className="setting-label">Delete Account</span>
-                </button>
+          {/* ── Settings Tab ── */}
+          {activeTab === "settings" && (
+            <div className="usr-card">
+              <h2 className="usr-card-title">Account Settings</h2>
+              <div className="usr-settings-list">
+                {[
+                  { icon: <KeyRound size={16} />, label: "Change Password", onClick: () => setShowPassword(true), red: false, chevron: true },
+                  { icon: <LogOut size={16} />, label: "Log Out", onClick: () => setShowLogout(true), red: true, chevron: false },
+                  { icon: <Trash2 size={16} />, label: "Delete Account", onClick: () => setShowDelete(true), red: true, chevron: false },
+                ].map(({ icon, label, onClick, red, chevron }) => (
+                  <button
+                    key={label}
+                    className={`usr-setting-row${red ? " usr-setting-red" : ""}`}
+                    onClick={onClick}
+                    type="button"
+                  >
+                    <span className="usr-setting-icon">{icon}</span>
+                    <span className="usr-setting-label">{label}</span>
+                    {chevron && <ChevronRight size={16} className="usr-chevron" />}
+                  </button>
+                ))}
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {activePanel === "password" && (
-        <SettingsDrawer
-          title="Change Password"
-          onClose={() => setActivePanel(null)}
-        >
-          <ChangePassword onDone={() => setActivePanel(null)} />
-        </SettingsDrawer>
+      {/* ── Password Drawer ── */}
+      {showPassword && <ChangePasswordDrawer onClose={() => setShowPassword(false)} />}
+
+      {/* ── Logout Confirm ── */}
+      {showLogout && (
+        <ConfirmModal
+          emoji="👋"
+          title="Log Out?"
+          message="Are you sure you want to log out of your account?"
+          confirmLabel="Yes, Log Out"
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogout(false)}
+        />
       )}
 
-      {showDeleteReviewConfirm && (
-        <div className="profile-drawer-overlay" onClick={() => setShowDeleteReviewConfirm(false)}>
-          <div className="logout-confirm-box" onClick={(e) => e.stopPropagation()}>
-            <div className="profile-logout-icon" style={{ color: "#ef4444" }}>
-              <Trash2 size={28} />
-            </div>
-            <h3>Delete Review?</h3>
-            <p>Are you sure you want to delete this review from the system?</p>
-            <div className="profile-confirm-actions">
-              <button className="btn-cancel" onClick={() => setShowDeleteReviewConfirm(false)}>Cancel</button>
-              <button className="btn-save profile-danger-btn" onClick={() => handleDeleteReview(selectedReviewId)}>Delete</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showDeleteConfirm && (
-        <div
-          className="profile-drawer-overlay"
-          onClick={() => setShowDeleteConfirm(false)}
-        >
-          <div
-            className="logout-confirm-box"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="profile-logout-icon">
-              <Trash2 size={28} />
-            </div>
-            <h3>Delete Account?</h3>
-            <p>
-              This action is permanent and cannot be undone. All your data will
-              be deleted.
-            </p>
-            <div className="profile-confirm-actions">
-              <button
-                className="btn-cancel"
-                onClick={() => setShowDeleteConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-save profile-danger-btn"
-                onClick={handleDeleteAccount}
-              >
-                Yes, Delete My Account
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {showLogoutConfirm && (
-        <div
-          className="profile-drawer-overlay"
-          onClick={() => setShowLogoutConfirm(false)}
-        >
-          <div
-            className="logout-confirm-box"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="profile-logout-icon">
-              <LogOut size={28} />
-            </div>
-            <h3>Log Out?</h3>
-            <p>Are you sure you want to log out of your account?</p>
-            <div className="profile-confirm-actions">
-              <button
-                className="btn-cancel"
-                onClick={() => setShowLogoutConfirm(false)}
-              >
-                Cancel
-              </button>
-              <button
-                className="btn-save profile-danger-btn"
-                onClick={handleLogout}
-              >
-                Yes, Log Out
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* ── Delete Confirm ── */}
+      {showDelete && (
+        <ConfirmModal
+          emoji="🗑️"
+          title="Delete Account?"
+          message="This is permanent and cannot be undone. All your data, orders, and reviews will be deleted."
+          confirmLabel="Yes, Delete"
+          onConfirm={handleDelete}
+          onCancel={() => setShowDelete(false)}
+        />
       )}
     </>
   );

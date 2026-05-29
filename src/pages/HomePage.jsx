@@ -367,13 +367,7 @@ const { isLoggedIn } = useAuth();
 
   useEffect(() => {
     const fetchOffers = async () => {
-      // TEMP: test nearby branches
-try {
-  const res = await fetch(`/api/branches/nearby?lat=30.04&lng=31.23`, { headers: { Accept: "application/json" } });
-  const data = await res.json();
-  console.log("nearby branches:", data);
-} catch(e) { console.log("nearby error:", e); }
-// END TEMP
+      
       setLoading(true);
       setError(null);
       try {
@@ -421,19 +415,15 @@ try {
 
             // ── Fix: build image URL correctly ──────────────────────────────
             const BASE_URL = "https://zero-waste-production.up.railway.app";
-            let imageUrl = "/assets/images/e.png";
+            let imageUrl = null;
             if (source.image) {
               const raw = source.image.trim();
               if (raw.startsWith("http")) {
-                // already a full URL — strip the wrong /storage prefix if present
-                // e.g. https://...railway.app/storage/uploads/... → https://...railway.app/uploads/...
-                imageUrl = raw.replace(`${BASE_URL}/storage/`, `${BASE_URL}/`);
-              } else {
-                // relative path — strip leading slashes and any leading "storage/"
-                // e.g. "storage/uploads/images_GradProj/x.jpg" → "uploads/images_GradProj/x.jpg"
-                const cleaned = raw.replace(/^\/+/, "").replace(/^storage\//, "");
-                imageUrl = `${BASE_URL}/${cleaned}`;
-              }
+  imageUrl = raw;
+} else {
+  const cleaned = raw.replace(/^\/+/, "");
+  imageUrl = `${BASE_URL}/${cleaned}`;
+}
             }
             // ────────────────────────────────────────────────────────────────
 
@@ -722,6 +712,14 @@ try {
                       )}
                     </div>
                   )}
+                  {offer.rating > 0 && (
+  <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
+    <Star size={13} fill="#f59e0b" color="#f59e0b" />
+    <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>
+      {Number(offer.rating).toFixed(1)}
+    </span>
+  </div>
+)}
                   <p className="offer-description">
                     {offer.description || "No description available"}
                   </p>

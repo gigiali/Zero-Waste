@@ -23,13 +23,30 @@ export function LocationProvider({ children }) {
     setLoadingLocation(true);
     try {
       const token = getToken();
-      const res = await fetch(`/api/branches/nearby?lat=${lat}&lng=${lng}`, {
+      if (!token) {
+        setNearbyBranches([]);
+        setDeliveryFee(25);
+        return;
+      }
+
+      const params = new URLSearchParams({
+        lat: String(lat),
+        long: String(lng),
+      });
+
+      const res = await fetch(`/api/branches/nearby?${params.toString()}`, {
         headers: {
           Accept: "application/json",
-          ...(token && { Authorization: `Bearer ${token}` }),
+          Authorization: `Bearer ${token}`,
         },
       });
       const data = await res.json();
+      if (!res.ok) {
+        setNearbyBranches([]);
+        setDeliveryFee(25);
+        return;
+      }
+
       const branches = data.data || data.branches || [];
       setNearbyBranches(branches);
 

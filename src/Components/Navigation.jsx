@@ -6,6 +6,7 @@ import {
   X,
   Search,
   LogIn,
+  Heart,
 } from "lucide-react";
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +25,7 @@ export default function Navigation({
 }) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  const { isLoggedIn, logout, user, updateUser } = useAuth();
+  const { isLoggedIn, logout, user, updateUser, role } = useAuth();
   const { t, i18n } = useTranslation();
   const { locationName, loadingLocation, fetchNearbyAndFee, clearLocation } =
     useLocationContext();
@@ -98,8 +99,9 @@ export default function Navigation({
     const token = getToken();
     if (!token) return;
     let route = "/api/customer/profile";
-    if (user.role === "vendor") route = "/api/vendor/myprofile/update";
-    else if (user.role === "admin") route = "/api/profile";
+    if (role === "vendor") route = "/api/vendor/myprofile/update";
+    else if (role === "admin" || role === "super_admin" || role === "manager")
+      route = "/api/profile";
     try {
       await fetch(route, {
         method: "PUT",
@@ -408,6 +410,19 @@ export default function Navigation({
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
+            </div>
+          )}
+
+          {/* Favorites */}
+          {isLoggedIn && role === "customer" && (
+            <div
+              style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
+              onClick={() => navigate("/favorites")}
+              title="Favorites"
+              onMouseEnter={pillHoverIn}
+              onMouseLeave={pillHoverOut}
+            >
+              <Heart size={18} />
             </div>
           )}
 

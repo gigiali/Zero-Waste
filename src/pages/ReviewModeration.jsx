@@ -33,7 +33,9 @@ const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
 function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
   const ref = useRef(null);
+  const buttonRef = useRef(null);
 
   useEffect(() => {
     if (!open) return;
@@ -42,57 +44,38 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
     return () => document.removeEventListener("mousedown", h);
   }, [open]);
 
-  const doRequest = async (url, method = "POST") => {
+  const handleToggleVisibility = async () => {
     setBusy(true);
     try {
-      const res = await fetch(url, {
-        method,
+      const res = await fetch(`${BASE_URL}/reviews/${report.id}/toggle-visibility`, {
+        method: "PATCH",
         headers: {
           Accept: "application/json",
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
       });
-      return res.ok;
-    } catch { return false; }
-    finally { setBusy(false); }
-  };
-
-  const handleToggle = async () => {
-    const ok = await doRequest(`${BASE_URL}/reviews/${report.id}/toggle-visibility`, "PATCH");
-    if (ok) onStatusChange(report.id, report.status === "visible" ? "hidden" : "visible");
-    else alert("Failed to toggle visibility.");
-    setOpen(false);
-  };
-
-  const handleDeleteOffer = async () => {
-    if (!window.confirm(`Delete offer: "${report.reported_item}"? This cannot be undone.`)) return;
-    setBusy(true);
-    console.log("[Delete] target_id:", report.target_id, "review_id:", report.id);
-    try {
-      const res = await fetch(`${BASE_URL}/admin/offers/${report.target_id}`, {
-        method: "DELETE",
-        headers: {
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      console.log("[Delete] status:", res.status);
-      if (res.ok || res.status === 204) {
-        onDelete(report.target_id, "offer");   // pass offer id + type
-      } else {
-        let msg = `Delete failed (${res.status})`;
-        try { const b = await res.json(); msg = b?.message ?? msg; } catch {}
-        console.error("[Delete] error body:", msg);
-        alert(msg);
-      }
+      const data = await res.json().catch(() => ({}));
+      console.log("Toggle response:", res.status, data);
+      if (res.ok) onStatusChange(report.id, report.status === "visible" ? "hidden" : "visible");
+      else alert("Failed: " + (data?.message ?? res.status));
     } catch (err) {
-      console.error("[Delete] network error:", err);
-      alert("Network error: " + err.message);
+      console.error("Toggle error:", err);
     } finally {
       setBusy(false);
       setOpen(false);
     }
+  };
+
+  const handleMenuToggle = () => {
+    if (!open && buttonRef.current) {
+      const rect = buttonRef.current.getBoundingClientRect();
+      setDropdownPos({
+        top: rect.bottom + 6,
+        left: rect.right - 170,
+      });
+    }
+    setOpen((v) => !v);
   };
 
   const actions = [
@@ -100,23 +83,17 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
       icon: report.status === "visible" ? <EyeOff size={14} /> : <Eye size={14} />,
       label: report.status === "visible" ? "Hide review" : "Show review",
       accent: true,
-      onClick: handleToggle,
+      onClick: handleToggleVisibility,
       show: canManage(role),
-    },
-    {
-      icon: <Trash2 size={14} />,
-      label: "Delete offer",
-      danger: true,
-      onClick: handleDeleteOffer,
-      show: canDelete(role),
     },
   ].filter((a) => a.show);
 
   return (
     <div ref={ref} className="rm-menu-wrap">
       <button
+        ref={buttonRef}
         className="rm-menu-trigger"
-        onClick={() => setOpen((v) => !v)}
+        onClick={handleMenuToggle}
         disabled={busy}
         aria-label="Actions"
       >
@@ -126,7 +103,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
       </button>
 
       {open && (
-        <div className="rm-dropdown">
+        <div className="rm-dropdown" style={{ top: `${dropdownPos.top}px`, left: `${dropdownPos.left}px` }}>
           {actions.map((a, i) => (
             <React.Fragment key={i}>
               {a.divider && <div className="rm-dropdown__divider" />}
@@ -151,12 +128,11 @@ export default function ReviewModeration() {
   const { role, token: contextToken } = useAuth();
   const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
 
-  const [reviews,     setReviews]     = useState([]);
-  const [loading,     setLoading]     = useState(false);
-  const [searchTerm,  setSearchTerm]  = useState("");
-  const [filterStatus,setFilterStatus]= useState("all");
+  const [reviews,      setReviews]      = useState([]);
+  const [loading,      setLoading]      = useState(false);
+  const [searchTerm,   setSearchTerm]   = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
 
-  /* ── Fetch: GET /api/offers → GET /api/offers/{offer_id}/reviews ── */
   useEffect(() => {
     if (!role || !token) return;
     (async () => {
@@ -166,7 +142,9 @@ export default function ReviewModeration() {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         const offersJson = await offersRes.json();
-        const offers     = offersJson?.data?.data ?? offersJson?.data ?? (Array.isArray(offersJson) ? offersJson : []);
+        console.log("Offers response:", offersJson);
+        const offers     = Array.isArray(offersJson?.data) ? offersJson.data : (offersJson?.data?.data ?? []);
+        console.log("Parsed offers count:", offers.length);
 
         const reviewArrays = await Promise.all(
           offers.map(async (offer) => {
@@ -176,22 +154,27 @@ export default function ReviewModeration() {
               });
               const d    = await r.json();
               const revs = d?.reviews ?? d?.data ?? (Array.isArray(d) ? d : []);
+              console.log(`Offer ${offer.id} (${offer.title}): ${revs.length} reviews`);
               return revs.map((rev) => ({ ...rev, offer }));
-            } catch { return []; }
+            } catch (e) { 
+              console.error(`Error fetching reviews for offer ${offer.id}:`, e);
+              return []; 
+            }
           })
         );
 
         const raw = reviewArrays.flat();
+        console.log("Total reviews fetched:", raw.length);
         setReviews(
           raw.map((r) => ({
-            id:             r.id,
-            reviewer:       r.user?.name ?? r.customer_name ?? "Customer",
-            offer_title:    r.offer?.title ?? r.offer_name ?? "Offer",
-            target_id:      r.offer_id ?? r.offer?.id ?? r.id,
-            comment:        r.comment ?? r.body ?? "—",
-            rating:         r.rating ?? null,
-            status:         r.is_visible === false ? "hidden" : "visible",
-            created_at:     r.created_at ?? null,
+            id:          r.id,
+            reviewer:    r.user?.name ?? r.customer_name ?? "Customer",
+            offer_title: r.offer?.title ?? r.offer_name ?? "Offer",
+            target_id:   r.offer_id ?? r.offer?.id ?? r.id,
+            comment:     r.comment ?? r.body ?? "—",
+            rating:      r.rating ?? null,
+            status:      (r.is_visible === false || r.is_visible === 0) ? "hidden" : "visible",
+            created_at:  r.created_at ?? null,
           }))
         );
       } catch (err) {
@@ -205,18 +188,12 @@ export default function ReviewModeration() {
   const handleStatusChange = (id, status) =>
     setReviews((prev) => prev.map((r) => (r.id === id ? { ...r, status } : r)));
 
-  const handleDelete = (id, type = "review") => {
-    console.log("[handleDelete] called — id:", id, "| type:", type);
-    setReviews((prev) => {
-      console.log("[handleDelete] prev count:", prev.length);
-      console.log("[handleDelete] sample target_ids:", prev.slice(0, 3).map(r => r.target_id));
-      const next = type === "offer"
+  const handleDelete = (id, type = "review") =>
+    setReviews((prev) =>
+      type === "offer"
         ? prev.filter((r) => String(r.target_id) !== String(id))
-        : prev.filter((r) => String(r.id)        !== String(id));
-      console.log("[handleDelete] after filter count:", next.length);
-      return next;
-    });
-  };
+        : prev.filter((r) => String(r.id)        !== String(id))
+    );
 
   const filtered = reviews.filter((r) => {
     const q = searchTerm.toLowerCase();
@@ -343,9 +320,7 @@ export default function ReviewModeration() {
                         </td>
                         <td className="rm-table__rating">
                           {rev.rating != null ? (
-                            <span className="rm-rating">
-                              ★ {rev.rating}
-                            </span>
+                            <span className="rm-rating">★ {rev.rating}</span>
                           ) : "—"}
                         </td>
                         <td>
@@ -353,10 +328,7 @@ export default function ReviewModeration() {
                             className="rm-status-badge"
                             style={{ background: st.bg, color: st.text }}
                           >
-                            <span
-                              className="rm-status-dot"
-                              style={{ background: st.dot }}
-                            />
+                            <span className="rm-status-dot" style={{ background: st.dot }} />
                             {st.label}
                           </span>
                         </td>

@@ -197,8 +197,8 @@
   background: white;
   border: 1px solid var(--rm-border);
   border-radius: 12px;
-  overflow: hidden;
   box-shadow: var(--rm-shadow);
+  position: relative;
 }
 
 /* ── Loading ────────────────────────────────────── */
@@ -215,6 +215,7 @@
 /* ── Table ──────────────────────────────────────── */
 .rm-table-wrap {
   overflow-x: auto;
+  border-radius: 12px;
 }
 
 .rm-table {
@@ -340,10 +341,10 @@
   font-size: 0.95rem;
 }
 
-/* ── Action menu ────────────────────────────────── */
 .rm-menu-wrap {
   position: relative;
   display: inline-block;
+  z-index: 100;
 }
 
 .rm-menu-trigger {
@@ -358,6 +359,8 @@
   align-items: center;
   justify-content: center;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
+  position: relative;
+  z-index: 101;
 }
 .rm-menu-trigger:hover {
   background: #f1f5f9;
@@ -370,15 +373,13 @@
 }
 
 .rm-dropdown {
-  position: absolute;
-  right: 0;
-  top: calc(100% + 6px);
+  position: fixed;
   background: white;
   border: 1px solid var(--rm-border);
   border-radius: 10px;
   box-shadow: 0 8px 24px rgba(0,0,0,.10), 0 2px 6px rgba(0,0,0,.06);
   min-width: 170px;
-  z-index: 50;
+  z-index: 9999;
   overflow: hidden;
   padding: 4px;
 }

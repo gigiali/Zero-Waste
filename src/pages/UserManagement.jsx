@@ -34,6 +34,30 @@ const TYPE_CFG = {
 };
 const getType = (r) => TYPE_CFG[r?.toLowerCase?.()] ?? { bg: "#f3f4f6", text: "#374151", label: r ?? "Unknown" };
 
+/* ── fetch ALL vendor pages ── */
+async function fetchAllVendors(token) {
+  let page = 1;
+  let all  = [];
+  while (true) {
+    const res = await fetch(`${BASE_URL}/vendors?page=${page}`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) break;
+    const data = await res.json();
+    const isPaginated = data?.data?.data && Array.isArray(data.data.data);
+    if (isPaginated) {
+      all = [...all, ...data.data.data];
+      if (page >= (data.data.last_page ?? 1)) break;
+      page++;
+    } else {
+      const raw = data?.data ?? (Array.isArray(data) ? data : []);
+      all = Array.isArray(raw) ? raw : [];
+      break;
+    }
+  }
+  return all;
+}
+
 /* ── TOAST ── */
 function Toast({ toasts, removeToast }) {
   return (
@@ -50,18 +74,38 @@ function Toast({ toasts, removeToast }) {
 }
 
 /* ── DELETE CONFIRM MODAL ── */
-function DeleteModal({ user, onConfirm, onCancel }) {
+function DeleteModal({ user, onConfirm, onCancel, busy }) {
   return (
-    <div className="um-modal-overlay" onClick={onCancel}>
-      <div className="um-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="um-modal__icon">🗑️</div>
-        <h3 className="um-modal__title">Delete User?</h3>
-        <p className="um-modal__text">
-          Are you sure you want to delete <strong>{user?.name}</strong>? This action cannot be undone.
-        </p>
-        <div className="um-modal__btns">
-          <button className="um-modal__cancel" onClick={onCancel}>Cancel</button>
-          <button className="um-modal__confirm" onClick={onConfirm}>Yes, Delete</button>
+    <div
+      style={{ position:"fixed", inset:0, background:"rgba(0,0,0,0.45)", zIndex:2000, display:"flex", alignItems:"center", justifyContent:"center", padding:16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onCancel(); }}
+    >
+      <div style={{ background:"#fff", borderRadius:16, width:"100%", maxWidth:400, boxShadow:"0 20px 60px rgba(0,0,0,0.2)", overflow:"hidden" }}>
+        <div style={{ padding:"28px 28px 20px", textAlign:"center" }}>
+          <div style={{ width:52, height:52, borderRadius:"50%", background:"#ffeaea", display:"flex", alignItems:"center", justifyContent:"center", margin:"0 auto 16px" }}>
+            <Trash2 size={22} color="#ef4444" />
+          </div>
+          <h3 style={{ margin:"0 0 8px", fontSize:17, fontWeight:700, color:"#2d3a4a" }}>Delete User?</h3>
+          <p style={{ margin:0, fontSize:13.5, color:"#8592a3", lineHeight:1.6 }}>
+            Are you sure you want to delete <strong style={{ color:"#2d3a4a" }}>{user?.name}</strong>?
+            <br />This action cannot be undone.
+          </p>
+        </div>
+        <div style={{ display:"flex", gap:10, padding:"0 28px 24px" }}>
+          <button
+            onClick={onCancel}
+            disabled={busy}
+            style={{ flex:1, padding:11, borderRadius:10, border:"1.5px solid #e0e3eb", background:"#fff", color:"#5d6679", fontWeight:600, fontSize:14, cursor:"pointer" }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={busy}
+            style={{ flex:1, padding:11, borderRadius:10, border:"none", background:"#ef4444", color:"#fff", fontWeight:700, fontSize:14, cursor:"pointer", display:"flex", alignItems:"center", justifyContent:"center", gap:6 }}
+          >
+            {busy ? <Loader2 size={15} className="um-spin" /> : <Trash2 size={15} />} Delete
+          </button>
         </div>
       </div>
     </div>
@@ -69,10 +113,12 @@ function DeleteModal({ user, onConfirm, onCancel }) {
 }
 
 /* ── ACTION MENU ── */
+// NEW
 function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
-  const [open,        setOpen]        = useState(false);
-  const [busy,        setBusy]        = useState(false);
-  const [showDelete,  setShowDelete]  = useState(false);
+  const [open,       setOpen]       = useState(false);
+  const [busy,       setBusy]       = useState(false);
+  const [showDelete, setShowDelete] = useState(false);
+  const [menuPos,    setMenuPos]    = useState({ top: 0, left: 0 });
   const ref = useRef(null);
 
   useEffect(() => {
@@ -82,7 +128,8 @@ function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  const doRequest = async (url, method = "PATCH") => {
+  // NEW
+const doRequest = async (url, method = "PATCH") => {
     setBusy(true);
     try {
       const res = await fetch(url, {
@@ -93,10 +140,9 @@ function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
           Authorization: `Bearer ${token}`,
         },
       });
-      if (!res.ok) {
-        const errData = await res.json().catch(() => ({}));
-        console.error("API error:", res.status, errData);
-      }
+      const resData = await res.json().catch(() => ({}));
+      console.log("API response:", res.status, resData);
+      if (!res.ok) console.error("API error:", res.status, resData);
       return res.ok;
     } catch (err) {
       console.error("Request failed:", err);
@@ -108,77 +154,63 @@ function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
 
   const isBlocked = ["blocked", "suspended"].includes(user.status?.toLowerCase());
 
+  // Block/Unblock always uses user_id (the actual user account id)
+  
+const blockId = user.user_id ?? user.id;
+
   const handleBlock = async () => {
     setOpen(false);
-    const ok = await doRequest(`${BASE_URL}/admin/users/${user.role === "vendor" ? user.user_id : user.id}/block`);
-    if (ok) {
-      onStatusChange(user.id, "blocked");
-      addToast("success", `${user.name} has been blocked.`);
-    } else {
-      addToast("error", `Failed to block ${user.name}.`);
-    }
+    const ok = await doRequest(`${BASE_URL}/admin/users/${blockId}/block`);
+    if (ok) { onStatusChange(user.id, "blocked"); addToast("success", `${user.name} has been blocked.`); }
+    else     { addToast("error", `Failed to block ${user.name}.`); }
   };
 
   const handleUnblock = async () => {
     setOpen(false);
-    const ok = await doRequest(`${BASE_URL}/admin/users/${user.role === "vendor" ? user.user_id : user.id}/unblock`);
-    if (ok) {
-      onStatusChange(user.id, "active");
-      addToast("success", `${user.name} has been unblocked.`);
-    } else {
-      addToast("error", `Failed to unblock ${user.name}.`);
-    }
+    const ok = await doRequest(`${BASE_URL}/admin/users/${blockId}/unblock`);
+    if (ok) { onStatusChange(user.id, "active"); addToast("success", `${user.name} has been unblocked.`); }
+    else     { addToast("error", `Failed to unblock ${user.name}.`); }
   };
 
   const handleDeleteConfirm = async () => {
-    setShowDelete(false);
+    // vendor  → DELETE /admin/vendor/{vendor_id}      (id = vendor row id)
+    // customer → DELETE /admin/customers/{customer_id}
     const endpoint = user.role === "vendor"
-  ? `${BASE_URL}/admin/vendor/${user.id}`
-  : `${BASE_URL}/admin/customers/${user.id}`;
+      ? `${BASE_URL}/admin/vendor/${user.id}`
+      : `${BASE_URL}/admin/customers/${user.id}`;
 
-console.log("Deleting:", user.role, user.id, endpoint);
+    console.log("Deleting:", user.role, "| vendor/customer id:", user.id, "| endpoint:", endpoint);
     const ok = await doRequest(endpoint, "DELETE");
-    if (ok) {
-      onDelete(user.id);
-      addToast("success", `${user.name} has been deleted.`);
-    } else {
-      addToast("error", `Failed to delete ${user.name}.`);
-    }
+    if (ok) { onDelete(user.id); addToast("success", `${user.name} has been deleted.`); }
+    else     { addToast("error", `Failed to delete ${user.name}.`); }
+    setShowDelete(false);
   };
 
   const actions = [
-    {
-      icon: <ShieldOff size={15} />,
-      label: "Block User",
-      color: "#f59e0b",
-      onClick: handleBlock,
-      show: canManage(role) && !isBlocked,
-    },
-    {
-      icon: <ShieldCheck size={15} />,
-      label: "Unblock User",
-      color: "#10b981",
-      onClick: handleUnblock,
-      show: canManage(role) && isBlocked,
-    },
-    {
-      icon: <Trash2 size={15} />,
-      label: "Delete User",
-      color: "#ef4444",
-      onClick: () => { setOpen(false); setShowDelete(true); },
-      show: canDelete(role),
-      divider: true,
-    },
+    { icon: <ShieldOff size={15} />,  label: "Block User",   color: "#f59e0b", onClick: handleBlock,                                show: canManage(role) && !isBlocked },
+    { icon: <ShieldCheck size={15} />, label: "Unblock User", color: "#10b981", onClick: handleUnblock,                             show: canManage(role) && isBlocked  },
+    { icon: <Trash2 size={15} />,     label: "Delete User",  color: "#ef4444", onClick: () => { setOpen(false); setShowDelete(true); }, show: canDelete(role), divider: true },
   ].filter((a) => a.show);
 
   return (
     <>
       <div ref={ref} style={{ position: "relative", display: "inline-block" }}>
-        <button className="um-action-btn" onClick={() => setOpen((v) => !v)} disabled={busy}>
+        
+        <button className="um-action-btn" onClick={() => {
+          if (!open && ref.current) {
+            const rect = ref.current.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const menuHeight = 100;
+            const top = spaceBelow < menuHeight ? rect.top - menuHeight : rect.bottom + 4;
+            setMenuPos({ top, left: rect.right - 160 });
+          }
+          setOpen((v) => !v);
+        }} disabled={busy}>
           {busy ? <Loader2 size={16} className="um-spin" /> : <MoreVertical size={16} />}
         </button>
+      
         {open && actions.length > 0 && (
-          <div className="um-dropdown">
+          <div className="um-dropdown" style={{ top: menuPos.top, left: menuPos.left }}>
             {actions.map((a, i) => (
               <React.Fragment key={i}>
                 {a.divider && <div className="um-dropdown__divider" />}
@@ -196,6 +228,7 @@ console.log("Deleting:", user.role, user.id, endpoint);
           user={user}
           onConfirm={handleDeleteConfirm}
           onCancel={() => setShowDelete(false)}
+          busy={busy}
         />
       )}
     </>
@@ -244,20 +277,17 @@ export default function UserManagement() {
     if (!token) return;
     setLoading(true);
     try {
-      const [custRes, vendRes] = await Promise.all([
+      const [custRes, vendorList] = await Promise.all([
         fetch(`${BASE_URL}/admin/customers`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         }),
-        fetch(`${BASE_URL}/vendors?per_page=100`, {
-  headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-}),
+        // ✅ FIX 1: loop all pages exactly like ManageBusinesses
+        fetchAllVendors(token),
       ]);
 
       const custData = await custRes.json();
-      const vendData = await vendRes.json();
-
       console.log("📦 Customers raw:", custData);
-      console.log("🏢 Vendors raw:",   vendData);
+      console.log("🏢 Vendors raw (all pages):", vendorList.length, "items | sample:", vendorList[0]);
 
       // ── Parse customers ──
       const custList = custData?.customers
@@ -266,30 +296,34 @@ export default function UserManagement() {
         ?? (Array.isArray(custData) ? custData : []);
 
       const customers = (Array.isArray(custList) ? custList : []).map((u) => ({
-  id:     u.id ?? u._id ?? u.customer_id,
-        name:   u.name      ?? "Unknown",
-        email:  u.email     ?? "—",
-        role:   "customer",
-        status: u.status    ?? u.user_status ?? "active",
-        joined: u.created_at ?? null,
+        id:      u.id ?? u._id ?? u.customer_id,
+        user_id: u.user_id ?? u.id,
+        name:    u.name   ?? "Unknown",
+        email:   u.email  ?? "—",
+        role:    "customer",
+        // ✅ FIX 2: try all possible status field names
+        status:  u.status ?? u.user_status ?? u.account_status ??  u.user?.status ?? "active",
+        joined:  u.created_at ?? null,
+      }));
+      // ADD after customers array is built
+console.log("Customer sample:", JSON.stringify(customers[0]));
+      // ── Parse vendors ──
+      const vendors = vendorList.map((v) => ({
+        id:      v.id,
+        user_id: v.user_id,
+        name:    v.business_name ?? v.name ?? "Unknown",
+        email:   v.email ?? v.contact_email ?? "—",
+        role:    "vendor",
+        // ✅ FIX 2: vendors use "status" field (approved/pending/rejected/blocked)
+        // user account status lives on v.user?.status — try both
+        
+status:  v.user?.status ?? v.status ?? v.vendor_status ?? v.approval_status ?? "active",
+user_id: v.user_id ?? v.user?.id,
+        joined:  v.created_at ?? null,
       }));
 
-      // ── Parse vendors ──
-      const vendList = vendData?.data?.data
-  ?? vendData?.data?.vendors
-  ?? (Array.isArray(vendData) ? vendData : []);
-
-      const vendors = (Array.isArray(vendList) ? vendList : []).map((v) => ({
-  id:      v.id,
-  user_id: v.user_id,
-  name:    v.business_name ?? v.name ?? "Unknown",
-  email:   v.email         ?? v.contact_email ?? "—",
-  role:    "vendor",
-  status:  v.status        ?? v.vendor_status ?? v.approval_status ?? "active",
-  joined:  v.created_at    ?? null,
-}));
-      console.log("✅ Customers parsed:", customers.length, "| sample status:", customers[0]?.status);
-      console.log("✅ Vendors parsed:",   vendors.length,   "| sample status:", vendors[0]?.status);
+      console.log("✅ Customers:", customers.length, "| sample status:", customers[0]?.status);
+      console.log("✅ Vendors:",   vendors.length,   "| sample status:", vendors[0]?.status);
 
       setUsers([...customers, ...vendors]);
     } catch (err) {
@@ -309,7 +343,7 @@ export default function UserManagement() {
     setUsers((prev) => prev.filter((u) => u.id !== id));
 
   const filtered = users.filter((u) => {
-    const q     = searchQuery.toLowerCase();
+    const q    = searchQuery.toLowerCase();
     const match = !q || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
     const bySt  = filterStatus === "all" || u.status === filterStatus;
     const byTp  = filterType   === "all" || u.role   === filterType;

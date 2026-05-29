@@ -311,4 +311,38 @@
   margin-bottom: 1rem;
 }
 
+/* Favorite Button */
+.detail-hero {
+  position: relative; /* لو مش موجودة أصلاً */
+}
+
+.favorite-btn {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.35);
+  border: none;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background 0.2s, transform 0.15s;
+}
+
+.favorite-btn:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+
+.favorite-btn:active {
+  transform: scale(0.9);
+}
+
+.favorite-btn.active {
+  background: rgba(239, 68, 68, 0.2);
+}
 @keyframes rd-spin { to { transform: rotate(360deg); } }

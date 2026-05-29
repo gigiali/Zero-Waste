@@ -16,11 +16,22 @@ import { useAuth } from "../Context/AuthContext";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 
-function ChangePassword({ onCancel }) {
+/* ─────────────────────────────────────────────
+   Change Password sub-page
+───────────────────────────────────────────── */
+function ChangePassword({ onCancel, role }) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  // Route differs by role
+  const passwordRoute =
+    role === "vendor"
+      ? `${BASE_URL}/vendor/change-password`
+      : role === "customer"
+      ? `${BASE_URL}/profile/change-password`
+      : `${BASE_URL}/admin/change-password`;
 
   const handleChange = async () => {
     const e = {};
@@ -38,9 +49,10 @@ function ChangePassword({ onCancel }) {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem("token") || sessionStorage.getItem("token");
+      const token =
+        localStorage.getItem("token") || sessionStorage.getItem("token");
 
-      const response = await fetch(`${BASE_URL}/admin/change-password`, {
+      const response = await fetch(passwordRoute, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -62,11 +74,16 @@ function ChangePassword({ onCancel }) {
       } else if (data.errors) {
         const newErrors = {};
         Object.keys(data.errors).forEach((f) => {
-          newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f];
+          newErrors[f] = Array.isArray(data.errors[f])
+            ? data.errors[f][0]
+            : data.errors[f];
         });
         setErrors(newErrors);
       } else {
-        setErrors({ general: data.message || "Failed to change password. Please try again." });
+        setErrors({
+          general:
+            data.message || "Failed to change password. Please try again.",
+        });
       }
     } catch (err) {
       setErrors({ general: "Network error. Please check your connection." });
@@ -79,37 +96,72 @@ function ChangePassword({ onCancel }) {
     <div className="profile-page">
       <div className="profile-hero">
         <div className="hero-inner">
-          <div>
-            <h1 className="hero-title">Change Password</h1>
-            <p className="hero-subtitle">Update your password</p>
+          <div className="hero-left">
+            <div>
+              <h1 className="hero-title">Change Password</h1>
+              <p className="hero-subtitle">Update your account password</p>
+            </div>
           </div>
-          <button className="hero-edit-btn" onClick={onCancel}>← Back</button>
+          <button className="hero-edit-btn" onClick={onCancel}>
+            ← Back
+          </button>
         </div>
       </div>
+
       <div className="profile-body">
         <div className="profile-card">
-          <h2 className="card-title">New Password</h2>
+          <h2 className="card-title">Set New Password</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {[
               ["current", "current_password", "Current password"],
               ["next", "new_password", "New password"],
               ["confirm", "new_password_confirmation", "Confirm new password"],
             ].map(([formKey, errorKey, ph]) => (
-              <div key={formKey}>
+              <div key={formKey} className="pw-input-wrap">
                 <input
                   type="password"
                   placeholder={ph}
                   value={form[formKey]}
-                  onChange={(e) => setForm((p) => ({ ...p, [formKey]: e.target.value }))}
-                  style={{ padding: "0.75rem 1rem", border: errors[errorKey] ? "1.5px solid #ef4444" : "1.5px solid #e5e7eb", borderRadius: "8px", fontSize: "0.95rem", outline: "none", width: "100%" }}
+                  className={errors[errorKey] ? "has-error" : ""}
+                  onChange={(e) =>
+                    setForm((p) => ({ ...p, [formKey]: e.target.value }))
+                  }
                 />
-                {errors[errorKey] && <span style={{ color: "#ef4444", fontSize: "0.85rem" }}>{errors[errorKey]}</span>}
+                {errors[errorKey] && (
+                  <span className="pw-error">{errors[errorKey]}</span>
+                )}
               </div>
             ))}
-            {errors.general && <span style={{ color: "#ef4444", fontSize: "0.85rem" }}>{errors.general}</span>}
-            {successMessage && <span style={{ color: "#10b981", fontSize: "0.85rem", fontWeight: 600 }}>{successMessage}</span>}
-            <button onClick={handleChange} disabled={isLoading} style={{ padding: "0.75rem", background: isLoading ? "#9ca3af" : "#10b981", color: "white", border: "none", borderRadius: "8px", fontWeight: 700, cursor: isLoading ? "not-allowed" : "pointer" }}>
-              {isLoading ? "Changing..." : "Save Password"}
+
+            {errors.general && (
+              <span className="pw-error">{errors.general}</span>
+            )}
+            {successMessage && (
+              <span
+                style={{ color: "#1a4a8a", fontSize: "0.88rem", fontWeight: 700 }}
+              >
+                {successMessage}
+              </span>
+            )}
+
+            <button
+              onClick={handleChange}
+              disabled={isLoading}
+              style={{
+                padding: "0.8rem",
+                background: isLoading ? "#94a3b8" : "#1a4a8a",
+                color: "white",
+                border: "none",
+                borderRadius: "10px",
+                fontWeight: 700,
+                fontSize: "0.95rem",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                fontFamily: "'Plus Jakarta Sans', sans-serif",
+                letterSpacing: "0.01em",
+                transition: "background 0.15s",
+              }}
+            >
+              {isLoading ? "Saving…" : "Save Password"}
             </button>
           </div>
         </div>
@@ -118,16 +170,24 @@ function ChangePassword({ onCancel }) {
   );
 }
 
+/* ─────────────────────────────────────────────
+   Main Profile Page
+───────────────────────────────────────────── */
 export default function UserProfile() {
   const navigate = useNavigate();
-  const { logout, darkMode, toggleDarkMode, role, token: contextToken } = useAuth();
-const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
+  const { logout, role, token: contextToken } = useAuth();
+  const token =
+    contextToken ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("token");
+
+  // Redirect if not admin / manager
   useEffect(() => {
-  if (role && role !== "super_admin" && role !== "manager") {
-    if (role === "vendor") navigate("/business/profile");
-    else navigate("/profile");
-  }
-}, [role]);
+    if (role && role !== "super_admin" && role !== "manager") {
+      if (role === "vendor") navigate("/business/profile");
+      else navigate("/profile");
+    }
+  }, [role]);
 
   const [view, setView] = useState("main");
   const [isEditing, setIsEditing] = useState(false);
@@ -136,27 +196,35 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  const [userData, setUserData] = useState({ name: "", email: "", phone: "", address: "" });
+  const [userData, setUserData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
   const [editData, setEditData] = useState({ ...userData });
 
+  /* ── Fetch profile ── */
   const fetchUserData = async () => {
     try {
       if (!token) return;
       const response = await fetch(`${BASE_URL}/myprofile`, {
         method: "GET",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
       const data = await response.json();
-      console.log("🔍 Profile API response:", data);
 
       const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
 
       if (response.ok && user?.name) {
-        const u = { 
-          name: user.name || "", 
-          email: user.email || "", 
-          phone: user.phone || "", 
-          address: user.address || "" 
+        const u = {
+          name: user.name || "",
+          email: user.email || "",
+          phone: user.phone || "",
+          address: user.address || "",
         };
         setUserData(u);
         setEditData(u);
@@ -166,10 +234,12 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
     }
   };
 
-  useEffect(() => { 
-  if (token) fetchUserData(); 
-}, [token]);
+  useEffect(() => {
+    if (token) fetchUserData();
+  }, [token]);
 
+  /* ── Save profile ── */
+  // Admin/Manager use PUT /api/profile
   const handleSave = async () => {
     const e = {};
     if (!editData.name.trim()) e.name = "Name is required";
@@ -183,20 +253,37 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
     try {
       const response = await fetch(`${BASE_URL}/profile`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ name: editData.name.trim(), email: editData.email.trim(), phone: editData.phone.trim(), address: editData.address.trim() }),
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: editData.name.trim(),
+          email: editData.email.trim(),
+          phone: editData.phone.trim(),
+          address: editData.address.trim(),
+        }),
       });
       const data = await response.json();
+
       if (response.ok) {
         setUserData({ ...editData });
         setIsEditing(false);
-        alert("Profile updated successfully!");
+        // re-fetch to confirm server state
+        await fetchUserData();
       } else if (response.status === 422 && data.errors) {
         const newErrors = {};
-        Object.keys(data.errors).forEach((f) => { newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f]; });
+        Object.keys(data.errors).forEach((f) => {
+          newErrors[f] = Array.isArray(data.errors[f])
+            ? data.errors[f][0]
+            : data.errors[f];
+        });
         setErrors(newErrors);
       } else {
-        setErrors({ general: data.message || "Failed to update profile. Please try again." });
+        setErrors({
+          general: data.message || "Failed to update profile. Please try again.",
+        });
       }
     } catch (error) {
       setErrors({ general: "Network error. Please check your connection." });
@@ -205,47 +292,210 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
     }
   };
 
-  const handleCancel = () => { setEditData({ ...userData }); setErrors({}); setIsEditing(false); };
+  const handleCancel = () => {
+    setEditData({ ...userData });
+    setErrors({});
+    setIsEditing(false);
+  };
 
+  /* ── Delete account ── */
+  // Admin self-delete uses DELETE /api/profile
   const handleDeleteAccount = async () => {
     try {
       const response = await fetch(`${BASE_URL}/profile`, {
         method: "DELETE",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
-      if (response.ok) { logout(); navigate("/home"); }
+      if (response.ok) {
+        logout();
+        navigate("/home");
+      }
     } catch (err) {
       console.error("Delete account error:", err);
     }
   };
 
-  const handleLogout = () => { logout(); setShowLogoutConfirm(false); navigate("/home"); };
+  /* ── Logout ── */
+  // POST /api/logout to invalidate token on server
+  const handleLogout = async () => {
+    try {
+      await fetch(`${BASE_URL}/logout`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    } catch (_) {
+      // fail silently — still log out client
+    } finally {
+      logout();
+      setShowLogoutConfirm(false);
+      navigate("/home");
+    }
+  };
+
+  /* ── Avatar initials ── */
+  const initials = userData.name
+    ? userData.name
+        .split(" ")
+        .slice(0, 2)
+        .map((w) => w[0])
+        .join("")
+        .toUpperCase()
+    : "?";
 
   const infoFields = [
-    { icon: <User size={20} />, label: "Full Name", key: "name", type: "text" },
-    { icon: <Mail size={20} />, label: "Email Address", key: "email", type: "email" },
-    { icon: <Phone size={20} />, label: "Phone Number", key: "phone", type: "tel" },
-    { icon: <MapPin size={20} />, label: "Address", key: "address", type: "text" },
+    { icon: <User size={18} />, label: "Full Name", key: "name", type: "text" },
+    { icon: <Mail size={18} />, label: "Email Address", key: "email", type: "email" },
+    { icon: <Phone size={18} />, label: "Phone Number", key: "phone", type: "tel" },
+    { icon: <MapPin size={18} />, label: "Address", key: "address", type: "text" },
   ];
 
-  if (view === "password") return <ChangePassword onCancel={() => setView("main")} />;
+  const settingItems = [
+    {
+      icon: <KeyRound size={17} />,
+      label: "Change Password",
+      onClick: () => setView("password"),
+      red: false,
+    },
+    {
+      icon: <LogOut size={17} />,
+      label: "Log Out",
+      onClick: () => setShowLogoutConfirm(true),
+      red: true,
+    },
+    {
+      icon: <Trash2 size={17} />,
+      label: "Delete Account",
+      onClick: () => setShowDeleteConfirm(true),
+      red: true,
+    },
+  ];
+
+  if (view === "password")
+    return <ChangePassword onCancel={() => setView("main")} role={role} />;
+
+  /* ── Confirm modal helper ── */
+  const ConfirmModal = ({ emoji, title, message, onConfirm, onCancel, confirmLabel }) => (
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        background: "rgba(15,45,94,0.45)",
+        zIndex: 99999,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+      onClick={onCancel}
+    >
+      <div
+        style={{
+          background: "white",
+          borderRadius: "16px",
+          padding: "2rem",
+          maxWidth: "380px",
+          width: "90%",
+          boxShadow: "0 24px 60px rgba(15,45,94,0.2)",
+          textAlign: "center",
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>{emoji}</div>
+        <h3
+          style={{
+            margin: "0 0 0.5rem",
+            fontSize: "1.15rem",
+            color: "#0f2d5e",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            fontWeight: 800,
+          }}
+        >
+          {title}
+        </h3>
+        <p
+          style={{
+            color: "#64748b",
+            fontSize: "0.88rem",
+            margin: "0 0 1.5rem",
+            fontFamily: "'Plus Jakarta Sans', sans-serif",
+            lineHeight: 1.6,
+          }}
+        >
+          {message}
+        </p>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button
+            onClick={onCancel}
+            style={{
+              flex: 1,
+              padding: "0.7rem",
+              border: "1.5px solid #e2e8f0",
+              borderRadius: "10px",
+              background: "white",
+              color: "#374151",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: "0.88rem",
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            style={{
+              flex: 1,
+              padding: "0.7rem",
+              border: "none",
+              borderRadius: "10px",
+              background: "#ef4444",
+              color: "white",
+              fontWeight: 700,
+              cursor: "pointer",
+              fontFamily: "'Plus Jakarta Sans', sans-serif",
+              fontSize: "0.88rem",
+            }}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <>
       <div className="profile-page">
+        {/* ── Hero ── */}
         <div className="profile-hero">
           <div className="hero-inner">
-            <div>
-              <h1 className="hero-title">My Profile</h1>
-              <p className="hero-subtitle">Manage your account information</p>
+            <div className="hero-left">
+              <div className="profile-avatar">{initials}</div>
+              <div>
+                <h1 className="hero-title">{userData.name || "My Profile"}</h1>
+                <p className="hero-subtitle">Manage your account information</p>
+              </div>
             </div>
-            <button className="hero-edit-btn" onClick={() => setIsEditing(!isEditing)}>
-              <Edit2 size={16} /> {isEditing ? "Cancel Editing" : "Edit"}
+            <button
+              className="hero-edit-btn"
+              onClick={() => {
+                if (isEditing) handleCancel();
+                else setIsEditing(true);
+              }}
+            >
+              <Edit2 size={15} />
+              {isEditing ? "Cancel Editing" : "Edit Profile"}
             </button>
           </div>
         </div>
 
         <div className="profile-body">
+          {/* ── Personal Information ── */}
           <div className="profile-card">
             <h2 className="card-title">Personal Information</h2>
             <div className="info-list">
@@ -256,10 +506,26 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
                     <span className="info-label">{label}</span>
                     {isEditing ? (
                       <div>
-                        <input className="info-input" type={type} value={editData[key]}
-                          onChange={(e) => { setEditData({ ...editData, [key]: e.target.value }); if (errors[key]) setErrors((p) => ({ ...p, [key]: "" })); }}
-                          style={{ border: errors[key] ? "1.5px solid #ef4444" : undefined }} />
-                        {errors[key] && <span style={{ color: "#ef4444", fontSize: "0.85rem" }}>{errors[key]}</span>}
+                        <input
+                          className="info-input"
+                          type={type}
+                          value={editData[key]}
+                          onChange={(e) => {
+                            setEditData({ ...editData, [key]: e.target.value });
+                            if (errors[key])
+                              setErrors((p) => ({ ...p, [key]: "" }));
+                          }}
+                          style={
+                            errors[key]
+                              ? { borderColor: "#ef4444" }
+                              : undefined
+                          }
+                        />
+                        {errors[key] && (
+                          <span style={{ color: "#ef4444", fontSize: "0.82rem", fontWeight: 600 }}>
+                            {errors[key]}
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="info-value">{userData[key] || "—"}</span>
@@ -268,67 +534,75 @@ const token = contextToken || localStorage.getItem("token") || sessionStorage.ge
                 </div>
               ))}
             </div>
-            {errors.general && <div style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.5rem" }}>{errors.general}</div>}
+
+            {errors.general && (
+              <div style={{ color: "#ef4444", fontSize: "0.85rem", marginTop: "0.5rem", fontWeight: 600 }}>
+                {errors.general}
+              </div>
+            )}
+
             {isEditing && (
               <div className="edit-actions">
-                <button className="btn-save" onClick={handleSave} disabled={isLoading}>{isLoading ? "Saving..." : "Save Changes"}</button>
-                <button className="btn-cancel" onClick={handleCancel} disabled={isLoading}>Cancel</button>
+                <button
+                  className="btn-save"
+                  onClick={handleSave}
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Saving…" : "Save Changes"}
+                </button>
+                <button
+                  className="btn-cancel"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
+                  Cancel
+                </button>
               </div>
             )}
           </div>
 
+          {/* ── Account Settings ── */}
           <div className="profile-card">
             <h2 className="card-title">Account Settings</h2>
             <div className="settings-list">
-              <button className="setting-row" onClick={() => setView("password")}>
-                <KeyRound size={18} />
-                <span className="setting-label">Change Password</span>
-                <ChevronRight size={18} className="chevron" />
-              </button>
-              <button className="setting-row" onClick={toggleDarkMode}>
-                <span style={{ fontSize: 18 }}>{darkMode ? "☀️" : "🌙"}</span>
-                <span className="setting-label">{darkMode ? "Light Mode" : "Dark Mode"}</span>
-                <span className={`profile-switch ${darkMode ? "is-on" : ""}`}><span /></span>
-              </button>
-              <button className="setting-row setting-red" onClick={() => setShowLogoutConfirm(true)}>
-                <LogOut size={18} />
-                <span className="setting-label">Log Out</span>
-              </button>
-              <button className="setting-row setting-red" onClick={() => setShowDeleteConfirm(true)}>
-                <Trash2 size={18} />
-                <span className="setting-label">Delete Account</span>
-              </button>
+              {settingItems.map(({ icon, label, onClick, red }) => (
+                <button
+                  key={label}
+                  className={`setting-row${red ? " setting-red" : ""}`}
+                  onClick={onClick}
+                >
+                  <span className="setting-icon-wrap">{icon}</span>
+                  <span className="setting-label">{label}</span>
+                  {!red && <ChevronRight size={17} className="chevron" />}
+                </button>
+              ))}
             </div>
           </div>
         </div>
       </div>
 
+      {/* ── Delete Confirm ── */}
       {showDeleteConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }} onClick={() => setShowDeleteConfirm(false)}>
-          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "400px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }} onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🗑️</div>
-            <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.2rem", color: "#1f2937" }}>Delete Account?</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>This action is permanent and cannot be undone. All your data will be deleted.</p>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button onClick={() => setShowDeleteConfirm(false)} style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleDeleteAccount} style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#ef4444", color: "white", fontWeight: 600, cursor: "pointer" }}>Yes, Delete My Account</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          emoji="🗑️"
+          title="Delete Account?"
+          message="This action is permanent and cannot be undone. All your data will be deleted from the system."
+          onConfirm={handleDeleteAccount}
+          onCancel={() => setShowDeleteConfirm(false)}
+          confirmLabel="Yes, Delete"
+        />
       )}
 
+      {/* ── Logout Confirm ── */}
       {showLogoutConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👋</div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.2rem" }}>Log Out?</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Are you sure you want to log out of your account?</p>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button onClick={() => setShowLogoutConfirm(false)} style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
-              <button onClick={handleLogout} style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#ef4444", color: "white", fontWeight: 600, cursor: "pointer" }}>Yes, Log Out</button>
-            </div>
-          </div>
-        </div>
+        <ConfirmModal
+          emoji="👋"
+          title="Log Out?"
+          message="Are you sure you want to log out of your account?"
+          onConfirm={handleLogout}
+          onCancel={() => setShowLogoutConfirm(false)}
+          confirmLabel="Yes, Log Out"
+        />
       )}
     </>
   );

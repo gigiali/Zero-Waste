@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState } from "react";
 
 const AuthContext = createContext();
 
@@ -18,8 +18,10 @@ const saveUserToStorage = (userData) => {
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const token =
-      localStorage.getItem("token") || sessionStorage.getItem("token") ||
-      localStorage.getItem("auth_token") || sessionStorage.getItem("auth_token"); // زيادة أمان
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("token") ||
+      localStorage.getItem("auth_token") ||
+      sessionStorage.getItem("auth_token"); // زيادة أمان
     const stored =
       localStorage.getItem("user") || sessionStorage.getItem("user");
     if (token && stored) {
@@ -36,37 +38,15 @@ export function AuthProvider({ children }) {
     return localStorage.getItem("businessStatus") || null;
   });
 
-  // تحديث الـ Dark Mode ليقرأ المظهر الخاص بالمستخدم الحالي
-  const [darkMode, setDarkMode] = useState(() => {
-    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-    let userId = "guest";
-    try { userId = JSON.parse(storedUser)?.id ?? "guest"; } catch {}
-    return localStorage.getItem(`darkMode_${userId}`) === "true";
-  });
-  
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add("dark");
-    } else {
-      document.body.classList.remove("dark");
-    }
-    const storedUser = localStorage.getItem("user") || sessionStorage.getItem("user");
-    let userId = "guest";
-    try { userId = JSON.parse(storedUser)?.id ?? "guest"; } catch {}
-    localStorage.setItem(`darkMode_${userId}`, darkMode);
-  }, [darkMode, user]); // خليناه يراقب الـ user كمان عشان يقلب dark mode الخاص بيه فوراً بعد الـ Login
-
-  const toggleDarkMode = () => setDarkMode((prev) => !prev);
-
   // ✅ تعديل الـ login لضمان حفظ التوكن بالاسمين وزيادة الأمان
   const login = (userData, token, remember = false) => {
     const storage = remember ? localStorage : sessionStorage;
-    
+
     // بنحفظ بالاسمين عشان نضمن إن أي الـ Components القديمة والجديدة تقرأه بدون أي Error
     storage.setItem("token", token);
-    storage.setItem("auth_token", token); 
+    storage.setItem("auth_token", token);
     storage.setItem("user", JSON.stringify(userData));
-    
+
     // تحديث الـ State فوراً عشان يسمع في الـ useEffect بتاع البروفايل
     setUser(userData);
   };
@@ -97,7 +77,7 @@ export function AuthProvider({ children }) {
   };
 
   const isLoggedIn = !!user;
-  
+
   // دي الـ الـ حلال المشاكل اللي مربوطة بالـ useEffect في صفحة الـ Profile
   const role = user?.role_type ?? user?.role ?? null;
 
@@ -112,8 +92,6 @@ export function AuthProvider({ children }) {
         setBusinessStatus,
         role,
         updateUser,
-        darkMode,
-        toggleDarkMode,
       }}
     >
       {children}

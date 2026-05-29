@@ -24,3 +24,35 @@ export function installApiFetch() {
 
   window.__zeroWasteApiFetchInstalled = true;
 }
+
+export const getFavorites = async (token, lat, lng) => {
+  const params = new URLSearchParams();
+  if (lat) params.set("customer_lat", lat);
+  if (lng) params.set("customer_long", lng);
+
+  const query = params.toString();
+  const response = await fetch(`/api/favorites${query ? `?${query}` : ""}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+  return { ok: response.ok, data };
+};
+
+export const toggleFavorite = async (token, restaurantId) => {
+  const response = await fetch("/api/favorites/toggle", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ restaurant_id: restaurantId }),
+  });
+
+  const data = await response.json().catch(() => ({}));
+  return { ok: response.ok, data };
+};

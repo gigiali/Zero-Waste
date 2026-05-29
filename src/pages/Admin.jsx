@@ -19,7 +19,7 @@ import {
   Star,
   LogOut,
   Bell,
-  Settings,
+  Languages,
   ChevronRight,
   ArrowUpRight,
   ArrowDownRight,
@@ -146,7 +146,7 @@ const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 const Admin = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { role, isLoggedIn, token: contextToken } = useAuth();
   const token =
@@ -163,6 +163,7 @@ const Admin = () => {
   // ── UI State ─────────────────────────────────────────────────────────────────
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   // ── Data State ───────────────────────────────────────────────────────────────
   const [weeklyData, setWeeklyData] = useState([]);
@@ -171,6 +172,11 @@ const Admin = () => {
   const [rawStats, setRawStats] = useState(null);
   const [statsLoading, setStatsLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [notifUnread, setNotifUnread] = useState(0);
 
   // All Orders
   const [allOrders, setAllOrders] = useState([]);
@@ -229,7 +235,6 @@ const Admin = () => {
         const users  = data?.data?.latest_users  ?? [];
         const offers = data?.data?.latest_offers ?? [];
 
-        // ✅ FIX: Use index-based unique keys to avoid undefined key collisions
         const merged = [
           ...users.map((u, idx) => ({
             uid: `u-${idx}-${u.id ?? idx}`,
@@ -252,7 +257,32 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
-  // ── 3. All Orders ─────────────────────────────────────────────────────────────
+  // ── 3. Notifications ─────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    (async () => {
+      setNotifLoading(true);
+      try {
+        const res = await fetch(`${BASE_URL}/notifications`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error(`Notif ${res.status}`);
+        const data = await res.json();
+        const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        setNotifications(list);
+        setNotifUnread(list.filter((n) => !n.read_at && !n.is_read).length);
+      } catch (err) {
+        console.error("Notifications fetch error:", err);
+      } finally {
+        setNotifLoading(false);
+      }
+    })();
+  }, [isLoggedIn, token]);
+
+  // ── 4. All Orders ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
@@ -268,29 +298,27 @@ const Admin = () => {
         if (!res.ok) throw new Error(`Orders ${res.status}`);
         const data = await res.json();
 
-        // ✅ Handle all possible response shapes
         console.log("🔍 RAW orders response:", JSON.stringify(data).slice(0, 300));
 
-const list =
-  Array.isArray(data)               ? data :
-  Array.isArray(data?.data)         ? data.data :
-  Array.isArray(data?.orders)       ? data.orders :
-  Array.isArray(data?.data?.orders) ? data.data.orders :
-  Array.isArray(data?.data?.data)   ? data.data.data :
-  data?.data && typeof data.data === "object" && !Array.isArray(data.data)
-    ? Object.values(data.data).find(Array.isArray) ?? []
-    : [];
+        const list =
+          Array.isArray(data)               ? data :
+          Array.isArray(data?.data)         ? data.data :
+          Array.isArray(data?.orders)       ? data.orders :
+          Array.isArray(data?.data?.orders) ? data.data.orders :
+          Array.isArray(data?.data?.data)   ? data.data.data :
+          data?.data && typeof data.data === "object" && !Array.isArray(data.data)
+            ? Object.values(data.data).find(Array.isArray) ?? []
+            : [];
 
-console.log("✅ Parsed orders list length:", list.length);
-
+        console.log("✅ Parsed orders list length:", list.length);
         console.log("✅ Orders loaded:", list.length, "| Sample:", list[0]);
+
         setAllOrders(list);
         if (list.length > 0) {
-  setWeeklyData(buildWeeklyData(list));
-} else {
-  // Fallback: empty week structure bardo to avoid "no data" if API has orders older than 7 days
-  setWeeklyData(buildWeeklyData([]));
-}
+          setWeeklyData(buildWeeklyData(list));
+        } else {
+          setWeeklyData(buildWeeklyData([]));
+        }
       } catch (err) {
         console.error("Orders fetch error:", err);
         setOrdersError(err.message);
@@ -376,9 +404,9 @@ console.log("✅ Parsed orders list length:", list.length);
   ];
 
   const managementItems = [
-    { id: "users",     icon: Users,           label: "Users",      path: "/admin/users" },
-    { id: "businesses",icon: ClipboardList,   label: "Businesses", path: "/admin/businesses" },
-    { id: "reviews",   icon: Star,            label: "Reviews",    path: "/admin/review-moderation" },
+    { id: "users",      icon: Users,        label: "Users",      path: "/admin/users" },
+    { id: "businesses", icon: ClipboardList, label: "Businesses", path: "/admin/businesses" },
+    { id: "reviews",    icon: Star,          label: "Reviews",    path: "/admin/review-moderation" },
   ];
 
   return (
@@ -388,8 +416,8 @@ console.log("✅ Parsed orders list length:", list.length);
         {/* Logo */}
         <div className="sidebar-logo">
           <div className="sidebar-logo__icon">
-  <img src="/src/assets/images/e.png" alt="logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
-</div>
+            <img src="/src/assets/images/e.png" alt="logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
+          </div>
           {sidebarOpen && (
             <div className="sidebar-logo__text">
               <span className="sidebar-logo__name">ZeroWaste</span>
@@ -431,6 +459,50 @@ console.log("✅ Parsed orders list length:", list.length);
               onClick={() => navigate(item.path)}
             />
           ))}
+
+          <div className="sidebar-nav-divider" />
+          <NavItem
+            icon={Bell}
+            label={sidebarOpen ? "Notifications" : ""}
+            active={activeSection === "notifications"}
+            badge={notifUnread > 0 ? notifUnread : null}
+            onClick={() => setActiveSection("notifications")}
+          />
+
+          {/* Language Dropdown */}
+          <div className="sidebar-lang-wrapper">
+            <button
+              type="button"
+              className="sidebar-nav-item"
+              onClick={() => setLangDropdownOpen((v) => !v)}
+            >
+              <Languages size={18} />
+              {sidebarOpen && (
+                <>
+                  <span>Language</span>
+                  <ChevronDown size={14} style={{ marginLeft: "auto" }} />
+                </>
+              )}
+            </button>
+            {langDropdownOpen && (
+              <div className="lang-dropdown">
+                <button
+                  type="button"
+                  className={`lang-option ${i18n.language === "en" ? "active" : ""}`}
+                  onClick={() => { i18n.changeLanguage("en"); setLangDropdownOpen(false); }}
+                >
+                  🇬🇧 English
+                </button>
+                <button
+                  type="button"
+                  className={`lang-option ${i18n.language === "ar" ? "active" : ""}`}
+                  onClick={() => { i18n.changeLanguage("ar"); setLangDropdownOpen(false); }}
+                >
+                  🇪🇬 العربية
+                </button>
+              </div>
+            )}
+          </div>
         </nav>
 
         {/* Bottom profile */}
@@ -453,9 +525,10 @@ console.log("✅ Parsed orders list length:", list.length);
         <header className="admin-topbar">
           <div className="admin-topbar__left">
             <h1 className="admin-topbar__title">
-              {activeSection === "dashboard" && "Dashboard"}
-              {activeSection === "orders"    && "All Orders"}
-              {activeSection === "activity"  && "Recent Activity"}
+              {activeSection === "dashboard"     && "Dashboard"}
+              {activeSection === "orders"        && "All Orders"}
+              {activeSection === "activity"      && "Recent Activity"}
+              {activeSection === "notifications" && "Notifications"}
             </h1>
             <div className="admin-topbar__breadcrumb">
               <span>Admin</span>
@@ -464,17 +537,6 @@ console.log("✅ Parsed orders list length:", list.length);
                 {activeSection.charAt(0).toUpperCase() + activeSection.slice(1)}
               </span>
             </div>
-          </div>
-          <div className="admin-topbar__right">
-            <button className="topbar-icon-btn" type="button">
-              <Bell size={18} />
-              {(rawStats?.active_issues ?? 0) > 0 && (
-                <span className="topbar-notif-dot" />
-              )}
-            </button>
-            <button className="topbar-icon-btn" type="button">
-              <Settings size={18} />
-            </button>
           </div>
         </header>
 
@@ -737,11 +799,11 @@ console.log("✅ Parsed orders list length:", list.length);
                   Failed to load orders: {ordersError}
                 </div>
               ) : allOrders.length === 0 ? (
-  <div className="empty-state">
-    <ShoppingBag size={40} color="#cbd5e1" />
-    <p>No orders found.</p>
-    <span>The /api/admin/all-orders endpoint returned an empty list.</span>
-  </div>
+                <div className="empty-state">
+                  <ShoppingBag size={40} color="#cbd5e1" />
+                  <p>No orders found.</p>
+                  <span>The /api/admin/all-orders endpoint returned an empty list.</span>
+                </div>
               ) : (
                 <>
                   <div className="table-wrapper">
@@ -866,12 +928,85 @@ console.log("✅ Parsed orders list length:", list.length);
             </div>
           )}
 
+          {/* ══════════════════════════════════════════
+              NOTIFICATIONS SECTION
+          ══════════════════════════════════════════ */}
+          {activeSection === "notifications" && (
+            <div className="orders-card">
+              <div className="orders-card__header">
+                <div className="orders-card__title-row">
+                  <Bell size={20} color="#696cff" />
+                  <h3>Notifications</h3>
+                  {notifUnread > 0 && (
+                    <span className="orders-count-badge">{notifUnread} unread</span>
+                  )}
+                </div>
+              </div>
+              {notifLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={18} className="spin" /> Loading notifications…
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="empty-state">
+                  <Bell size={36} color="#cbd5e1" />
+                  <p>No notifications found.</p>
+                </div>
+              ) : (
+                <div className="activity-list">
+                  {notifications.map((n, idx) => (
+                    <div
+                      key={n.id ?? idx}
+                      className="activity-item"
+                      style={{ opacity: n.read_at || n.is_read ? 0.6 : 1 }}
+                    >
+                      <div
+                        className="activity-item__dot"
+                        style={{ background: n.read_at || n.is_read ? "#cbd5e1" : "#696cff" }}
+                      />
+                      <div className="activity-item__body">
+                        <p className="activity-item__desc">{n.message ?? n.data?.message ?? "—"}</p>
+                        <span className="activity-item__time">{fmtDate(n.created_at)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
         </div>
       </main>
 
       <style>{`
         @keyframes spin { to { transform: rotate(360deg) } }
         .spin { animation: spin 1s linear infinite }
+
+        /* ── Language Dropdown ───────────────────────────── */
+        .sidebar-lang-wrapper { position: relative; }
+
+        .lang-dropdown {
+          display: flex;
+          flex-direction: column;
+          background: #fff;
+          border: 1px solid #e7e7ff;
+          border-radius: 8px;
+          margin: 4px 12px;
+          overflow: hidden;
+          box-shadow: 0 4px 16px rgba(105,108,255,0.1);
+        }
+
+        .lang-option {
+          background: none;
+          border: none;
+          padding: 10px 16px;
+          text-align: left;
+          cursor: pointer;
+          font-size: 13px;
+          color: #566a7f;
+          transition: background 0.15s;
+        }
+        .lang-option:hover { background: #f5f5ff; }
+        .lang-option.active { color: #696cff; font-weight: 600; background: #f0f0ff; }
       `}</style>
     </div>
   );

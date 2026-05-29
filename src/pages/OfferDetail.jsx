@@ -151,7 +151,6 @@ const { isLoggedIn } = useAuth();
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
-          console.log("RAW offer data:", data);
           setOffer(normalizeOffer(data));
         } else {
           setOffer(null);
