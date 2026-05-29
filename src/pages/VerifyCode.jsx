@@ -59,9 +59,12 @@ export default function VerifyCode() {
     }
 
     setIsLoading(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const email = sessionStorage.getItem("passwordResetEmail");
-      const phone = sessionStorage.getItem("passwordResetPhone");
       const verificationCode = code.join("");
 
       const response = await fetch("/api/verify-reset-code", {
@@ -74,7 +77,11 @@ export default function VerifyCode() {
           reset_code: verificationCode,
           email: email,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
 
       if (response.ok) {
@@ -83,8 +90,12 @@ export default function VerifyCode() {
         setMessage(data.message || t("auth.invalidVerificationCode"));
       }
     } catch (err) {
-      console.error("Verify code error:", err);
-      setMessage(t("auth.networkError"));
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setMessage(t("auth.requestTimeout"));
+      } else {
+        setMessage(t("auth.networkError"));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -95,10 +106,7 @@ export default function VerifyCode() {
   return (
     <RecoveryFrame title={t("auth.verification")}>
       <form onSubmit={handleSubmit} noValidate>
-        <p
-          className="auth-label"
-          style={{ marginBottom: 12, textAlign: "center" }}
-        >
+        <p className="auth-label vc-instruction">
           {t("auth.enterVerificationCode")}
         </p>
 
@@ -121,7 +129,7 @@ export default function VerifyCode() {
           ))}
         </div>
 
-        <p className="auth-resend-row" style={{ marginTop: 14 }}>
+        <p className="auth-resend-row vc-resend">
           {t("auth.didntReceiveCode")}{" "}
           <button
             type="button"
@@ -133,18 +141,14 @@ export default function VerifyCode() {
         </p>
 
         {message && (
-          <p
-            className={isSent ? "auth-success-text" : "auth-error-text"}
-            style={{ marginBottom: 12, textAlign: "center" }}
-          >
+          <p className={`vc-message ${isSent ? "auth-success-text" : "auth-error-text"}`}>
             {message}
           </p>
         )}
 
         <button
           type="submit"
-          className="auth-btn-primary"
-          style={{ marginTop: 6 }}
+          className="auth-btn-primary vc-submit"
           disabled={isLoading}
         >
           {isLoading ? t("auth.verifying") : t("auth.verify")}

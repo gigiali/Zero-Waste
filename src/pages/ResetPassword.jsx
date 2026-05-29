@@ -25,9 +25,12 @@ export default function ResetPassword() {
     }
 
     setIsLoading(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const email = sessionStorage.getItem("passwordResetEmail");
-      const phone = sessionStorage.getItem("passwordResetPhone");
 
       const response = await fetch("/api/reset-password", {
         method: "POST",
@@ -38,22 +41,28 @@ export default function ResetPassword() {
         body: JSON.stringify({
           password,
           password_confirmation: confirmPassword,
-          ...(email ? { email } : { phone }),
+          email,
         }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
 
       if (response.ok) {
-        // Clear sessionStorage
         sessionStorage.removeItem("passwordResetEmail");
-        sessionStorage.removeItem("passwordResetPhone");
         navigate("/signin");
       } else {
         setError(data.message || t("auth.failedResetPassword"));
       }
     } catch (err) {
-      console.error("Reset password error:", err);
-      setError(t("auth.networkError"));
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setError(t("auth.requestTimeout"));
+      } else {
+        setError(t("auth.networkError"));
+      }
     } finally {
       setIsLoading(false);
     }
@@ -96,16 +105,11 @@ export default function ResetPassword() {
           />
         </div>
 
-        {error && (
-          <p className="auth-error-text" style={{ marginBottom: 12 }}>
-            {error}
-          </p>
-        )}
+        {error && <p className="auth-error-text rp-error">{error}</p>}
 
         <button
           type="submit"
-          className="auth-btn-primary"
-          style={{ marginTop: 4 }}
+          className="auth-btn-primary rp-submit"
           disabled={isLoading}
         >
           {isLoading ? t("auth.resetting") : t("auth.resetPassword")}
