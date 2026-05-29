@@ -8,12 +8,19 @@ import "./PaymentMethod.css";
 import { useCart } from "../Context/CartContext";
 
 // ── Animated Order Review Modal ───────────────────────────────────────────────
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone }) {
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, apiSuccess }) {
   const [phase, setPhase] = useState(1);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
+    if (apiSuccess) {
+      setConfirmed(true);
+    }
+  }, [apiSuccess]);
+
+  useEffect(() => {
+    if (confirmed) return;
     let elapsed = 0;
     const interval = setInterval(() => {
       elapsed += 100;
@@ -23,9 +30,9 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
       else if (elapsed === 20000) { setPhase(3); setProgress(100); clearInterval(interval); }
     }, 100);
     return () => clearInterval(interval);
-  }, []);
+  }, [confirmed]);
 
-  const handleConfirm = () => { setConfirmed(true); onConfirm(); };
+  const handleConfirm = () => { onConfirm(); };
 
   return (
     <div className="orm-overlay">
@@ -33,7 +40,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
         <div className="orm-header">
           <div className="orm-header-icon"><Package size={20} /></div>
           <div className="orm-header-text"><h2>Review Your Order</h2></div>
-          {phase < 3 && (
+          {phase < 3 && !confirmed && (
             <button className="orm-skip-btn" onClick={() => {
               if (phase === 1) { setPhase(2); setProgress(0); }
               else { setPhase(3); setProgress(100); }
@@ -41,7 +48,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           )}
         </div>
 
-        {phase < 3 && (
+        {phase < 3 && !confirmed && (
           <div className="orm-progress-wrap">
             <div className="orm-progress-track">
               <div className="orm-progress-fill" style={{ width: `${progress}%` }} />
@@ -50,22 +57,24 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           </div>
         )}
 
-        <div className="orm-steps">
-          {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
-            const stepNum = idx + 1;
-            const done = phase > stepNum;
-            const active = phase === stepNum;
-            return (
-              <div key={label} className={`orm-step ${done ? "done" : active ? "active" : "pending"}`}>
-                <div className="orm-step-node">{done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}</div>
-                <span className="orm-step-label">{label}</span>
-                {idx < 2 && <div className={`orm-step-line ${done ? "done" : ""}`} />}
-              </div>
-            );
-          })}
-        </div>
+        {!confirmed && (
+          <div className="orm-steps">
+            {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
+              const stepNum = idx + 1;
+              const done = phase > stepNum;
+              const active = phase === stepNum;
+              return (
+                <div key={label} className={`orm-step ${done ? "done" : active ? "active" : "pending"}`}>
+                  <div className="orm-step-node">{done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}</div>
+                  <span className="orm-step-label">{label}</span>
+                  {idx < 2 && <div className={`orm-step-line ${done ? "done" : ""}`} />}
+                </div>
+              );
+            })}
+          </div>
+        )}
 
-        {phase === 1 && (
+        {phase === 1 && !confirmed && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Details</h3>
             <div className="orm-detail-row">
@@ -99,7 +108,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           </div>
         )}
 
-        {phase === 2 && (
+        {phase === 2 && !confirmed && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Summary</h3>
             <div className="orm-items-list">
@@ -181,7 +190,7 @@ const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, car
     total,
     items: cartItems.map((item) => ({
       id: item.id,
-      offer_id: item.id,        // ✅ ضافت offer_id
+      offer_id: item.id,
       title: item.title,
       quantity: item.quantity,
       unitPrice: item.discountedPrice || item.discountPrice || 0,
@@ -199,11 +208,14 @@ const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, car
 export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { cartItems, clearCart } = useCart();
+  
+  const { cartItems, clearCart, fetchOffers } = useCart(); 
+  
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [apiSuccess, setApiSuccess] = useState(false); 
 
   const deliveryMethod = searchParams.get("method") || "pickup";
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
@@ -250,16 +262,6 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     setIsSubmitting(true);
     setSubmitError("");
 
-    // ✅ DEMO_MODE = false — بيبعت للـ API الحقيقي
-    const DEMO_MODE = false;
-
-    if (DEMO_MODE) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      saveUserOrder({ orderId: `ORD-${Date.now()}`, cartItems, deliveryMethod, selectedMethod, cartTotal, subtotal: cartTotal, deliveryFee, total, businessName: cartItems[0]?.location, businessPhone: cartItems[0]?.phone || cartItems[0]?.vendor_phone });
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       const token =
         localStorage.getItem("auth_token") ||
@@ -272,42 +274,76 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
       const customerLat = localStorage.getItem("userLocationLat");
       const customerLong = localStorage.getItem("userLocationLng");
 
-      const items = cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity }));
-
-      const submitData = new FormData();
-      submitData.append("items", JSON.stringify(items));
-      submitData.append("payment_method", selectedMethod);
-      submitData.append("delivery_type", deliveryMethod);
-
-      if (deliveryMethod === "delivery") {
-        if (!customerLat || !customerLong) { setSubmitError("Please set your location first"); setIsSubmitting(false); return; }
-        submitData.append("customer_lat", customerLat);
-        submitData.append("customer_long", customerLong);
+      if (deliveryMethod === "delivery" && (!customerLat || !customerLong)) {
+        setSubmitError("Please set your location first");
+        setIsSubmitting(false);
+        return;
       }
+
+      const items = cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity }));
 
       const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
         method: "POST",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        body: submitData,
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          items,
+          payment_method: selectedMethod,
+          delivery_type: deliveryMethod,
+          ...(deliveryMethod === "delivery" && {
+            customer_lat: customerLat,
+            customer_long: customerLong,
+          }),
+        }),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
+      // التعديل السحري هنا: يقبل 200 أو 201 أو أي رد ناجح
+      if (response.ok || response.status === 200 || response.status === 201) {
         const firstItem = cartItems[0];
         const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
         const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
 
-        const savedOrder = saveUserOrder({
-          orderId: data.order?.id || `ORD-${Date.now()}`,
+        // 1. حفظ الطلب احتياطياً
+        saveUserOrder({
+          orderId: data.order?.id || data.id || `ORD-${Date.now()}`,
           cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone,
         });
 
-        clearCart();
+        // 2. تحديث كمية الـ Offers المتاحة محلياً لو مستخدمة
+        const storedOffers = JSON.parse(localStorage.getItem("zw_offers") || "[]");
+        if (storedOffers.length > 0) {
+          const updatedOffers = storedOffers.map(offer => {
+            const orderedItem = cartItems.find(item => item.id === offer.id);
+            if (orderedItem) {
+              return {
+                ...offer,
+                available_portions: Math.max(0, (offer.available_portions || offer.portions || 0) - orderedItem.quantity)
+              };
+            }
+            return offer;
+          });
+          localStorage.setItem("zw_offers", JSON.stringify(updatedOffers));
+          window.dispatchEvent(new Event("zw-offers-updated"));
+        }
 
-        navigate("/order-confirmation", {
-          state: { deliveryMethod, cartTotal, deliveryFee, total, orderId: savedOrder.orderNumber, businessName, businessPhone },
-        });
+        // 3. إعادة جلب العروض من الـ API الحقيقي لتحديث الحصص
+        if (fetchOffers) {
+          try {
+            await fetchOffers();
+          } catch (e) {
+            console.error("Error refreshing offers from API:", e);
+          }
+        }
+
+        // 4. مسح الكارت وفتح شاشة النجاح
+        clearCart();
+        setIsSubmitting(false);
+        setApiSuccess(true);
       } else {
         if (response.status === 422 && data.errors) {
           setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
@@ -407,12 +443,13 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           total={total}
           onConfirm={handleFinalConfirm}
           onCancel={handleModalCancel}
+          apiSuccess={apiSuccess}
           onTrackOrder={() => {
             const latestOrder = JSON.parse(localStorage.getItem("zw_user_orders") || "[]")[0];
             navigate("/home", {
               state: {
                 trackingActive: true,
-                orderNumber: latestOrder?.orderNumber || "ORD-2026-001",
+                orderNumber: latestOrder?.orderNumber || "ORD-000",
                 deliveryMethod, total,
                 orderTime: latestOrder?.createdAt || new Date().toISOString(),
                 offerId: cartItems[0]?.id || 1,

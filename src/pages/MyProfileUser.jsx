@@ -14,7 +14,8 @@ const getToken = () =>
   localStorage.getItem("auth_token") ||
   localStorage.getItem("token") ||
   sessionStorage.getItem("auth_token") ||
-  sessionStorage.getItem("token");
+  sessionStorage.getItem("token") ||
+  "";
 
 /* ─────────────────────────────────────────────
    Change Password Drawer
@@ -37,7 +38,6 @@ function ChangePasswordDrawer({ onClose }) {
 
     setIsLoading(true);
     try {
-      // PUT /api/profile/change-password — customer change password route
       const res = await fetch(`${BASE_URL}/profile/change-password`, {
         method: "PUT",
         headers: {
@@ -140,7 +140,10 @@ function OrdersTab({ orders, isLoading }) {
   if (isLoading) {
     return (
       <div className="usr-card">
-        <div className="usr-empty"><Package size={28} /><p>Loading orders…</p></div>
+        <div className="usr-empty">
+          <div className="orm-spinner" style={{ marginBottom: "10px" }} />
+          <p>Loading your orders from database…</p>
+        </div>
       </div>
     );
   }
@@ -150,60 +153,75 @@ function OrdersTab({ orders, isLoading }) {
       <div className="usr-section-head">
         <div>
           <h2 className="usr-card-title">My Orders</h2>
-          <p className="usr-muted">All your confirmed orders appear here.</p>
+          <p className="usr-muted">All your confirmed orders appear here live from server.</p>
         </div>
         <span className="usr-count-badge">{orders.length}</span>
       </div>
 
       {orders.length === 0 ? (
-        <div className="usr-empty"><Package size={28} /><p>No orders yet</p></div>
+        <div className="usr-empty">
+          <Package size={28} />
+          <p>No orders found yet.</p>
+          <span style={{ fontSize: '11px', color: '#9ca3af', marginTop: '5px' }}>
+            Check your browser console to see the backend response structure.
+          </span>
+        </div>
       ) : (
         <div className="usr-orders-list">
-          {orders.map((order) => (
-            <article className="usr-order-card" key={order.id}>
-              <div className="usr-order-top">
-                <div className="usr-order-top-left">
-                  <strong>#{order.id}</strong>
-                  <span className="usr-order-badge" style={{
-  background: order.status === "Delivered" ? "#f0fdf4" : 
-              order.status === "Rejected" ? "#fef2f2" : "#eff6ff",
-  color: order.status === "Delivered" ? "#10b981" : 
-         order.status === "Rejected" ? "#ef4444" : "#3b82f6"
-}}>
-  {order.status || "Confirmed"}
-</span>
-                </div>
-                <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
-              </div>
+          {orders.map((order) => {
+            const currentStatus = order.order_status || order.status || "pending";
+            const normalizedStatus = currentStatus.toLowerCase();
 
-              <div className="usr-order-meta">
-                <span><MapPin size={13} /> {order.vendor_name || "Restaurant"}</span>
-                <span>
-                  <CalendarDays size={13} />
-                  {order.created_at ? new Date(order.created_at).toLocaleString() : "Today"}
-                </span>
-                <span>
-                  {order.delivery_type === "delivery" ? <Truck size={13} /> : <ShoppingBag size={13} />}
-                  {order.delivery_type === "delivery" ? "Delivery" : "Pickup"}
-                </span>
-                <span><CreditCard size={13} /> {order.payment_method || "—"}</span>
-              </div>
-
-              <div className="usr-order-items">
-                {(order.items || order.order_items || []).map((item, idx) => (
-                  <div className="usr-order-item" key={idx}>
-                    <span>{item.quantity || item.quality}× {item.title || item.offer?.title || item.name}</span>
-                    <strong>EGP {Number(item.price || item.offer?.discount_price || 0).toFixed(2)}</strong>
+            return (
+              <article className="usr-order-card" key={order.id}>
+                <div className="usr-order-top">
+                  <div className="usr-order-top-left">
+                    <strong>Order #{order.id}</strong>
+                    <span className="usr-order-badge" style={{
+                      background: normalizedStatus === "delivered" || normalizedStatus === "completed" || normalizedStatus === "approved" ? "#f0fdf4" : 
+                                  normalizedStatus === "rejected" || normalizedStatus === "cancelled" || normalizedStatus === "failed" ? "#fef2f2" : "#eff6ff",
+                      color: normalizedStatus === "delivered" || normalizedStatus === "completed" || normalizedStatus === "approved" ? "#10b981" : 
+                             normalizedStatus === "rejected" || normalizedStatus === "cancelled" || normalizedStatus === "failed" ? "#ef4444" : "#3b82f6"
+                    }}>
+                      {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                    </span>
                   </div>
-                ))}
-              </div>
+                  <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
+                </div>
 
-              <div className="usr-order-totals">
-                <span>Subtotal: EGP {Number(order.subtotal || order.total_amount || 0).toFixed(2)}</span>
-                <span>Delivery: EGP {Number(order.delivery_fees || order.deliveryFee || 0).toFixed(2)}</span>
-              </div>
-            </article>
-          ))}
+                <div className="usr-order-meta">
+                  <span><MapPin size={13} /> {order.vendor_name || order.vendor?.name || "Zero Waste Vendor"}</span>
+                  <span>
+                    <CalendarDays size={13} />
+                    {order.created_at ? new Date(order.created_at).toLocaleDateString() : "Just now"}
+                  </span>
+                  <span>
+                    {order.delivery_type === "delivery" || order.delivery_method === "delivery" ? <Truck size={13} /> : <ShoppingBag size={13} />}
+                    {order.delivery_type === "delivery" || order.delivery_method === "delivery" ? "Delivery" : "Pickup"}
+                  </span>
+                  <span><CreditCard size={13} /> {order.payment_method || "Cash On Delivery"}</span>
+                </div>
+
+                <div className="usr-order-items">
+                  {(order.order_items || order.items || []).map((item, idx) => (
+                    <div className="usr-order-item" key={idx}>
+                      <span>
+                        {item.quantity || 1}× {item.offer?.title || item.meal?.name || item.title || item.name || "Meal Item"}
+                      </span>
+                      <strong>EGP {Number(item.price || item.offer?.discount_price || 0).toFixed(2)}</strong>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="usr-order-totals">
+                  <span>Total Paid: EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</span>
+                  {Number(order.delivery_fees || order.delivery_fee || 0) > 0 && (
+                    <span>Delivery: EGP {Number(order.delivery_fees || order.delivery_fee).toFixed(2)}</span>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       )}
     </div>
@@ -277,7 +295,7 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
 }
 
 /* ─────────────────────────────────────────────
-   Main User Profile
+   Main User Profile Component
 ───────────────────────────────────────────── */
 export default function MyProfileUser() {
   const navigate = useNavigate();
@@ -299,7 +317,6 @@ export default function MyProfileUser() {
   const [loadingReviews, setLoadingReviews] = useState(false);
 
   /* ── Fetch profile ── */
-  // GET /api/myprofile
   const fetchProfile = async () => {
     try {
       const res = await fetch(`${BASE_URL}/myprofile`, {
@@ -323,24 +340,49 @@ export default function MyProfileUser() {
   };
 
   /* ── Fetch orders ── */
-  // GET /api/my-orders
   const fetchOrders = async () => {
     setLoadingOrders(true);
     try {
+      const token = getToken();
+      
       const res = await fetch(`${BASE_URL}/my-orders`, {
-        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json", 
+          "Authorization": `Bearer ${token}` 
+        },
       });
-      const data = await res.json();
-      if (res.ok) setOrders(Array.isArray(data) ? data : data.orders || []);
+      
+      const responseData = await res.json();
+      
+      console.log("====== 📦 BACKEND RESPONSE FOR /my-orders ======");
+      console.log(responseData);
+      console.log("=================================================");
+
+      if (res.ok && responseData) {
+        let extracted = [];
+
+        if (Array.isArray(responseData)) {
+          extracted = responseData;
+        } else if (responseData.data && Array.isArray(responseData.data)) {
+          extracted = responseData.data;
+        } else if (responseData.orders && Array.isArray(responseData.orders)) {
+          extracted = responseData.orders;
+        } else if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
+          extracted = responseData.data.data;
+        }
+
+        setOrders(extracted);
+      }
     } catch (err) {
-      console.error("Fetch orders error:", err);
+      console.error("Fetch orders main error:", err);
     } finally {
       setLoadingOrders(false);
     }
   };
 
   /* ── Fetch reviews ── */
-  // GET /api/my-reviews
   const fetchReviews = async () => {
     setLoadingReviews(true);
     try {
@@ -348,7 +390,7 @@ export default function MyProfileUser() {
         headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
       const data = await res.json();
-      if (res.ok) setReviews(Array.isArray(data) ? data : data.reviews || []);
+      if (res.ok) setReviews(Array.isArray(data) ? data : data.reviews || data.data || []);
     } catch (err) {
       console.error("Fetch reviews error:", err);
     } finally {
@@ -357,20 +399,23 @@ export default function MyProfileUser() {
   };
 
   useEffect(() => {
-  fetchProfile();
-  fetchOrders();
-  fetchReviews();
-
-  // Auto-refresh orders every 30 seconds
-  const interval = setInterval(() => {
+    fetchProfile();
     fetchOrders();
-  }, 30000);
+    fetchReviews();
+  }, []);
 
-  return () => clearInterval(interval);
-}, []);
+  const handleTabChange = (tabId) => {
+    if (isEditing) handleCancel();
+    setActiveTab(tabId);
+    
+    if (tabId === "orders") {
+      fetchOrders();
+    } else if (tabId === "reviews") {
+      fetchReviews();
+    }
+  };
 
   /* ── Save profile ── */
-  // PUT /api/customer/profile
   const handleSave = async () => {
     const e = {};
     if (!editData.name.trim()) e.name = "Name is required";
@@ -424,7 +469,6 @@ export default function MyProfileUser() {
   };
 
   /* ── Delete account ── */
-  // DELETE /api/customer/delete-profile
   const handleDelete = async () => {
     try {
       const res = await fetch(`${BASE_URL}/customer/delete-profile`, {
@@ -436,7 +480,6 @@ export default function MyProfileUser() {
   };
 
   /* ── Logout ── */
-  // POST /api/logout
   const handleLogout = async () => {
     try {
       await fetch(`${BASE_URL}/logout`, {
@@ -451,7 +494,6 @@ export default function MyProfileUser() {
   };
 
   /* ── Delete review ── */
-  // DELETE /api/reviews/{id}
   const handleDeleteReview = async (id) => {
     try {
       const res = await fetch(`${BASE_URL}/reviews/${id}`, {
@@ -512,7 +554,7 @@ export default function MyProfileUser() {
               <button
                 key={tab.id}
                 className={`usr-tab${activeTab === tab.id ? " is-active" : ""}`}
-                onClick={() => { if (isEditing) handleCancel(); setActiveTab(tab.id); }}
+                onClick={() => handleTabChange(tab.id)}
                 type="button"
               >
                 {tab.icon}

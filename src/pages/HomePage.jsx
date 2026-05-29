@@ -125,8 +125,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
     try {
       const headers = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const response = await fetch("/api/reviews", { method: "POST", headers, body: formData });
-      if (!response.ok) throw new Error("Failed to submit review");
+      const response = await fetch("https://zero-waste-production.up.railway.app/api/reviews", { method: "POST", headers, body: formData });      if (!response.ok) throw new Error("Failed to submit review");
       setSubmitted(true);
       setShowReview(false);
       removeImage();
