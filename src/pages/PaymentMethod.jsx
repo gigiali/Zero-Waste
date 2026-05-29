@@ -397,7 +397,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     setSubmitError("");
 
     // ========== DEMO MODE: Skip API & Login ==========
-    const DEMO_MODE = true; // Set to false when backend is ready
+    const DEMO_MODE = false; // Set to false when backend is ready
 
     if (DEMO_MODE) {
       // Simulate API delay

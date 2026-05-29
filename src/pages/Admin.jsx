@@ -50,13 +50,13 @@ import { useTranslation } from "react-i18next";
 import "./Admin.css";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
+const API_TIMEOUT = 8000;
 const PIE_COLORS = ["#696cff", "#ff4d49", "#28c76f", "#ff9f43"];
 
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager = (r) => r === "manager";
 const canManage = (r) => isSuperAdmin(r) || isManager(r);
 
-// ─── Build weekly chart data from real orders ─────────────────────────────────
 const buildWeeklyData = (orders = []) => {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   const today = new Date();
@@ -84,7 +84,6 @@ const buildWeeklyData = (orders = []) => {
   return Object.values(map);
 };
 
-// ─── Order status badge ───────────────────────────────────────────────────────
 const STATUS_COLORS = {
   pending:          { bg: "#fff8e1", text: "#f59e0b",  label: "Pending" },
   accepted:         { bg: "#e8f5e9", text: "#28c76f",  label: "Accepted" },
@@ -108,7 +107,6 @@ const StatusBadge = ({ status }) => {
   );
 };
 
-// ─── Stat Card Component ──────────────────────────────────────────────────────
 const StatCard = ({ title, value, subtitle, icon: Icon, color, trend, trendUp }) => (
   <div className="stat-card">
     <div className="stat-card__body">
@@ -130,7 +128,6 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, trend, trendUp })
   </div>
 );
 
-// ─── Sidebar Nav Item ─────────────────────────────────────────────────────────
 const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
   <button
     type="button"
@@ -144,7 +141,6 @@ const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
   </button>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
 const Admin = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -160,12 +156,10 @@ const Admin = () => {
     support: "Support",
   };
 
-  // ── UI State ─────────────────────────────────────────────────────────────────
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
-  // ── Data State ───────────────────────────────────────────────────────────────
   const [weeklyData, setWeeklyData] = useState([]);
   const [pieData, setPieData] = useState([]);
   const [activities, setActivities] = useState([]);
@@ -173,12 +167,10 @@ const Admin = () => {
   const [statsLoading, setStatsLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
 
-  // Notifications
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifUnread, setNotifUnread] = useState(0);
 
-  // All Orders
   const [allOrders, setAllOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState(null);
@@ -188,18 +180,23 @@ const Admin = () => {
   const [ordersSortDir, setOrdersSortDir] = useState("desc");
   const ORDERS_PER_PAGE = 10;
 
-  // ── 1. Dashboard Stats ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
       setStatsLoading(true);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
         const res = await fetch(`${BASE_URL}/dashboard/stats`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
+
         if (!res.ok) throw new Error(`Stats ${res.status}`);
         const data = await res.json();
         const realData = data?.data ?? data;
@@ -211,25 +208,32 @@ const Admin = () => {
           { name: "Expired Offers", value: realData?.expired_offers  ?? 0 },
         ]);
       } catch (err) {
-        console.error("Stats fetch error:", err);
+        if (err.name !== "AbortError") {
+          console.error("Stats fetch error:", err);
+        }
       } finally {
         setStatsLoading(false);
       }
     })();
   }, [isLoggedIn, token]);
 
-  // ── 2. Recent Activity ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
       setActivityLoading(true);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
         const res = await fetch(`${BASE_URL}/dashboard/activity`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
+
         if (!res.ok) throw new Error(`Activity ${res.status}`);
         const data = await res.json();
         const users  = data?.data?.latest_users  ?? [];
@@ -250,55 +254,67 @@ const Admin = () => {
 
         setActivities(merged);
       } catch (err) {
-        console.error("Activity fetch error:", err);
+        if (err.name !== "AbortError") {
+          console.error("Activity fetch error:", err);
+        }
       } finally {
         setActivityLoading(false);
       }
     })();
   }, [isLoggedIn, token]);
 
-  // ── 3. Notifications ─────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
       setNotifLoading(true);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
         const res = await fetch(`${BASE_URL}/notifications`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
+
         if (!res.ok) throw new Error(`Notif ${res.status}`);
         const data = await res.json();
         const list = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         setNotifications(list);
         setNotifUnread(list.filter((n) => !n.read_at && !n.is_read).length);
       } catch (err) {
-        console.error("Notifications fetch error:", err);
+        if (err.name !== "AbortError") {
+          console.error("Notifications fetch error:", err);
+        }
       } finally {
         setNotifLoading(false);
       }
     })();
   }, [isLoggedIn, token]);
 
-  // ── 4. All Orders ─────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
       setOrdersLoading(true);
       setOrdersError(null);
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
         const res = await fetch(`${BASE_URL}/admin/all-orders`, {
           headers: {
             Accept: "application/json",
             Authorization: `Bearer ${token}`,
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
+
         if (!res.ok) throw new Error(`Orders ${res.status}`);
         const data = await res.json();
-
-        console.log("🔍 RAW orders response:", JSON.stringify(data).slice(0, 300));
 
         const list =
           Array.isArray(data)               ? data :
@@ -310,9 +326,6 @@ const Admin = () => {
             ? Object.values(data.data).find(Array.isArray) ?? []
             : [];
 
-        console.log("✅ Parsed orders list length:", list.length);
-        console.log("✅ Orders loaded:", list.length, "| Sample:", list[0]);
-
         setAllOrders(list);
         if (list.length > 0) {
           setWeeklyData(buildWeeklyData(list));
@@ -320,15 +333,16 @@ const Admin = () => {
           setWeeklyData(buildWeeklyData([]));
         }
       } catch (err) {
-        console.error("Orders fetch error:", err);
-        setOrdersError(err.message);
+        if (err.name !== "AbortError") {
+          console.error("Orders fetch error:", err);
+          setOrdersError(err.message);
+        }
       } finally {
         setOrdersLoading(false);
       }
     })();
   }, [isLoggedIn, token]);
 
-  // ── Derived stats ─────────────────────────────────────────────────────────────
   const totalUsers    = rawStats?.total_customers ?? 0;
   const totalVendors  = rawStats?.total_vendors   ?? 0;
   const activeOffers  = rawStats?.active_offers   ?? 0;
@@ -339,7 +353,6 @@ const Admin = () => {
   const commission = (totalRevF * 0.15).toFixed(2);
   const avgOrder   = totalOrdersF > 0 ? (totalRevF / totalOrdersF).toFixed(2) : "0.00";
 
-  // ── Orders table ──────────────────────────────────────────────────────────────
   const filteredOrders = allOrders
     .filter((o) => {
       const q = ordersSearch.toLowerCase();
@@ -386,7 +399,6 @@ const Admin = () => {
     } catch { return v; }
   };
 
-  // ── Guard ─────────────────────────────────────────────────────────────────────
   if (!isLoggedIn) {
     return (
       <div className="admin-auth-error">
@@ -396,7 +408,6 @@ const Admin = () => {
     );
   }
 
-  // ─── Sidebar nav items ────────────────────────────────────────────────────────
   const navItems = [
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "orders",    icon: ShoppingBag,     label: "All Orders", badge: allOrders.length || null },
@@ -411,9 +422,7 @@ const Admin = () => {
 
   return (
     <div className="admin-shell">
-      {/* ── Sidebar ── */}
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
-        {/* Logo */}
         <div className="sidebar-logo">
           <div className="sidebar-logo__icon">
             <img src="/src/assets/images/e.png" alt="logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
@@ -426,7 +435,6 @@ const Admin = () => {
           )}
         </div>
 
-        {/* Toggle button */}
         <button
           className="sidebar-toggle"
           onClick={() => setSidebarOpen((v) => !v)}
@@ -435,7 +443,6 @@ const Admin = () => {
           {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
         </button>
 
-        {/* Nav */}
         <nav className="sidebar-nav">
           {sidebarOpen && <p className="sidebar-nav-section-title">MENU</p>}
           {navItems.map((item) => (
@@ -469,7 +476,6 @@ const Admin = () => {
             onClick={() => setActiveSection("notifications")}
           />
 
-          {/* Language Dropdown */}
           <div className="sidebar-lang-wrapper">
             <button
               type="button"
@@ -505,7 +511,6 @@ const Admin = () => {
           </div>
         </nav>
 
-        {/* Bottom profile */}
         {sidebarOpen && (
           <div className="sidebar-profile" onClick={() => navigate("/admin/profile")} style={{ cursor: "pointer" }}>
             <div className="sidebar-profile__avatar">
@@ -519,9 +524,7 @@ const Admin = () => {
         )}
       </aside>
 
-      {/* ── Main Content ── */}
       <main className="admin-main">
-        {/* Top bar */}
         <header className="admin-topbar">
           <div className="admin-topbar__left">
             <h1 className="admin-topbar__title">
@@ -542,12 +545,8 @@ const Admin = () => {
 
         <div className="admin-page-content">
 
-          {/* ══════════════════════════════════════════
-              DASHBOARD SECTION
-          ══════════════════════════════════════════ */}
           {activeSection === "dashboard" && (
             <>
-              {/* Stat cards */}
               {statsLoading ? (
                 <div className="loading-state">
                   <Loader2 size={20} className="spin" /> Loading stats…
@@ -606,9 +605,7 @@ const Admin = () => {
                 </div>
               )}
 
-              {/* Charts row */}
               <div className="charts-row">
-                {/* Weekly Line/Area Chart */}
                 <div className="chart-card chart-card--wide">
                   <div className="chart-card__header">
                     <div>
@@ -661,7 +658,6 @@ const Admin = () => {
                   )}
                 </div>
 
-                {/* Pie chart */}
                 <div className="chart-card">
                   <div className="chart-card__header">
                     <div>
@@ -701,7 +697,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Quick Actions */}
               <div className="quick-actions">
                 <h3 className="section-heading">Quick Actions</h3>
                 <div className="quick-actions-grid">
@@ -738,7 +733,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Environmental Impact */}
               {canManage(role) && (
                 <div className="impact-banner">
                   <div className="impact-banner__item">
@@ -755,12 +749,8 @@ const Admin = () => {
             </>
           )}
 
-          {/* ══════════════════════════════════════════
-              ORDERS SECTION
-          ══════════════════════════════════════════ */}
           {activeSection === "orders" && (
             <div className="orders-card">
-              {/* Header */}
               <div className="orders-card__header">
                 <div className="orders-card__title-row">
                   <ShoppingBag size={20} color="#696cff" />
@@ -788,7 +778,6 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* Table */}
               {ordersLoading ? (
                 <div className="loading-state">
                   <Loader2 size={18} className="spin" /> Loading orders…
@@ -852,7 +841,6 @@ const Admin = () => {
                     </table>
                   </div>
 
-                  {/* Pagination */}
                   {totalPages > 1 && (
                     <div className="pagination">
                       <span className="pagination__info">
@@ -892,9 +880,6 @@ const Admin = () => {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════
-              ACTIVITY SECTION
-          ══════════════════════════════════════════ */}
           {activeSection === "activity" && (
             <div className="orders-card">
               <div className="orders-card__header">
@@ -928,9 +913,6 @@ const Admin = () => {
             </div>
           )}
 
-          {/* ══════════════════════════════════════════
-              NOTIFICATIONS SECTION
-          ══════════════════════════════════════════ */}
           {activeSection === "notifications" && (
             <div className="orders-card">
               <div className="orders-card__header">
@@ -981,8 +963,7 @@ const Admin = () => {
         @keyframes spin { to { transform: rotate(360deg) } }
         .spin { animation: spin 1s linear infinite }
 
-        /* ── Language Dropdown ───────────────────────────── */
-        .sidebar-lang-wrapper { position: relative; }
+        .sidebar-lang-wrapper { position: relative; z-index: 1000; }
 
         .lang-dropdown {
           display: flex;
@@ -993,6 +974,11 @@ const Admin = () => {
           margin: 4px 12px;
           overflow: hidden;
           box-shadow: 0 4px 16px rgba(105,108,255,0.1);
+          position: absolute;
+          top: 100%;
+          left: 0;
+          right: 0;
+          z-index: 1001;
         }
 
         .lang-option {

@@ -164,7 +164,14 @@ function OrdersTab({ orders, isLoading }) {
               <div className="usr-order-top">
                 <div className="usr-order-top-left">
                   <strong>#{order.id}</strong>
-                  <span className="usr-order-badge">{order.status || order.order_status || "Confirmed"}</span>
+                  <span className="usr-order-badge" style={{
+  background: order.status === "Delivered" ? "#f0fdf4" : 
+              order.status === "Rejected" ? "#fef2f2" : "#eff6ff",
+  color: order.status === "Delivered" ? "#10b981" : 
+         order.status === "Rejected" ? "#ef4444" : "#3b82f6"
+}}>
+  {order.status || "Confirmed"}
+</span>
                 </div>
                 <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
               </div>
@@ -350,10 +357,17 @@ export default function MyProfileUser() {
   };
 
   useEffect(() => {
-    fetchProfile();
+  fetchProfile();
+  fetchOrders();
+  fetchReviews();
+
+  // Auto-refresh orders every 30 seconds
+  const interval = setInterval(() => {
     fetchOrders();
-    fetchReviews();
-  }, []);
+  }, 30000);
+
+  return () => clearInterval(interval);
+}, []);
 
   /* ── Save profile ── */
   // PUT /api/customer/profile

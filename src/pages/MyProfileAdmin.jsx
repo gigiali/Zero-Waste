@@ -25,13 +25,7 @@ function ChangePassword({ onCancel, role }) {
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  // Route differs by role
-  const passwordRoute =
-    role === "vendor"
-      ? `${BASE_URL}/vendor/change-password`
-      : role === "customer"
-      ? `${BASE_URL}/profile/change-password`
-      : `${BASE_URL}/admin/change-password`;
+  const passwordRoute = `${BASE_URL}/admin/change-password`;
 
   const handleChange = async () => {
     const e = {};
@@ -181,13 +175,12 @@ export default function UserProfile() {
     localStorage.getItem("token") ||
     sessionStorage.getItem("token");
 
-  // Redirect if not admin / manager
   useEffect(() => {
     if (role && role !== "super_admin" && role !== "manager") {
       if (role === "vendor") navigate("/business/profile");
       else navigate("/profile");
     }
-  }, [role]);
+  }, [role, navigate]);
 
   const [view, setView] = useState("main");
   const [isEditing, setIsEditing] = useState(false);
@@ -204,7 +197,6 @@ export default function UserProfile() {
   });
   const [editData, setEditData] = useState({ ...userData });
 
-  /* ── Fetch profile ── */
   const fetchUserData = async () => {
     try {
       if (!token) return;
@@ -238,8 +230,6 @@ export default function UserProfile() {
     if (token) fetchUserData();
   }, [token]);
 
-  /* ── Save profile ── */
-  // Admin/Manager use PUT /api/profile
   const handleSave = async () => {
     const e = {};
     if (!editData.name.trim()) e.name = "Name is required";
@@ -270,7 +260,6 @@ export default function UserProfile() {
       if (response.ok) {
         setUserData({ ...editData });
         setIsEditing(false);
-        // re-fetch to confirm server state
         await fetchUserData();
       } else if (response.status === 422 && data.errors) {
         const newErrors = {};
@@ -298,8 +287,6 @@ export default function UserProfile() {
     setIsEditing(false);
   };
 
-  /* ── Delete account ── */
-  // Admin self-delete uses DELETE /api/profile
   const handleDeleteAccount = async () => {
     try {
       const response = await fetch(`${BASE_URL}/profile`, {
@@ -318,8 +305,6 @@ export default function UserProfile() {
     }
   };
 
-  /* ── Logout ── */
-  // POST /api/logout to invalidate token on server
   const handleLogout = async () => {
     try {
       await fetch(`${BASE_URL}/logout`, {
@@ -338,7 +323,6 @@ export default function UserProfile() {
     }
   };
 
-  /* ── Avatar initials ── */
   const initials = userData.name
     ? userData.name
         .split(" ")
@@ -379,7 +363,6 @@ export default function UserProfile() {
   if (view === "password")
     return <ChangePassword onCancel={() => setView("main")} role={role} />;
 
-  /* ── Confirm modal helper ── */
   const ConfirmModal = ({ emoji, title, message, onConfirm, onCancel, confirmLabel }) => (
     <div
       style={{
@@ -471,7 +454,6 @@ export default function UserProfile() {
   return (
     <>
       <div className="profile-page">
-        {/* ── Hero ── */}
         <div className="profile-hero">
           <div className="hero-inner">
             <div className="hero-left">
@@ -495,7 +477,6 @@ export default function UserProfile() {
         </div>
 
         <div className="profile-body">
-          {/* ── Personal Information ── */}
           <div className="profile-card">
             <h2 className="card-title">Personal Information</h2>
             <div className="info-list">
@@ -561,7 +542,6 @@ export default function UserProfile() {
             )}
           </div>
 
-          {/* ── Account Settings ── */}
           <div className="profile-card">
             <h2 className="card-title">Account Settings</h2>
             <div className="settings-list">
@@ -581,7 +561,6 @@ export default function UserProfile() {
         </div>
       </div>
 
-      {/* ── Delete Confirm ── */}
       {showDeleteConfirm && (
         <ConfirmModal
           emoji="🗑️"
@@ -593,7 +572,6 @@ export default function UserProfile() {
         />
       )}
 
-      {/* ── Logout Confirm ── */}
       {showLogoutConfirm && (
         <ConfirmModal
           emoji="👋"

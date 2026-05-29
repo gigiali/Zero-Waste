@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../Context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -6,8 +6,32 @@ import Button from "../Components/Button";
 import "../auth-theme.css";
 import "./SignIn.css";
 
-// ✅ الرابط الصحيح والمباشر للباك إند على Railway لمنع خطأ الـ 401 والـ Localhost
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
+
+function SkeletonSignIn() {
+  return (
+    <main className="auth-page">
+      <div className="auth-card">
+        <div className="auth-card-header">
+          <div className="si-skeleton si-skeleton--title" />
+          <div className="si-skeleton si-skeleton--subtitle" />
+        </div>
+        <div className="auth-card-body">
+          <div className="si-skeleton-field">
+            <div className="si-skeleton si-skeleton--label" />
+            <div className="si-skeleton si-skeleton--input" />
+          </div>
+          <div className="si-skeleton-field">
+            <div className="si-skeleton si-skeleton--label" />
+            <div className="si-skeleton si-skeleton--input" />
+          </div>
+          <div className="si-skeleton si-skeleton--options" />
+          <div className="si-skeleton si-skeleton--btn" />
+        </div>
+      </div>
+    </main>
+  );
+}
 
 function SignIn() {
   const { login } = useAuth();
@@ -16,8 +40,16 @@ function SignIn() {
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors]         = useState({});
   const [isLoading, setIsLoading]   = useState(false);
+  const [slowWarning, setSlowWarning] = useState(false);
+  const [pageReady, setPageReady]   = useState(false);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const timeoutRef = useRef(null);
+
+  useEffect(() => {
+    const t = setTimeout(() => setPageReady(true), 500);
+    return () => clearTimeout(t);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem("rememberMe") === "true";
@@ -39,13 +71,15 @@ function SignIn() {
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
 
     setIsLoading(true);
+    setSlowWarning(false);
+    timeoutRef.current = setTimeout(() => setSlowWarning(true), 10000);
+
     try {
-      // ✅ ضرب الـ API الفعلي مباشرة بـ JSON المضمون 100% للسيرفر
       const response = await fetch(`${BASE_URL}/login`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json", 
-          "Accept": "application/json" 
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
         },
         body: JSON.stringify({ email, password }),
       });
@@ -54,7 +88,6 @@ function SignIn() {
       if (response.ok) {
         login(data.user, data.token, rememberMe);
 
-        // ✅ استخراج الـ Role الصح بناءً على الـ ER Diagram (حيث الحقل هو role_type)
         const userRole = data.user?.role_type || data.user?.role || "customer";
 
         if (rememberMe) {
@@ -83,7 +116,6 @@ function SignIn() {
           localStorage.removeItem("userRole");
         }
 
-        // ✅ التوجيه الصحيح بناءً على الـ role_type الفعلي الجاي من الداتا
         if (userRole === "vendor") {
           navigate("/business/profile");
         } else if (userRole === "super_admin" || userRole === "manager" || userRole === "admin") {
@@ -103,9 +135,13 @@ function SignIn() {
       console.error("Login Error:", err);
       setErrors({ general: "Login failed. Please check your connection and try again." });
     } finally {
+      clearTimeout(timeoutRef.current);
       setIsLoading(false);
+      setSlowWarning(false);
     }
   };
+
+  if (!pageReady) return <SkeletonSignIn />;
 
   return (
     <main className="auth-page">
@@ -119,30 +155,49 @@ function SignIn() {
           <form onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
               <label className="auth-label" htmlFor="si-email">Email</label>
-              <input id="si-email" className="auth-input" type="email"
-                placeholder="you@example.com" value={email}
-                onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }} />
+              <input
+                id="si-email"
+                className="auth-input"
+                type="email"
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }}
+              />
               {errors.email && <span className="auth-error-text">{errors.email}</span>}
             </div>
 
             <div className="auth-field">
               <label className="auth-label" htmlFor="si-password">Password</label>
-              <input id="si-password" className="auth-input" type="password"
-                placeholder="••••••••" value={password}
-                onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: "" })); }} />
+              <input
+                id="si-password"
+                className="auth-input"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: "" })); }}
+              />
               {errors.password && <span className="auth-error-text">{errors.password}</span>}
             </div>
 
             <div className="si-options">
               <label className="auth-checkbox-label">
-                <input type="checkbox" checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)} />
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 <span>Remember me</span>
               </label>
               <a href="/forgot-password" className="auth-btn-ghost si-forgot">
                 Forgot password?
               </a>
             </div>
+
+            {slowWarning && isLoading && (
+              <div className="si-timeout-banner">
+                ⏱ This is taking longer than expected — please wait or check your connection.
+              </div>
+            )}
 
             {errors.general && <div className="auth-error-box">{errors.general}</div>}
 

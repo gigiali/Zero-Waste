@@ -15,9 +15,8 @@ export default function OrderConfirmation() {
   };
 
   const handleTrackOrder = () => {
-    // Navigate to order tracking page (you can create this later)
-    alert("Order tracking feature coming soon!");
-  };
+  navigate("/my-orders");
+};
 
   return (
     <div className="confirmation-container">

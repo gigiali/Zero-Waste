@@ -31,7 +31,114 @@
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
-/* ── Hero ── */
+@keyframes skeleton-shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.biz-skeleton-card {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.skeleton-line {
+  height: 16px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 1000px 100%;
+  animation: skeleton-shimmer 2s infinite;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+.skeleton-line.skeleton-title {
+  height: 20px;
+  width: 30%;
+  margin-bottom: 16px;
+}
+
+.biz-timeout-message {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  animation: slideDown 0.3s ease-out;
+  max-width: 90%;
+  z-index: 10000;
+  border-left: 4px solid;
+}
+
+.biz-timeout-error {
+  border-left-color: #ef4444;
+  background: #fef2f2;
+}
+
+.biz-timeout-success {
+  border-left-color: #10b981;
+  background: #f0fdf4;
+}
+
+.biz-timeout-warning {
+  border-left-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.biz-timeout-icon {
+  font-size: 18px;
+  font-weight: bold;
+  min-width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.biz-timeout-error .biz-timeout-icon { color: #ef4444; }
+.biz-timeout-success .biz-timeout-icon { color: #10b981; }
+.biz-timeout-warning .biz-timeout-icon { color: #f59e0b; }
+
+.biz-timeout-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+  flex: 1;
+}
+
+.biz-timeout-error .biz-timeout-text { color: #991b1b; }
+.biz-timeout-success .biz-timeout-text { color: #065f46; }
+.biz-timeout-warning .biz-timeout-text { color: #92400e; }
+
+.biz-timeout-close {
+  background: none;
+  border: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: #999;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s;
+}
+
+.biz-timeout-close:hover { color: #666; }
+
 .biz-hero {
   background: var(--biz-hero);
   padding: 52px 0 56px;
@@ -134,7 +241,6 @@
   border-color: rgba(255,255,255,0.5);
 }
 
-/* ── Body ── */
 .biz-body {
   max-width: 900px;
   margin: 28px auto 48px;
@@ -144,7 +250,6 @@
   gap: 20px;
 }
 
-/* ── Card ── */
 .biz-card {
   background: var(--biz-card);
   border-radius: 16px;
@@ -161,17 +266,6 @@
   letter-spacing: -0.01em;
 }
 
-.biz-section-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-}
-
-.biz-section-head .biz-card-title { margin-bottom: 0; }
-
-/* ── Info rows ── */
 .biz-info-list {
   display: flex;
   flex-direction: column;
@@ -186,6 +280,10 @@
 }
 
 .biz-info-row:last-child { border-bottom: none; }
+
+.biz-info-row-file {
+  align-items: flex-start;
+}
 
 .biz-info-icon {
   width: 36px; height: 36px;
@@ -226,7 +324,6 @@
   margin-top: 2px;
 }
 
-/* ── Inputs ── */
 .biz-input {
   font-size: 0.95rem;
   color: var(--biz-value);
@@ -255,7 +352,10 @@
   margin-top: 3px;
 }
 
-/* ── File upload ── */
+.biz-file-input {
+  display: none;
+}
+
 .biz-upload-btn {
   display: inline-flex;
   align-items: center;
@@ -270,6 +370,7 @@
   cursor: pointer;
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: border-color 0.15s, background 0.15s;
+  margin-top: 8px;
 }
 
 .biz-upload-btn:hover {
@@ -283,6 +384,7 @@
 .biz-preview-wrap {
   position: relative;
   display: inline-block;
+  margin-top: 8px;
   margin-bottom: 8px;
 }
 
@@ -325,12 +427,10 @@
   font-size: 0.9rem;
   font-weight: 600;
   text-decoration: none;
-  margin-top: 2px;
 }
 
 .biz-doc-link:hover { text-decoration: underline; }
 
-/* ── Edit actions ── */
 .biz-edit-actions {
   display: flex;
   gap: 12px;
@@ -353,6 +453,11 @@
 .biz-btn-save:hover { background: var(--accent-dark); box-shadow: 0 4px 12px rgba(6,78,43,0.25); }
 .biz-btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
 
+.biz-btn-fullwidth {
+  width: 100%;
+  max-width: 100%;
+}
+
 .biz-btn-cancel {
   background: #f1f5f1;
   color: #374151;
@@ -367,8 +472,8 @@
 }
 
 .biz-btn-cancel:hover { background: var(--biz-border); }
+.biz-btn-cancel:disabled { background: #e5e7eb; cursor: not-allowed; }
 
-/* ── Settings list ── */
 .biz-settings-list {
   display: flex;
   flex-direction: column;
@@ -390,7 +495,6 @@
   text-align: left;
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: background 0.15s;
-  border-radius: 0;
 }
 
 .biz-settings-list .biz-setting-row:last-child { border-bottom: none; }
@@ -415,7 +519,6 @@
 .biz-setting-red .biz-setting-icon { background: #fef2f2; color: #ef4444; }
 .biz-setting-red:hover { background: #fef2f2 !important; }
 
-/* ── Error / General ── */
 .biz-general-error {
   color: #ef4444;
   font-size: 0.84rem;
@@ -423,7 +526,6 @@
   margin-top: 8px;
 }
 
-/* ── Modals ── */
 .biz-overlay {
   position: fixed;
   inset: 0;
@@ -489,7 +591,12 @@
   font-size: 0.88rem;
 }
 
-/* ── Password page ── */
+.biz-pw-group {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .biz-pw-wrap {
   display: flex;
   flex-direction: column;
@@ -519,7 +626,6 @@
 .biz-pw-error { color: #ef4444; font-size: 0.82rem; font-weight: 600; }
 .biz-pw-success { color: var(--accent); font-size: 0.82rem; font-weight: 700; }
 
-/* ── Pending badge ── */
 .biz-status-badge {
   display: inline-flex;
   align-items: center;
@@ -528,13 +634,13 @@
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 700;
+  margin-top: 6px;
 }
 
 .biz-status-badge.pending { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
 .biz-status-badge.approved { background: var(--accent-light); color: var(--accent-dark); border: 1px solid var(--accent-border); }
 .biz-status-badge.rejected { background: #fef2f2; color: #ef4444; border: 1px solid #fca5a5; }
 
-/* ── Responsive ── */
 @media (max-width: 600px) {
   .biz-hero-inner { flex-direction: column; align-items: flex-start; gap: 18px; }
   .biz-card { padding: 20px 16px; }

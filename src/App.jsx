@@ -62,7 +62,6 @@ function App() {
           <Route path="/favorites"      element={<Favorites />} />
           <Route path="/offer/:id"      element={<><Navigation /> <OfferDetail /></>} />
           <Route path="/restaurant/:id" element={<><Navigation /> <RestaurantDetail /></>} />
-
           {/* Business */}
           <Route path="/business-setup"   element={<BusinessSetup />} />
           <Route path="/business"         element={<Business />} />

@@ -5,13 +5,13 @@ import {
   MoreVertical,
   Eye,
   CheckCircle,
-  Trash2,
   Loader2,
   AlertTriangle,
   ShieldAlert,
   EyeOff,
   BookOpen,
   ArrowLeft,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
 import "./ReviewModeration.css";
@@ -21,7 +21,6 @@ const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager    = (r) => r === "manager";
 const canManage    = (r) => isSuperAdmin(r) || isManager(r);
-const canDelete    = (r) => isSuperAdmin(r);
 
 const statusConfig = {
   visible: { bg: "var(--rm-green-bg)", text: "var(--rm-green-text)", dot: "#10b981", label: "Visible" },
@@ -29,6 +28,25 @@ const statusConfig = {
 };
 const fallbackStatus = { bg: "var(--rm-muted-bg)", text: "var(--rm-muted-text)", dot: "#94a3b8", label: "Open" };
 const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
+
+function SkeletonRow() {
+  return (
+    <tr className="rm-skeleton-row">
+      <td><div className="rm-skeleton rm-skeleton--text" /></td>
+      <td>
+        <div className="rm-skeleton-reviewer">
+          <div className="rm-skeleton rm-skeleton--avatar" />
+          <div className="rm-skeleton rm-skeleton--text rm-skeleton--short" />
+        </div>
+      </td>
+      <td><div className="rm-skeleton rm-skeleton--text rm-skeleton--long" /></td>
+      <td><div className="rm-skeleton rm-skeleton--text rm-skeleton--xs" /></td>
+      <td><div className="rm-skeleton rm-skeleton--badge" /></td>
+      <td><div className="rm-skeleton rm-skeleton--text rm-skeleton--short" /></td>
+      <td><div className="rm-skeleton rm-skeleton--icon" /></td>
+    </tr>
+  );
+}
 
 function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   const [open, setOpen] = useState(false);
@@ -56,7 +74,6 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
         },
       });
       const data = await res.json().catch(() => ({}));
-      console.log("Toggle response:", res.status, data);
       if (res.ok) onStatusChange(report.id, report.status === "visible" ? "hidden" : "visible");
       else alert("Failed: " + (data?.message ?? res.status));
     } catch (err) {
@@ -70,10 +87,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   const handleMenuToggle = () => {
     if (!open && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPos({
-        top: rect.bottom + 6,
-        left: rect.right - 170,
-      });
+      setDropdownPos({ top: rect.bottom + 6, left: rect.right - 170 });
     }
     setOpen((v) => !v);
   };
@@ -97,9 +111,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
         disabled={busy}
         aria-label="Actions"
       >
-        {busy
-          ? <Loader2 size={15} className="rm-spin" />
-          : <MoreVertical size={15} />}
+        {busy ? <Loader2 size={15} className="rm-spin" /> : <MoreVertical size={15} />}
       </button>
 
       {open && (
@@ -122,29 +134,32 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   );
 }
 
-/* ── Main Page ────────────────────────────────────────────────────────── */
 export default function ReviewModeration() {
   const navigate = useNavigate();
   const { role, token: contextToken } = useAuth();
   const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
 
-  const [reviews,      setReviews]      = useState([]);
-  const [loading,      setLoading]      = useState(false);
-  const [searchTerm,   setSearchTerm]   = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [reviews,     setReviews]     = useState([]);
+  const [loading,     setLoading]     = useState(false);
+  const [slowWarning, setSlowWarning] = useState(false);
+  const [searchTerm,  setSearchTerm]  = useState("");
+  const [filterStatus,setFilterStatus]= useState("all");
 
   useEffect(() => {
     if (!role || !token) return;
+    let timeoutId;
+
     (async () => {
       setLoading(true);
+      setSlowWarning(false);
+      timeoutId = setTimeout(() => setSlowWarning(true), 10000);
+
       try {
         const offersRes  = await fetch(`${BASE_URL}/offers`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         const offersJson = await offersRes.json();
-        console.log("Offers response:", offersJson);
         const offers     = Array.isArray(offersJson?.data) ? offersJson.data : (offersJson?.data?.data ?? []);
-        console.log("Parsed offers count:", offers.length);
 
         const reviewArrays = await Promise.all(
           offers.map(async (offer) => {
@@ -154,17 +169,12 @@ export default function ReviewModeration() {
               });
               const d    = await r.json();
               const revs = d?.reviews ?? d?.data ?? (Array.isArray(d) ? d : []);
-              console.log(`Offer ${offer.id} (${offer.title}): ${revs.length} reviews`);
               return revs.map((rev) => ({ ...rev, offer }));
-            } catch (e) { 
-              console.error(`Error fetching reviews for offer ${offer.id}:`, e);
-              return []; 
-            }
+            } catch { return []; }
           })
         );
 
         const raw = reviewArrays.flat();
-        console.log("Total reviews fetched:", raw.length);
         setReviews(
           raw.map((r) => ({
             id:          r.id,
@@ -180,9 +190,13 @@ export default function ReviewModeration() {
       } catch (err) {
         console.error("ReviewModeration fetch error:", err);
       } finally {
+        clearTimeout(timeoutId);
         setLoading(false);
+        setSlowWarning(false);
       }
     })();
+
+    return () => clearTimeout(timeoutId);
   }, [role, token]);
 
   const handleStatusChange = (id, status) =>
@@ -197,7 +211,10 @@ export default function ReviewModeration() {
 
   const filtered = reviews.filter((r) => {
     const q = searchTerm.toLowerCase();
-    const matchSearch = r.offer_title.toLowerCase().includes(q) || r.comment.toLowerCase().includes(q) || r.reviewer.toLowerCase().includes(q);
+    const matchSearch =
+      r.offer_title.toLowerCase().includes(q) ||
+      r.comment.toLowerCase().includes(q) ||
+      r.reviewer.toLowerCase().includes(q);
     const matchStatus = filterStatus === "all" || r.status === filterStatus;
     return matchSearch && matchStatus;
   });
@@ -207,7 +224,6 @@ export default function ReviewModeration() {
 
   return (
     <div className="rm-page">
-      {/* ── Header ── */}
       <div className="rm-header">
         <div className="rm-header__left">
           <button className="rm-back-btn" onClick={() => navigate("/admin")}>
@@ -222,27 +238,32 @@ export default function ReviewModeration() {
         </div>
       </div>
 
-      {/* ── Stats ── */}
       <div className="rm-stats">
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--blue"><BookOpen size={18} /></span>
           <div>
             <p className="rm-stat__label">Total Reviews</p>
-            <p className="rm-stat__value">{reviews.length}</p>
+            <p className="rm-stat__value">
+              {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : reviews.length}
+            </p>
           </div>
         </div>
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--green"><CheckCircle size={18} /></span>
           <div>
             <p className="rm-stat__label">Visible</p>
-            <p className="rm-stat__value rm-stat__value--green">{totalVisible}</p>
+            <p className="rm-stat__value rm-stat__value--green">
+              {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : totalVisible}
+            </p>
           </div>
         </div>
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--red"><EyeOff size={18} /></span>
           <div>
             <p className="rm-stat__label">Hidden</p>
-            <p className="rm-stat__value rm-stat__value--red">{totalHidden}</p>
+            <p className="rm-stat__value rm-stat__value--red">
+              {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : totalHidden}
+            </p>
           </div>
         </div>
         <div className="rm-stat">
@@ -250,13 +271,14 @@ export default function ReviewModeration() {
           <div>
             <p className="rm-stat__label">Hidden Rate</p>
             <p className="rm-stat__value rm-stat__value--amber">
-              {reviews.length ? Math.round((totalHidden / reviews.length) * 100) : 0}%
+              {loading
+                ? <span className="rm-skeleton rm-skeleton--stat" />
+                : `${reviews.length ? Math.round((totalHidden / reviews.length) * 100) : 0}%`}
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── Controls ── */}
       <div className="rm-controls">
         <div className="rm-search">
           <Search size={16} className="rm-search__icon" />
@@ -279,89 +301,90 @@ export default function ReviewModeration() {
         </select>
       </div>
 
-      {/* ── Table ── */}
+      {slowWarning && loading && (
+        <div className="rm-timeout-banner">
+          <Clock size={16} />
+          <span>This is taking longer than expected — please wait or check your connection.</span>
+        </div>
+      )}
+
       <div className="rm-card">
-        {loading ? (
-          <div className="rm-loading">
-            <Loader2 size={20} className="rm-spin" />
-            <span>Loading reviews…</span>
-          </div>
-        ) : (
-          <div className="rm-table-wrap">
-            <table className="rm-table">
-              <thead>
+        <div className="rm-table-wrap">
+          <table className="rm-table">
+            <thead>
+              <tr>
+                <th>Offer</th>
+                <th>Reviewer</th>
+                <th>Comment</th>
+                <th>Rating</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {loading ? (
+                Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
+              ) : filtered.length > 0 ? (
+                filtered.map((rev) => {
+                  const st = getStatus(rev.status);
+                  return (
+                    <tr key={rev.id} className="rm-table__row">
+                      <td className="rm-table__offer">
+                        <span className="rm-offer-name">{rev.offer_title}</span>
+                      </td>
+                      <td className="rm-table__reviewer">
+                        <span className="rm-avatar">
+                          {(rev.reviewer[0] ?? "?").toUpperCase()}
+                        </span>
+                        {rev.reviewer}
+                      </td>
+                      <td className="rm-table__comment" title={rev.comment}>
+                        {rev.comment}
+                      </td>
+                      <td className="rm-table__rating">
+                        {rev.rating != null ? (
+                          <span className="rm-rating">★ {rev.rating}</span>
+                        ) : "—"}
+                      </td>
+                      <td>
+                        <span
+                          className="rm-status-badge"
+                          style={{ background: st.bg, color: st.text }}
+                        >
+                          <span className="rm-status-dot" style={{ background: st.dot }} />
+                          {st.label}
+                        </span>
+                      </td>
+                      <td className="rm-table__date">
+                        {rev.created_at
+                          ? new Date(rev.created_at).toLocaleDateString("en-GB", {
+                              day: "2-digit", month: "short", year: "numeric",
+                            })
+                          : "—"}
+                      </td>
+                      <td>
+                        <ActionMenu
+                          report={{ ...rev, reported_item: rev.offer_title }}
+                          role={role}
+                          token={token}
+                          onStatusChange={handleStatusChange}
+                          onDelete={handleDelete}
+                        />
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
                 <tr>
-                  <th>Offer</th>
-                  <th>Reviewer</th>
-                  <th>Comment</th>
-                  <th>Rating</th>
-                  <th>Status</th>
-                  <th>Date</th>
-                  <th></th>
+                  <td colSpan={7} className="rm-table__empty">
+                    No reviews found
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {filtered.length > 0 ? (
-                  filtered.map((rev) => {
-                    const st = getStatus(rev.status);
-                    return (
-                      <tr key={rev.id} className="rm-table__row">
-                        <td className="rm-table__offer">
-                          <span className="rm-offer-name">{rev.offer_title}</span>
-                        </td>
-                        <td className="rm-table__reviewer">
-                          <span className="rm-avatar">
-                            {(rev.reviewer[0] ?? "?").toUpperCase()}
-                          </span>
-                          {rev.reviewer}
-                        </td>
-                        <td className="rm-table__comment" title={rev.comment}>
-                          {rev.comment}
-                        </td>
-                        <td className="rm-table__rating">
-                          {rev.rating != null ? (
-                            <span className="rm-rating">★ {rev.rating}</span>
-                          ) : "—"}
-                        </td>
-                        <td>
-                          <span
-                            className="rm-status-badge"
-                            style={{ background: st.bg, color: st.text }}
-                          >
-                            <span className="rm-status-dot" style={{ background: st.dot }} />
-                            {st.label}
-                          </span>
-                        </td>
-                        <td className="rm-table__date">
-                          {rev.created_at
-                            ? new Date(rev.created_at).toLocaleDateString("en-GB", {
-                                day: "2-digit", month: "short", year: "numeric",
-                              })
-                            : "—"}
-                        </td>
-                        <td>
-                          <ActionMenu
-                            report={{ ...rev, reported_item: rev.offer_title }}
-                            role={role}
-                            token={token}
-                            onStatusChange={handleStatusChange}
-                            onDelete={handleDelete}
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={7} className="rm-table__empty">
-                      {loading ? "" : "No reviews found"}
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        )}
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
