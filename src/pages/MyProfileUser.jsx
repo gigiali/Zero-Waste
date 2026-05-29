@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   User, Mail, Phone, MapPin, Edit2, LogOut, Trash2,
@@ -339,8 +339,7 @@ export default function MyProfileUser() {
     }
   };
 
-  /* ── Fetch orders ── */
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     setLoadingOrders(true);
     try {
       const token = getToken();
@@ -362,17 +361,13 @@ export default function MyProfileUser() {
 
       if (res.ok && responseData) {
         let extracted = [];
-
         if (Array.isArray(responseData)) {
           extracted = responseData;
-        } else if (responseData.data && Array.isArray(responseData.data)) {
-          extracted = responseData.data;
         } else if (responseData.orders && Array.isArray(responseData.orders)) {
           extracted = responseData.orders;
-        } else if (responseData.data && responseData.data.data && Array.isArray(responseData.data.data)) {
-          extracted = responseData.data.data;
+        } else if (responseData.data) {
+          extracted = Array.isArray(responseData.data) ? responseData.data : (responseData.data.data || []);
         }
-
         setOrders(extracted);
       }
     } catch (err) {
@@ -380,7 +375,7 @@ export default function MyProfileUser() {
     } finally {
       setLoadingOrders(false);
     }
-  };
+  }, []);
 
   /* ── Fetch reviews ── */
   const fetchReviews = async () => {
@@ -398,12 +393,24 @@ export default function MyProfileUser() {
     }
   };
 
+  /* ── Handle order-placed event ── */
+  
+useEffect(() => {
+    const handleOrderPlaced = () => {
+      setLoadingOrders(true);
+      fetchOrders();
+      if (activeTab !== "orders") setActiveTab("orders");
+    };
+    window.addEventListener("order-placed", handleOrderPlaced);
+    return () => window.removeEventListener("order-placed", handleOrderPlaced);
+  }, [activeTab]);
+
+  // هنادي فقط على البروفايل في الأول عشان البيانات الأساسية تظهر فوراً
   useEffect(() => {
     fetchProfile();
-    fetchOrders();
-    fetchReviews();
   }, []);
 
+  // جلب بيانات الـ Tabs التانية فقط لما اليوزر يضغط عليها عشان نمنع الكراش
   const handleTabChange = (tabId) => {
     if (isEditing) handleCancel();
     setActiveTab(tabId);

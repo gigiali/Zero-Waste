@@ -6,8 +6,8 @@ import {
   ChevronRight, Loader, AlertCircle, CheckCircle,
 } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, BarChart, Bar,
+  LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+  ResponsiveContainer, BarChart, Bar, Cell,
 } from "recharts";
 import { NotificationsPanel } from "../Components/Notificationsdropdown";
 import { useNotifications } from "../Context/Notificationscontext";
@@ -80,6 +80,7 @@ const normalizeOrder = (order) => {
     status: order.status || "Pending",
     branch_id: order.branch_id || offer?.branch_id || firstItem?.branch_id,
     branch: branchName(order.branch || offer?.branch),
+    created_at: order.created_at || order.createdAt || order.date || null,
   };
 };
 
@@ -138,6 +139,7 @@ export default function Business() {
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteBranchId, setDeleteBranchId] = useState(null);
 
+  // ── Fetch profile + branches on mount ──
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -201,6 +203,40 @@ export default function Business() {
     fetchData();
   }, []);
 
+  // ── Listen for new orders placed by customers ──
+  useEffect(() => {
+    const handleOrderPlaced = () => {
+      if (selectedBranch) {
+        const fetchLatestOrders = async () => {
+          const token = getToken();
+          if (!token) return;
+          try {
+            const res = await fetch("/api/vendor/orders", {
+              headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const data = await readJson(res);
+              const orderList = extractList(data, ["orders"]);
+              setOrders(orderList.map(normalizeOrder));
+            }
+          } catch (err) {
+            console.error("Orders refresh error:", err);
+          }
+        };
+        fetchLatestOrders();
+      }
+    };
+
+    window.addEventListener("order-placed", handleOrderPlaced);
+    window.addEventListener("zw-user-orders-updated", handleOrderPlaced);
+    
+    return () => {
+      window.removeEventListener("order-placed", handleOrderPlaced);
+      window.removeEventListener("zw-user-orders-updated", handleOrderPlaced);
+    };
+  }, [selectedBranch]);
+  
+  // ── Fetch offers when branch changes ──
   useEffect(() => {
     const fetchOffers = async () => {
       const token = getToken();
@@ -229,6 +265,7 @@ export default function Business() {
     if (selectedBranch) fetchOffers();
   }, [selectedBranch]);
 
+  // ── Fetch orders when branch changes ──
   useEffect(() => {
     const fetchOrders = async () => {
       const token = getToken();
@@ -257,40 +294,6 @@ export default function Business() {
     if (selectedBranch) fetchOrders();
   }, [selectedBranch]);
 
-  useEffect(() => {
-    const fetchSales = async () => {
-      const token = getToken();
-      if (!token) return;
-
-      try {
-        const res = await fetch("/api/sales-report", {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await readJson(res);
-          const salesList = extractList(data, ["daily_sales", "sales", "sales_by_day", "chart"]);
-
-          if (salesList.length > 0) {
-            setSalesData(salesList.map(normalizeSalesPoint));
-          }
-
-          const revenue = readRevenue(data);
-          if (revenue !== undefined) {
-            setKpiRevenue(`EGP ${revenue}`);
-          }
-        }
-      } catch (err) {
-        console.error("Sales report fetch error:", err);
-      }
-    };
-
-    if (selectedBranch) fetchSales();
-  }, [selectedBranch]);
-
   const selectedBranchName = branchName(selectedBranch);
 
   const filteredOffers = selectedBranch
@@ -304,6 +307,42 @@ export default function Business() {
         (o) => o.branch_id === selectedBranch.id || o.branch === selectedBranchName
       )
     : orders;
+
+  // ── Build chart data from orders ──
+  useEffect(() => {
+    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    const map = {};
+    days.forEach((d) => { map[d] = { day: d, sales: 0, orders: 0 }; });
+
+    filteredOrders.forEach((order) => {
+      const amount = Number(String(order.amount).replace("EGP ", "")) || 0;
+      const dateKey = order.created_at;
+      let day;
+      if (dateKey) {
+        const d = new Date(dateKey);
+        if (!isNaN(d.getTime())) {
+          day = days[d.getDay()];
+        }
+      }
+      // لو مفيش تاريخ خالص، متضيفش على الـ chart
+      if (day && map[day]) {
+        map[day].sales += amount;
+        map[day].orders += 1;
+      }
+    });
+
+    const chartData = days.map((d) => map[d]);
+    const hasData = chartData.some((d) => d.sales > 0 || d.orders > 0);
+    setSalesData(hasData ? chartData : FALLBACK_CHART);
+
+    // ── احسب الـ Revenue من الـ orders مباشرة ──
+    const totalRevenue = filteredOrders.reduce((sum, order) => {
+      return sum + (Number(String(order.amount).replace("EGP ", "")) || 0);
+    }, 0);
+    setKpiRevenue(totalRevenue > 0 ? `EGP ${totalRevenue.toLocaleString()}` : "EGP 0");
+
+  }, [orders, selectedBranch]);
+
 
   const openAdd = () => {
     setEditingId(null);
@@ -650,7 +689,6 @@ export default function Business() {
             margin: "4px 16px 8px",
           }}
         />
-        
 
         <nav className="biz-nav">
           {navItems.map((item) => {
@@ -874,37 +912,54 @@ export default function Business() {
               ))}
             </div>
 
-            <div className="biz-charts">
-              <div className="biz-chart-card">
-                <h3 className="biz-chart-title">Sales Overview</h3>
-                <ResponsiveContainer width="100%" height={240}>
-                  <LineChart data={salesData.length > 0 ? salesData : FALLBACK_CHART}>
+            <div className="biz-charts" style={{ display: "flex", flexDirection: "row", gap: "16px", width: "100%" }}>
+              <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
+                <h3 className="biz-chart-title">Revenue Overview (EGP)</h3>
+                <ResponsiveContainer width="100%" height={260}>
+                  <AreaChart data={salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.1} />
+                      </linearGradient>
+                    </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `EGP ${v}`} />
+                    <Tooltip formatter={(value) => [`EGP ${value.toLocaleString()}`, "Revenue"]} />
                     <Legend />
-                    <Line
+                    <Area
                       type="monotone"
                       dataKey="sales"
+                      name="Revenue (EGP)"
                       stroke="#10b981"
                       strokeWidth={2}
-                      dot={{ r: 4 }}
-                      name="Sales"
+                      fill="url(#revenueGrad)"
                     />
-                  </LineChart>
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <div className="biz-chart-card">
+
+              <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
                 <h3 className="biz-chart-title">Orders Overview</h3>
-                <ResponsiveContainer width="100%" height={240}>
-                  <BarChart data={salesData.length > 0 ? salesData : FALLBACK_CHART}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
-                    <YAxis tick={{ fontSize: 12 }} />
-                    <Tooltip />
+                    <YAxis
+                      tick={{ fontSize: 12 }}
+                      allowDecimals={false}
+                    />
+                    <Tooltip formatter={(value) => [value, "Orders"]} />
                     <Legend />
-                    <Bar dataKey="orders" fill="#3b82f6" name="Orders" />
+                    <Bar dataKey="orders" name="Orders" radius={[4, 4, 0, 0]}>
+                      {(salesData.length > 0 ? salesData : FALLBACK_CHART).map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`hsl(${220 + index * 10}, 70%, ${35 + (entry.orders / Math.max(...(salesData.map(d => d.orders)), 1)) * 30}%)`}
+                        />
+                      ))}
+                    </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>

@@ -302,7 +302,6 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
       const data = await response.json();
 
-      // التعديل السحري هنا: يقبل 200 أو 201 أو أي رد ناجح
       if (response.ok || response.status === 200 || response.status === 201) {
         const firstItem = cartItems[0];
         const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
@@ -314,7 +313,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone,
         });
 
-        // 2. تحديث كمية الـ Offers المتاحة محلياً لو مستخدمة
+        // 2. تحديث كمية الـ Offers المتاحة محلياً
         const storedOffers = JSON.parse(localStorage.getItem("zw_offers") || "[]");
         if (storedOffers.length > 0) {
           const updatedOffers = storedOffers.map(offer => {
@@ -331,7 +330,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           window.dispatchEvent(new Event("zw-offers-updated"));
         }
 
-        // 3. إعادة جلب العروض من الـ API الحقيقي لتحديث الحصص
+        // 3. إعادة جلب العروض من الـ API
         if (fetchOffers) {
           try {
             await fetchOffers();
@@ -340,8 +339,29 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           }
         }
 
-        // 4. مسح الكارت وفتح شاشة النجاح
+        // 4. مسح الكارت
         clearCart();
+        
+        // 5. 🔔 تحديث الـ orders في كل الـ listeners - ORDER PLACED EVENT
+        const orderData = {
+          id: data.order?.id || data.id || `ORD-${Date.now()}`,
+          status: "pending",
+          total_amount: total,
+          vendor_name: businessName,
+          payment_method: selectedMethod,
+          delivery_type: deliveryMethod,
+          order_items: cartItems.map(item => ({
+            offer: { title: item.title },
+            quantity: item.quantity,
+            price: item.discountedPrice || item.discountPrice || 0
+          })),
+          created_at: new Date().toISOString()
+        };
+        
+        window.dispatchEvent(new CustomEvent("order-placed", { 
+          detail: orderData
+        }));
+        
         setIsSubmitting(false);
         setApiSuccess(true);
       } else {
