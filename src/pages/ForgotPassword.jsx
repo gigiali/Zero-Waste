@@ -4,9 +4,6 @@ import { useTranslation } from "react-i18next";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
-/* ─────────────────────────────────────────────────────────────────────────
-   RecoveryFrame  —  shared shell for ForgotPassword / VerifyCode / ResetPassword
-   ───────────────────────────────────────────────────────────────────────── */
 function RecoveryFrame({ title, children, showFooter = true }) {
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -44,15 +41,10 @@ function RecoveryFrame({ title, children, showFooter = true }) {
   );
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
-   ForgotPassword
-   ───────────────────────────────────────────────────────────────────────── */
 export default function ForgotPassword() {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const [mode, setMode] = useState("email");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
@@ -60,21 +52,17 @@ export default function ForgotPassword() {
     e.preventDefault();
     setError("");
 
-    if (mode === "email") {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError("Enter a valid email address");
-        return;
-      }
-      sessionStorage.setItem("passwordResetEmail", email);
-    } else {
-      if (!/^\+?[0-9\s\-().]{7,20}$/.test(phone)) {
-        setError("Enter a valid phone number");
-        return;
-      }
-      sessionStorage.setItem("passwordResetPhone", phone);
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError(t("auth.invalidEmail"));
+      return;
     }
 
+    sessionStorage.setItem("passwordResetEmail", email);
     setIsLoading(true);
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
+
     try {
       const response = await fetch("/api/forgot-password", {
         method: "POST",
@@ -82,28 +70,29 @@ export default function ForgotPassword() {
           "Content-Type": "application/json",
           Accept: "application/json",
         },
-        body: JSON.stringify(mode === "email" ? { email } : { phone }),
+        body: JSON.stringify({ email }),
+        signal: controller.signal,
       });
+
+      clearTimeout(timeoutId);
+
       const data = await response.json();
 
       if (response.ok) {
         navigate("/verify-code");
       } else {
-        setError(data.message || "Failed to send verification code");
+        setError(data.message || t("auth.failedSendCode"));
       }
     } catch (err) {
-      console.error("Forgot password error:", err);
-      setError("Network error. Please try again.");
+      clearTimeout(timeoutId);
+      if (err.name === "AbortError") {
+        setError(t("auth.requestTimeout"));
+      } else {
+        setError(t("auth.networkError"));
+      }
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const switchMode = (m) => {
-    setMode(m);
-    setError("");
-    setEmail("");
-    setPhone("");
   };
 
   return (
@@ -133,7 +122,7 @@ export default function ForgotPassword() {
           className="auth-btn-primary fp-submit"
           disabled={isLoading}
         >
-          {isLoading ? t("auth.sendRecoveryCode") : t("auth.sendRecoveryCode")}
+          {isLoading ? t("auth.sending") : t("auth.sendRecoveryCode")}
         </button>
 
         <div className="fp-back-row">
