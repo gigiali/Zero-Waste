@@ -44,6 +44,7 @@ export default function Navigation({
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState([]);
   const [showMapSearchResults, setShowMapSearchResults] = useState(false);
+  const [favoritesCount, setFavoritesCount] = useState(0);
 
   const mapSearchTimeoutRef = useRef(null);
   const mapRef = useRef(null);
@@ -85,6 +86,32 @@ export default function Navigation({
     i18n.on("languageChanged", handleLanguageChanged);
     return () => i18n.off("languageChanged", handleLanguageChanged);
   }, [i18n]);
+
+  // ── Favorites Count ───────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!isLoggedIn || role !== "customer") return;
+
+    const fetchFavCount = async () => {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch("https://zero-waste-production.up.railway.app/api/favorites", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const raw = data?.data ?? data?.favorites ?? (Array.isArray(data) ? data : []);
+        setFavoritesCount(Array.isArray(raw) ? raw.length : 0);
+      } catch { setFavoritesCount(0); }
+    };
+
+    fetchFavCount();
+    window.addEventListener("zw-favorites-updated", fetchFavCount);
+    return () => window.removeEventListener("zw-favorites-updated", fetchFavCount);
+  }, [isLoggedIn, role]);
 
   // ── Language ──────────────────────────────────────────────────────────────
 
@@ -148,7 +175,6 @@ export default function Navigation({
     );
   };
 
-  // sends lat/lng to backend immediately after getting location
   const applyLocation = (lat, lng, name) => {
     fetchNearbyAndFee(lat, lng, name);
   };
@@ -423,6 +449,17 @@ export default function Navigation({
               onMouseLeave={pillHoverOut}
             >
               <Heart size={18} />
+              {favoritesCount > 0 && (
+                <span style={{
+                  position: "absolute", top: "-6px", right: "-6px",
+                  background: "#ef4444", color: "white", borderRadius: "50%",
+                  width: "16px", height: "16px", display: "flex", alignItems: "center",
+                  justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold",
+                  border: "2px solid white", boxShadow: "0 2px 4px rgba(239,68,68,0.2)",
+                }}>
+                  {favoritesCount > 99 ? "99+" : favoritesCount}
+                </span>
+              )}
             </div>
           )}
 

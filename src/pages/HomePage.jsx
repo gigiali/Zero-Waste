@@ -22,6 +22,8 @@ import {
 import { useCart } from "../Context/CartContext";
 import { useLocationContext } from "../Context/LocationContext";
 
+const BASE_URL = "https://zero-waste-production.up.railway.app";
+
 function CountdownTimer({ pickupTime }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
@@ -112,7 +114,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
       sessionStorage.getItem("auth_token");
 
     if (!token) { alert("Please sign in to submit a review."); return; }
-
     const formData = new FormData();
     if (!order.offerId && !order.id) { alert("Cannot submit review: missing offer ID."); return; }
     formData.append("offer_id", order.offerId ?? order.items?.[0]?.offer_id ?? order.items?.[0]?.id);
@@ -125,7 +126,8 @@ function OrderTrackingStrip({ order, onDismiss }) {
     try {
       const headers = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
-      const response = await fetch("https://zero-waste-production.up.railway.app/api/reviews", { method: "POST", headers, body: formData });      if (!response.ok) throw new Error("Failed to submit review");
+      const response = await fetch(`${BASE_URL}/api/reviews`, { method: "POST", headers, body: formData });
+      if (!response.ok) throw new Error("Failed to submit review");
       setSubmitted(true);
       setShowReview(false);
       removeImage();
@@ -227,6 +229,81 @@ function OrderTrackingStrip({ order, onDismiss }) {
   );
 }
 
+// ── Recommended Offer Card ────────────────────────────────────────────────────
+function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn }) {
+  const discount = offer.original_price && offer.discount_price
+    ? Math.round(((offer.original_price - offer.discount_price) / offer.original_price) * 100)
+    : 0;
+
+  const imageUrl = offer.image_url || (offer.image
+    ? (offer.image.startsWith("http") ? offer.image : `${BASE_URL}/${offer.image.replace(/^\/+/, "")}`)
+    : null);
+
+  const pickupTime = offer.expiration_time
+    ? new Date(offer.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+    : "Today";
+
+  return (
+    <div
+      onClick={() => onNavigate(`/offer/${offer.id}`)}
+      style={{
+        background: "white",
+        borderRadius: "16px",
+        overflow: "hidden",
+        cursor: "pointer",
+        border: "2px solid #d1fae5",
+        boxShadow: "0 4px 16px rgba(16,185,129,0.12)",
+        transition: "transform 0.2s, box-shadow 0.2s",
+        minWidth: "220px",
+        flex: "0 0 220px",
+      }}
+      onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 8px 24px rgba(16,185,129,0.2)"; }}
+      onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.12)"; }}
+    >
+      <div style={{ position: "relative", height: "140px", background: "#f3f4f6" }}>
+        {imageUrl ? (
+          <img src={imageUrl} alt={offer.title} style={{ width: "100%", height: "100%", objectFit: "cover" }}
+            onError={(e) => { e.target.onerror = null; e.target.src = "/assets/images/e.png"; }} />
+        ) : (
+          <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2.5rem" }}>🍽️</div>
+        )}
+        {discount > 0 && (
+          <div style={{ position: "absolute", top: "8px", right: "8px", background: "#ef4444", color: "white", borderRadius: "8px", padding: "2px 8px", fontSize: "0.75rem", fontWeight: 700 }}>
+            -{discount}%
+          </div>
+        )}
+        <div style={{ position: "absolute", bottom: "8px", left: "8px" }}>
+          <CountdownTimer pickupTime={pickupTime} />
+        </div>
+      </div>
+      <div style={{ padding: "12px" }}>
+        <h4 style={{ margin: "0 0 4px", fontSize: "0.9rem", fontWeight: 700, color: "#111827", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+          {offer.title}
+        </h4>
+        {offer.average_rating > 0 && (
+          <div style={{ display: "flex", alignItems: "center", gap: "3px", marginBottom: "6px" }}>
+            <Star size={12} fill="#f59e0b" color="#f59e0b" />
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400e" }}>{Number(offer.average_rating).toFixed(1)}</span>
+          </div>
+        )}
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+          <div>
+            <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#10b981" }}>EGP {offer.discount_price}</span>
+            {offer.original_price && (
+              <span style={{ fontSize: "0.75rem", color: "#9ca3af", textDecoration: "line-through", marginLeft: "6px" }}>EGP {offer.original_price}</span>
+            )}
+          </div>
+          <button
+            onClick={(e) => { e.stopPropagation(); onAddToCart({ id: offer.id, title: offer.title, image: imageUrl, discountedPrice: offer.discount_price, originalPrice: offer.original_price, discount }, 1, isLoggedIn); }}
+            style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.3rem 0.7rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
+            + Add
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const categoryIcons = {
   All: <Store size={16} />,
   Restaurant: <Utensils size={16} />,
@@ -265,6 +342,7 @@ export default function HomePage() {
 
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
+  const [recommendedOffers, setRecommendedOffers] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -287,8 +365,31 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
+  // ── Fetch Recommended Offers ──────────────────────────────────────────────
+  useEffect(() => {
+    const fetchRecommended = async () => {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch(`${BASE_URL}/api/offers/smart-recommendations`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && Array.isArray(data.data)) setRecommendedOffers(data.data);
+      } catch (err) {
+        console.error("Failed to fetch recommendations:", err);
+      }
+    };
+    fetchRecommended();
+  }, []);
+
   const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
 
+  // ── Fetch Offers with Real-Time Updates (every 30s) ───────────────────────
   useEffect(() => {
     const fetchOffers = async () => {
       setLoading(true);
@@ -301,70 +402,54 @@ export default function HomePage() {
           sessionStorage.getItem("token");
 
         const vendorType = selectedCategory === "All" ? "" : selectedCategory;
-        const endpoints = [
-          `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`,
-        ];
+        const endpoint = `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`;
 
-        let offersData = null;
+        const headers = { Accept: "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const response = await fetch(endpoint, { method: "GET", headers });
+        const data = await response.json();
 
-        for (const endpoint of endpoints) {
-          try {
-            const headers = { Accept: "application/json" };
-            if (token) headers["Authorization"] = `Bearer ${token}`;
-            const response = await fetch(endpoint, { method: "GET", headers });
-            const data = await response.json();
-            console.log("RAW API DATA:", data);
-            if (response.ok && (data.data || data.offers)) {
-              const dataToCheck = data.data || data.offers;
-              if (dataToCheck.length > 0) { offersData = dataToCheck; break; }
-            }
-          } catch { /* Try next endpoint */ }
-        }
-
-        if (offersData && offersData.length > 0) {
-          const BASE_URL = "https://zero-waste-production.up.railway.app";
-          const transformedOffers = offersData.map((offer, idx) => {
-            const source = offer;
-            const safeId = offer.id ?? idx;
-
-            let imageUrl = null;
-            if (source.image) {
-              const raw = source.image.trim();
-              if (raw.startsWith("http")) {
-                imageUrl = raw;
-              } else {
-                const cleaned = raw.replace(/^\/+/, "");
-                imageUrl = `${BASE_URL}/${cleaned}`;
+        if (response.ok && (data.data || data.offers)) {
+          const offersData = data.data || data.offers;
+          if (offersData.length > 0) {
+            const transformedOffers = offersData.map((offer, idx) => {
+              const source = offer;
+              const safeId = offer.id ?? idx;
+              let imageUrl = null;
+              if (source.image) {
+                const raw = source.image.trim();
+                imageUrl = raw.startsWith("http") ? raw : `${BASE_URL}/${raw.replace(/^\/+/, "")}`;
               }
-            }
-
-            return {
-              id: safeId,
-              hasId: true,
-              title: source.title,
-              description: source.description,
-              image: imageUrl,
-              discount: source.discount_price
-                ? Math.round(((source.original_price - source.discount_price) / source.original_price) * 100)
-                : 0,
-              originalPrice: source.original_price || 0,
-              discountedPrice: source.discount_price || 0,
-              quantity: source.quantity_available || 0,
-              pickupTime: source.expiration_time
-                ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
-                : "Today",
-              location:
-                source.branch?.branch_name ||
-                source.branch?.store_address ||
-                source.vendor?.business_name ||
-                "Unknown",
-              branchLat: source.branch?.lat,
-              branchLng: source.branch?.long,   // ✅ fixed: long not lng
-              rating: source.average_rating ?? source.rating ?? 0,
-              category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
-            };
-          });
-          setOffers(transformedOffers);
+              return {
+                id: safeId,
+                hasId: true,
+                title: source.title,
+                description: source.description,
+                image: imageUrl,
+                discount: source.discount_price
+                  ? Math.round(((source.original_price - source.discount_price) / source.original_price) * 100)
+                  : 0,
+                originalPrice: source.original_price || 0,
+                discountedPrice: source.discount_price || 0,
+                quantity: source.quantity_available || 0,
+                pickupTime: source.expiration_time
+                  ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+                  : "Today",
+                location:
+                  source.branch?.branch_name ||
+                  source.branch?.store_address ||
+                  source.vendor?.business_name ||
+                  "Unknown",
+                branchLat: source.branch?.lat,
+                branchLng: source.branch?.long,
+                rating: source.average_rating ?? source.rating ?? 0,
+                category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
+              };
+            });
+            setOffers(transformedOffers);
+          } else {
+            setError("No offers available right now");
+          }
         } else {
           setError("No offers available right now");
         }
@@ -375,7 +460,10 @@ export default function HomePage() {
         setLoading(false);
       }
     };
-    fetchOffers();
+
+    fetchOffers(); // ✅ اجري فوراً
+    const interval = setInterval(fetchOffers, 30000); // ✅ كل 30 ثانية
+    return () => clearInterval(interval); // ✅ cleanup
   }, [selectedCategory]);
 
   const filteredOffers = offers
@@ -430,6 +518,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ── Recommended Section ── */}
+      {recommendedOffers.length > 0 && (
+        <section style={{ padding: "32px 24px 0", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
+            <div style={{ background: "linear-gradient(135deg, #10b981, #059669)", borderRadius: "10px", padding: "6px 8px", display: "flex" }}>
+              <Star size={18} color="white" fill="white" />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#111827" }}>Recommended For You ✨</h2>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>Based on your interests and previous orders</p>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "12px", scrollbarWidth: "thin", scrollbarColor: "#10b981 #f3f4f6" }}>
+            {recommendedOffers.map((offer) => (
+              <RecommendedCard key={offer.id} offer={offer} onNavigate={navigate} onAddToCart={addToCart} isLoggedIn={isLoggedIn} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="filter-section" style={{ overflow: "visible" }}>
         <div className="filter-inner" style={{ overflow: "visible" }}>
           <div className="filter-left">
@@ -477,7 +585,7 @@ export default function HomePage() {
           <span className="offers-count">{filteredOffers.length} available</span>
         </div>
 
-        {loading && (
+        {loading && offers.length === 0 && (
           <div className="loading-container">
             <div className="loading-spinner" />
             <p className="loading-text">Loading offers...</p>
@@ -501,56 +609,65 @@ export default function HomePage() {
           </div>
         )}
 
-        {!loading && !error && filteredOffers.length > 0 && (
+        {filteredOffers.length > 0 && (
           <div className="offers-grid">
-            {filteredOffers.map((offer) => (
-              <div key={offer.id} className="offer-card" onClick={() => navigate(`/offer/${offer.id}`)} style={{ cursor: "pointer" }}>
-                <div className="offer-image-container">
-                  {offer.image ? (
-                    <img src={offer.image} alt={offer.title} className="offer-image"
-                      onError={(e) => { e.target.onerror = null; e.target.src = "/assets/images/e.png"; }} />
-                  ) : (
-                    <div className="offer-image-placeholder">🍽️</div>
-                  )}
-                  {offer.discount > 0 && <div className="discount-badge">-{offer.discount}%</div>}
-                  <div className="image-bottom-bar">
-                    <CountdownTimer pickupTime={offer.pickupTime} />
-                    {offer.quantity > 0 && (
-                      <div className="quantity-badge"><Package size={12} /><span>{offer.quantity} left</span></div>
+            {filteredOffers.map((offer) => {
+              const currentRating = Number(offer.rating || 0);
+              return (
+                <div key={offer.id} className="offer-card" onClick={() => navigate(`/offer/${offer.id}`)} style={{ cursor: "pointer" }}>
+                  <div className="offer-image-container">
+                    {offer.image ? (
+                      <img src={offer.image} alt={offer.title} className="offer-image"
+                        onError={(e) => { e.target.onerror = null; e.target.src = "/assets/images/e.png"; }} />
+                    ) : (
+                      <div className="offer-image-placeholder">🍽️</div>
                     )}
-                  </div>
-                </div>
-                <div className="offer-content">
-                  <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
-                  {offer.location && (
-                    <div className="offer-location">
-                      <MapPin size={13} />
-                      <span>{offer.location}</span>
-                      {offer.distance !== null && offer.distance !== undefined && (
-                        <span className="offer-distance">· {offer.distance} km</span>
+                    {offer.discount > 0 && <div className="discount-badge">-{offer.discount}%</div>}
+                    <div className="image-bottom-bar">
+                      <CountdownTimer pickupTime={offer.pickupTime} />
+                      {offer.quantity > 0 && (
+                        <div className="quantity-badge"><Package size={12} /><span>{offer.quantity} left</span></div>
                       )}
                     </div>
-                  )}
-                  {offer.rating > 0 && (
-                    <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px" }}>
-                      <Star size={13} fill="#f59e0b" color="#f59e0b" />
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#92400e" }}>{Number(offer.rating).toFixed(1)}</span>
+                  </div>
+                  <div className="offer-content">
+                    <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
+                    {offer.location && (
+                      <div className="offer-location">
+                        <MapPin size={13} />
+                        <span>{offer.location}</span>
+                        {offer.distance !== null && offer.distance !== undefined && (
+                          <span className="offer-distance">· {offer.distance} km</span>
+                        )}
+                      </div>
+                    )}
+                    <div style={{ display: "flex", alignItems: "center", gap: "4px", marginBottom: "4px", marginTop: "2px" }}>
+                      <div style={{ display: "flex", color: "#f59e0b" }}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} size={14}
+                            fill={star <= currentRating ? "currentColor" : "none"}
+                            stroke={star <= currentRating ? "currentColor" : "#d1d5db"} />
+                        ))}
+                      </div>
+                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: currentRating > 0 ? "#92400e" : "#9ca3af" }}>
+                        {currentRating > 0 ? currentRating.toFixed(1) : "0.0"}
+                      </span>
                     </div>
-                  )}
-                  <p className="offer-description">{offer.description || "No description available"}</p>
-                  <div className="offer-footer">
-                    <div className="price-container">
-                      <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
-                      {offer.originalPrice > 0 && <span className="original-price">EGP {offer.originalPrice}</span>}
+                    <p className="offer-description">{offer.description || "No description available"}</p>
+                    <div className="offer-footer">
+                      <div className="price-container">
+                        <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
+                        {offer.originalPrice > 0 && <span className="original-price">EGP {offer.originalPrice}</span>}
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(offer, 1, isLoggedIn); }}
+                        style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
+                        + Add
+                      </button>
                     </div>
-                    <button onClick={(e) => { e.stopPropagation(); addToCart(offer, 1, isLoggedIn); }}
-                      style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
-                      + Add
-                    </button>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </section>

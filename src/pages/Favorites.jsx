@@ -41,6 +41,7 @@ export default function Favorites() {
         }
       );
 
+
       const data = await res.json();
 
       if (res.ok) {
@@ -61,6 +62,7 @@ export default function Favorites() {
   /* ── remove favorite by vendor_id ── */
   const handleRemoveFavorite = async (vendorId) => {
     setFavorites((prev) => prev.filter((v) => v.id !== vendorId));
+    window.dispatchEvent(new Event("zw-favorites-updated"));
     try {
       const token = getToken();
       const res = await fetch(`/api/favorites/toggle`, {
