@@ -72,6 +72,8 @@ function CountdownTimer({ pickupTime }) {
 function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
+  // ── NEW: cancelled state ──
+  const [isCancelled, setIsCancelled] = useState(false);
 
   const statusToStep = (status, deliveryMethod) => {
     switch (status?.toLowerCase()) {
@@ -115,8 +117,19 @@ function OrderTrackingStrip({ order, onDismiss }) {
         const data = await res.json();
         if (res.ok) {
           const status = data.data?.order_status || data.order?.order_status || data.order_status;
+          const normalized = status?.toLowerCase();
+
+          // ── NEW: handle cancelled ──
+          if (normalized === "cancelled") {
+            setIsCancelled(true);
+            sessionStorage.removeItem("zw_active_order");
+            // auto-dismiss after 3 seconds so user can read the message
+            setTimeout(() => onDismiss(), 3000);
+            return;
+          }
+
           setCurrentStep(statusToStep(status, order.deliveryMethod));
-          if (status === "delivered" || status === "completed") {
+          if (normalized === "delivered" || normalized === "completed") {
             setShowReview(true);
             sessionStorage.removeItem("zw_active_order");
           }
@@ -185,6 +198,38 @@ function OrderTrackingStrip({ order, onDismiss }) {
     if (imagePreview) URL.revokeObjectURL(imagePreview);
     setImagePreview(null);
   };
+
+  // ── NEW: cancelled UI ──
+  if (isCancelled) {
+    return (
+      <div className="order-strip" style={{ borderColor: "#fca5a5" }}>
+        <div className="order-strip-header">
+          <div className="order-strip-meta">
+            <div className="order-strip-icon-wrap" style={{ background: "#fef2f2", color: "#ef4444" }}>
+              <X size={13} />
+            </div>
+            <span className="order-strip-number">#{order.orderNumber}</span>
+            <span className="order-strip-dot" />
+            <span
+              className="order-strip-method-badge"
+              style={{ background: "#fef2f2", color: "#ef4444" }}
+            >
+              Order Cancelled
+            </span>
+          </div>
+          <div className="order-strip-right">
+            <span className="order-strip-total">EGP {Number(order.total ?? 0).toFixed(2)}</span>
+            <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss">
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+        <p style={{ fontSize: "13px", color: "#ef4444", margin: "6px 0 4px", padding: "0 4px" }}>
+          This order was cancelled by the vendor.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="order-strip">
@@ -796,12 +841,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* ── Sustainability Impact ── */}
       {isLoggedIn && <SustainabilitySection />}
-
-      {/* ── Footer ── */}
       <Footer />
-
     </div>
   );
 }

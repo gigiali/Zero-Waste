@@ -134,9 +134,192 @@ function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel
 }
 
 /* ─────────────────────────────────────────────
+   Review Modal — used inside OrdersTab
+───────────────────────────────────────────── */
+function ReviewModal({ order, onClose, onSubmitted }) {
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
+  const [image, setImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  const offerId =
+    order.offer_id ||
+    order.order_items?.[0]?.offer_id ||
+    order.items?.[0]?.offer_id ||
+    order.order_items?.[0]?.offer?.id ||
+    order.items?.[0]?.offer?.id;
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
+      setError("Please select JPG or PNG only.");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Image must be less than 2MB.");
+      return;
+    }
+    setImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setError("");
+  };
+
+  const removeImage = () => {
+    setImage(null);
+    if (imagePreview) URL.revokeObjectURL(imagePreview);
+    setImagePreview(null);
+  };
+
+  const handleSubmit = async () => {
+    if (rating === 0) { setError("Please select a rating."); return; }
+    if (!offerId) { setError("Cannot submit: missing offer ID."); return; }
+
+    setIsLoading(true);
+    setError("");
+    try {
+      const formData = new FormData();
+      formData.append("offer_id", offerId);
+      formData.append("rating", rating);
+      formData.append("comment", comment);
+      formData.append("order_id", order.id);
+      formData.append("delivery_method", order.delivery_type || order.delivery_method || "pickup");
+      if (image) formData.append("image", image);
+
+      const res = await fetch(`${BASE_URL}/reviews`, {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.message || "Failed to submit review.");
+      }
+
+      const data = await res.json();
+      // pass back the new review so it shows instantly under the order
+      onSubmitted(order.id, data.review || data.data || { rating, comment, id: Date.now() });
+      onClose();
+    } catch (err) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="usr-overlay" onClick={onClose}>
+      <div
+        className="usr-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxWidth: "400px", width: "92%" }}
+      >
+        <button
+          style={{ position: "absolute", top: "12px", right: "12px", background: "none", border: "none", cursor: "pointer", color: "#6b7280" }}
+          onClick={onClose}
+        >
+          <X size={18} />
+        </button>
+
+        <div className="usr-modal-emoji">🎉</div>
+        <h3 style={{ marginBottom: "4px" }}>Leave a Review</h3>
+        <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px" }}>
+          {order.vendor_name || order.vendor?.name || "Your order"}
+        </p>
+
+        {/* Stars */}
+        <div style={{ display: "flex", gap: "6px", justifyContent: "center", marginBottom: "16px" }}>
+          {[1, 2, 3, 4, 5].map((s) => (
+            <button
+              key={s}
+              onClick={() => setRating(s)}
+              style={{ background: "none", border: "none", cursor: "pointer", padding: "2px" }}
+            >
+              <Star size={28} fill={s <= rating ? "#fbbf24" : "none"} color={s <= rating ? "#fbbf24" : "#d1d5db"} />
+            </button>
+          ))}
+        </div>
+
+        {/* Comment */}
+        <textarea
+          placeholder="Write your comment… (optional, max 500 chars)"
+          value={comment}
+          onChange={(e) => setComment(e.target.value.slice(0, 500))}
+          rows={3}
+          style={{
+            width: "100%",
+            borderRadius: "8px",
+            border: "1.5px solid #e5e7eb",
+            padding: "8px 10px",
+            fontSize: "13px",
+            resize: "vertical",
+            marginBottom: "12px",
+            boxSizing: "border-box",
+          }}
+        />
+
+        {/* Image upload */}
+        {!imagePreview ? (
+          <label
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+              cursor: "pointer",
+              fontSize: "13px",
+              color: "#6b7280",
+              marginBottom: "12px",
+              border: "1.5px dashed #d1d5db",
+              borderRadius: "8px",
+              padding: "8px 12px",
+            }}
+          >
+            <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleImageChange} style={{ display: "none" }} />
+            📷 Add photo (optional · JPG/PNG · max 2MB)
+          </label>
+        ) : (
+          <div style={{ position: "relative", marginBottom: "12px", display: "inline-block" }}>
+            <img src={imagePreview} alt="Preview" style={{ height: "80px", borderRadius: "8px", objectFit: "cover" }} />
+            <button
+              onClick={removeImage}
+              style={{ position: "absolute", top: "-6px", right: "-6px", background: "#ef4444", color: "white", border: "none", borderRadius: "50%", width: "20px", height: "20px", cursor: "pointer", fontSize: "12px", display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <X size={12} />
+            </button>
+          </div>
+        )}
+
+        {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "10px" }}>{error}</p>}
+
+        <div className="usr-modal-actions">
+          <button className="usr-modal-cancel" onClick={onClose}>Cancel</button>
+          <button className="usr-modal-confirm" onClick={handleSubmit} disabled={isLoading || rating === 0}>
+            {isLoading ? "Submitting…" : "Submit Review"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────
    Orders Tab
 ───────────────────────────────────────────── */
-function OrdersTab({ orders, isLoading }) {
+function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
+  const [reviewingOrderId, setReviewingOrderId] = useState(null);
+  // local map of orderId -> review (populated after submit)
+  const [localReviews, setLocalReviews] = useState({});
+
+  const handleReviewSubmitted = (orderId, review) => {
+    setLocalReviews((prev) => ({ ...prev, [orderId]: review }));
+    onReviewSubmitted(); // trigger refresh of Reviews tab
+  };
+
+  const reviewingOrder = orders.find((o) => o.id === reviewingOrderId);
+
   if (isLoading) {
     return (
       <div className="usr-card">
@@ -162,7 +345,7 @@ function OrdersTab({ orders, isLoading }) {
         <div className="usr-empty">
           <Package size={28} />
           <p>No orders found yet.</p>
-          <span style={{ fontSize: '11px', color: '#9ca3af', marginTop: '5px' }}>
+          <span style={{ fontSize: "11px", color: "#9ca3af", marginTop: "5px" }}>
             Check your browser console to see the backend response structure.
           </span>
         </div>
@@ -171,19 +354,24 @@ function OrdersTab({ orders, isLoading }) {
           {orders.map((order) => {
             const currentStatus = order.order_status || order.status || "pending";
             const normalizedStatus = currentStatus.toLowerCase();
+            const isDelivered = normalizedStatus === "delivered" || normalizedStatus === "completed";
+            const isCancelled = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "failed";
+            const submittedReview = localReviews[order.id];
 
             return (
               <article className="usr-order-card" key={order.id}>
                 <div className="usr-order-top">
                   <div className="usr-order-top-left">
                     <strong>Order #{order.id}</strong>
-                    <span className="usr-order-badge" style={{
-                      background: normalizedStatus === "delivered" || normalizedStatus === "completed" || normalizedStatus === "approved" ? "#f0fdf4" : 
-                                  normalizedStatus === "rejected" || normalizedStatus === "cancelled" || normalizedStatus === "failed" ? "#fef2f2" : "#eff6ff",
-                      color: normalizedStatus === "delivered" || normalizedStatus === "completed" || normalizedStatus === "approved" ? "#10b981" : 
-                             normalizedStatus === "rejected" || normalizedStatus === "cancelled" || normalizedStatus === "failed" ? "#ef4444" : "#3b82f6"
-                    }}>
-                      {currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                    <span
+                      className="usr-order-badge"
+                      style={{
+                        background: isDelivered ? "#f0fdf4" : isCancelled ? "#fef2f2" : "#eff6ff",
+                        color: isDelivered ? "#10b981" : isCancelled ? "#ef4444" : "#3b82f6",
+                      }}
+                    >
+                      {/* ── NEW: show "Order Cancelled" label for cancelled orders ── */}
+                      {isCancelled ? "Order Cancelled" : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
                     </span>
                   </div>
                   <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
@@ -219,10 +407,61 @@ function OrdersTab({ orders, isLoading }) {
                     <span>Delivery: EGP {Number(order.delivery_fees || order.delivery_fee).toFixed(2)}</span>
                   )}
                 </div>
+
+                {/* ── NEW: Review section — only for delivered/completed ── */}
+                {isDelivered && (
+                  <div style={{ marginTop: "10px", borderTop: "1px solid #f3f4f6", paddingTop: "10px" }}>
+                    {submittedReview ? (
+                      /* show the submitted review inline */
+                      <div style={{ background: "#fffbeb", borderRadius: "8px", padding: "10px 12px" }}>
+                        <div style={{ display: "flex", gap: "3px", marginBottom: "4px" }}>
+                          {Array.from({ length: submittedReview.rating || submittedReview.Rating || 5 }).map((_, i) => (
+                            <Star key={i} size={14} fill="#fbbf24" color="#fbbf24" />
+                          ))}
+                        </div>
+                        <p style={{ margin: 0, fontSize: "13px", color: "#374151" }}>
+                          {submittedReview.comment || submittedReview.Comment || "Review submitted."}
+                        </p>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setReviewingOrderId(order.id)}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "6px",
+                          background: "#fffbeb",
+                          border: "1.5px solid #fcd34d",
+                          borderRadius: "8px",
+                          padding: "6px 14px",
+                          fontSize: "13px",
+                          fontWeight: 600,
+                          color: "#92400e",
+                          cursor: "pointer",
+                        }}
+                      >
+                        <Star size={14} fill="#fbbf24" color="#fbbf24" />
+                        Leave a Review
+                      </button>
+                    )}
+                  </div>
+                )}
               </article>
             );
           })}
         </div>
+      )}
+
+      {/* Review Modal */}
+      {reviewingOrder && (
+        <ReviewModal
+          order={reviewingOrder}
+          onClose={() => setReviewingOrderId(null)}
+          onSubmitted={(orderId, review) => {
+            setReviewingOrderId(null);
+            handleReviewSubmitted(orderId, review);
+          }}
+        />
       )}
     </div>
   );
@@ -316,7 +555,6 @@ export default function MyProfileUser() {
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [loadingReviews, setLoadingReviews] = useState(false);
 
-  /* ── Fetch profile ── */
   const fetchProfile = async () => {
     try {
       const res = await fetch(`${BASE_URL}/myprofile`, {
@@ -342,43 +580,30 @@ export default function MyProfileUser() {
   const fetchOrders = useCallback(async () => {
     setLoadingOrders(true);
     try {
-      const token = getToken();
-      
       const res = await fetch(`${BASE_URL}/my-orders`, {
         method: "GET",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          "Accept": "application/json", 
-          "Authorization": `Bearer ${token}` 
+          Accept: "application/json",
+          Authorization: `Bearer ${getToken()}`,
         },
       });
-      
       const responseData = await res.json();
-      
-      console.log("====== 📦 BACKEND RESPONSE FOR /my-orders ======");
-      console.log(responseData);
-      console.log("=================================================");
-
       if (res.ok && responseData) {
         let extracted = [];
-        if (Array.isArray(responseData)) {
-          extracted = responseData;
-        } else if (responseData.orders && Array.isArray(responseData.orders)) {
-          extracted = responseData.orders;
-        } else if (responseData.data) {
-          extracted = Array.isArray(responseData.data) ? responseData.data : (responseData.data.data || []);
-        }
+        if (Array.isArray(responseData)) extracted = responseData;
+        else if (responseData.orders && Array.isArray(responseData.orders)) extracted = responseData.orders;
+        else if (responseData.data) extracted = Array.isArray(responseData.data) ? responseData.data : (responseData.data.data || []);
         setOrders(extracted);
       }
     } catch (err) {
-      console.error("Fetch orders main error:", err);
+      console.error("Fetch orders error:", err);
     } finally {
       setLoadingOrders(false);
     }
   }, []);
 
-  /* ── Fetch reviews ── */
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     setLoadingReviews(true);
     try {
       const res = await fetch(`${BASE_URL}/my-reviews`, {
@@ -391,11 +616,9 @@ export default function MyProfileUser() {
     } finally {
       setLoadingReviews(false);
     }
-  };
+  }, []);
 
-  /* ── Handle order-placed event ── */
-  
-useEffect(() => {
+  useEffect(() => {
     const handleOrderPlaced = () => {
       setLoadingOrders(true);
       fetchOrders();
@@ -403,26 +626,25 @@ useEffect(() => {
     };
     window.addEventListener("order-placed", handleOrderPlaced);
     return () => window.removeEventListener("order-placed", handleOrderPlaced);
-  }, [activeTab]);
+  }, [activeTab, fetchOrders]);
 
-  // هنادي فقط على البروفايل في الأول عشان البيانات الأساسية تظهر فوراً
   useEffect(() => {
     fetchProfile();
   }, []);
 
-  // جلب بيانات الـ Tabs التانية فقط لما اليوزر يضغط عليها عشان نمنع الكراش
   const handleTabChange = (tabId) => {
     if (isEditing) handleCancel();
     setActiveTab(tabId);
-    
-    if (tabId === "orders") {
-      fetchOrders();
-    } else if (tabId === "reviews") {
-      fetchReviews();
-    }
+    if (tabId === "orders") fetchOrders();
+    else if (tabId === "reviews") fetchReviews();
   };
 
-  /* ── Save profile ── */
+  // ── NEW: called after a review is submitted from OrdersTab ──
+  // refreshes the Reviews tab data so it's ready when the user navigates there
+  const handleReviewSubmitted = () => {
+    fetchReviews();
+  };
+
   const handleSave = async () => {
     const e = {};
     if (!editData.name.trim()) e.name = "Name is required";
@@ -475,7 +697,6 @@ useEffect(() => {
     setIsEditing(false);
   };
 
-  /* ── Delete account ── */
   const handleDelete = async () => {
     try {
       const res = await fetch(`${BASE_URL}/customer/delete-profile`, {
@@ -486,7 +707,6 @@ useEffect(() => {
     } catch (err) { console.error(err); }
   };
 
-  /* ── Logout ── */
   const handleLogout = async () => {
     try {
       await fetch(`${BASE_URL}/logout`, {
@@ -500,7 +720,6 @@ useEffect(() => {
     }
   };
 
-  /* ── Delete review ── */
   const handleDeleteReview = async (id) => {
     try {
       const res = await fetch(`${BASE_URL}/reviews/${id}`, {
@@ -532,7 +751,6 @@ useEffect(() => {
   return (
     <>
       <div className="usr-page">
-        {/* ── Hero ── */}
         <div className="usr-hero">
           <div className="usr-hero-inner">
             <div className="usr-hero-left">
@@ -555,7 +773,6 @@ useEffect(() => {
         </div>
 
         <div className="usr-body">
-          {/* ── Tabs ── */}
           <div className="usr-tabs">
             {tabs.map((tab) => (
               <button
@@ -570,7 +787,6 @@ useEffect(() => {
             ))}
           </div>
 
-          {/* ── Profile Tab ── */}
           {activeTab === "profile" && (
             <div className="usr-card">
               <h2 className="usr-card-title">Personal Information</h2>
@@ -616,17 +832,18 @@ useEffect(() => {
             </div>
           )}
 
-          {/* ── Orders Tab ── */}
           {activeTab === "orders" && (
-            <OrdersTab orders={orders} isLoading={loadingOrders} />
+            <OrdersTab
+              orders={orders}
+              isLoading={loadingOrders}
+              onReviewSubmitted={handleReviewSubmitted}
+            />
           )}
 
-          {/* ── Reviews Tab ── */}
           {activeTab === "reviews" && (
             <ReviewsTab reviews={reviews} isLoading={loadingReviews} onDelete={handleDeleteReview} />
           )}
 
-          {/* ── Settings Tab ── */}
           {activeTab === "settings" && (
             <div className="usr-card">
               <h2 className="usr-card-title">Account Settings</h2>
@@ -653,10 +870,8 @@ useEffect(() => {
         </div>
       </div>
 
-      {/* ── Password Drawer ── */}
       {showPassword && <ChangePasswordDrawer onClose={() => setShowPassword(false)} />}
 
-      {/* ── Logout Confirm ── */}
       {showLogout && (
         <ConfirmModal
           emoji="👋"
@@ -668,7 +883,6 @@ useEffect(() => {
         />
       )}
 
-      {/* ── Delete Confirm ── */}
       {showDelete && (
         <ConfirmModal
           emoji="🗑️"
