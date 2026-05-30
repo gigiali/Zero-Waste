@@ -75,9 +75,10 @@ const normalizeOrder = (order) => {
   return {
     id: order.id,
     offer: offer?.title || offer?.name || order.offer_title || "N/A",
-    customer: customer?.name || customer?.full_name || order.customer_name || "N/A",
+    customer: customer?.name || customer?.full_name || order.customer_name || order.user?.name || order.buyer?.name || "N/A",
     amount: `EGP ${order.total_amount ?? order.total ?? order.amount ?? 0}`,
-    status: order.status || "Pending",
+    status: order.order_status || order.status || "pending",
+    delivery_type: order.delivery_type || "pickup",
     branch_id: order.branch_id || offer?.branch_id || firstItem?.branch_id,
     branch: branchName(order.branch || offer?.branch),
     created_at: order.created_at || order.createdAt || order.date || null,
@@ -1242,14 +1243,12 @@ export default function Business() {
                                   handleOrderStatusUpdate(order.id, e.target.value)
                                 }
                                 disabled={updatingOrderId === order.id}
-                                className="biz-status-select"
+                                className={`biz-status-select status-${order.status?.toLowerCase()}`}
                               >
-                                <option value="Pending">Pending</option>
-                                <option value="Accepted">Accepted</option>
-                                <option value="Preparing">Preparing</option>
-                                <option value="Out for delivery">Out for delivery</option>
-                                <option value="Delivered">Delivered</option>
-                                <option value="Rejected">Rejected</option>
+                                <option value="processing">Processing</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                                {order.delivery_type === "delivery" && <option value="delivered">Delivered</option>}
                               </select>
                             </td>
                           </tr>

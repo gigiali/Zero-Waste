@@ -1064,3 +1064,29 @@
   .biz-field-row { grid-template-columns: 1fr; }
   .biz-welcome { flex-direction: column; gap: 12px; text-align: center; }
 }
+/* ── Order Status Select Colors ── */
+.biz-status-select {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  text-align: center;
+  min-width: 120px;
+}
+
+.biz-status-select.status-pending    { border: 2px solid #f59e0b; color: #92400e; background: #fef3c7; }
+.biz-status-select.status-processing { border: 2px solid #3b82f6; color: #1e40af; background: #eff6ff; }
+.biz-status-select.status-completed  { border: 2px solid #10b981; color: #065f46; background: #d1fae5; }
+.biz-status-select.status-cancelled  { border: 2px solid #ef4444; color: #7f1d1d; background: #fee2e2; }
+.biz-status-select.status-delivered  { border: 2px solid #8b5cf6; color: #4c1d95; background: #ede9fe; }
+.biz-status-select.status-in_transit { border: 2px solid #f97316; color: #7c2d12; background: #fff7ed; }
+
+.biz-status-select option {
+  background: white;
+  color: #111827;
+  font-weight: 600;
+  padding: 8px;
+}
