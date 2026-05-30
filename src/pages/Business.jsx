@@ -181,7 +181,7 @@ export default function Business() {
           setBranches(branchList);
 
           if (branchList.length === 0) {
-            setApiError("No branches found. Please create one first.");
+            setSelectedBranch(null);
             return;
           }
 

@@ -117,7 +117,21 @@ function SignIn() {
         }
 
         if (userRole === "vendor") {
-          navigate("/business/profile");
+          try {
+            const branchRes = await fetch(`${BASE_URL}/my-branches`, {
+              headers: { Accept: "application/json", Authorization: `Bearer ${data.token}` },
+            });
+            const branchData = await branchRes.json();
+            const list = branchData.data || branchData.branches || branchData || [];
+            const branchList = Array.isArray(list) ? list : [];
+            if (branchList.length === 0) {
+              navigate("/business/profile");
+            } else {
+              navigate("/business");
+            }
+          } catch {
+            navigate("/business/profile");
+          }
         } else if (userRole === "super_admin" || userRole === "manager" || userRole === "admin") {
           navigate("/admin");
         } else {

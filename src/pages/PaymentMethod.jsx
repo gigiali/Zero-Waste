@@ -7,20 +7,12 @@ import {
 import "./PaymentMethod.css";
 import { useCart } from "../Context/CartContext";
 
-// ── Animated Order Review Modal ───────────────────────────────────────────────
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, apiSuccess }) {
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone }) {
   const [phase, setPhase] = useState(1);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
-    if (apiSuccess) {
-      setConfirmed(true);
-    }
-  }, [apiSuccess]);
-
-  useEffect(() => {
-    if (confirmed) return;
     let elapsed = 0;
     const interval = setInterval(() => {
       elapsed += 100;
@@ -30,9 +22,9 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
       else if (elapsed === 20000) { setPhase(3); setProgress(100); clearInterval(interval); }
     }, 100);
     return () => clearInterval(interval);
-  }, [confirmed]);
+  }, []);
 
-  const handleConfirm = () => { onConfirm(); };
+  const handleConfirm = () => { setConfirmed(true); onConfirm(); };
 
   return (
     <div className="orm-overlay">
@@ -40,7 +32,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
         <div className="orm-header">
           <div className="orm-header-icon"><Package size={20} /></div>
           <div className="orm-header-text"><h2>Review Your Order</h2></div>
-          {phase < 3 && !confirmed && (
+          {phase < 3 && (
             <button className="orm-skip-btn" onClick={() => {
               if (phase === 1) { setPhase(2); setProgress(0); }
               else { setPhase(3); setProgress(100); }
@@ -48,7 +40,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           )}
         </div>
 
-        {phase < 3 && !confirmed && (
+        {phase < 3 && (
           <div className="orm-progress-wrap">
             <div className="orm-progress-track">
               <div className="orm-progress-fill" style={{ width: `${progress}%` }} />
@@ -57,24 +49,22 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           </div>
         )}
 
-        {!confirmed && (
-          <div className="orm-steps">
-            {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
-              const stepNum = idx + 1;
-              const done = phase > stepNum;
-              const active = phase === stepNum;
-              return (
-                <div key={label} className={`orm-step ${done ? "done" : active ? "active" : "pending"}`}>
-                  <div className="orm-step-node">{done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}</div>
-                  <span className="orm-step-label">{label}</span>
-                  {idx < 2 && <div className={`orm-step-line ${done ? "done" : ""}`} />}
-                </div>
-              );
-            })}
-          </div>
-        )}
+        <div className="orm-steps">
+          {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
+            const stepNum = idx + 1;
+            const done = phase > stepNum;
+            const active = phase === stepNum;
+            return (
+              <div key={label} className={`orm-step ${done ? "done" : active ? "active" : "pending"}`}>
+                <div className="orm-step-node">{done ? <CheckCircle size={13} /> : <span>{stepNum}</span>}</div>
+                <span className="orm-step-label">{label}</span>
+                {idx < 2 && <div className={`orm-step-line ${done ? "done" : ""}`} />}
+              </div>
+            );
+          })}
+        </div>
 
-        {phase === 1 && !confirmed && (
+        {phase === 1 && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Details</h3>
             <div className="orm-detail-row">
@@ -108,7 +98,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
           </div>
         )}
 
-        {phase === 2 && !confirmed && (
+        {phase === 2 && (
           <div className="orm-body orm-fade-in">
             <h3 className="orm-section-title">Order Summary</h3>
             <div className="orm-items-list">
@@ -125,6 +115,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
             <div className="orm-totals">
               <div className="orm-total-row"><span>Subtotal</span><span>EGP {cartTotal.toFixed(2)}</span></div>
               {deliveryFee > 0 && <div className="orm-total-row"><span>Delivery Fee</span><span>EGP {deliveryFee.toFixed(2)}</span></div>}
+              <div className="orm-total-row"><span>Service Fee (6%)</span><span>EGP {commission.toFixed(2)}</span></div>
               <div className="orm-total-divider" />
               <div className="orm-total-row orm-total-final"><span>Total</span><span>EGP {total.toFixed(2)}</span></div>
             </div>
@@ -151,14 +142,16 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
             <h3 className="orm-confirm-title">Order Confirmed!</h3>
             <p className="orm-confirm-subtitle">Your order has been placed successfully</p>
             <div className="orm-success-details">
+              <div className="orm-success-row"><span>Subtotal</span><strong>EGP {cartTotal.toFixed(2)}</strong></div>
+              <div className="orm-success-row"><span>Service Fee (6%)</span><strong>EGP {commission.toFixed(2)}</strong></div>
+              {deliveryFee > 0 && <div className="orm-success-row"><span>Delivery Fee</span><strong>EGP {deliveryFee.toFixed(2)}</strong></div>}
               <div className="orm-success-row"><span>Total</span><strong>EGP {total.toFixed(2)}</strong></div>
               <div className="orm-success-row"><span>Payment</span><strong>Cash on {deliveryMethod === "delivery" ? "Delivery" : "Pickup"}</strong></div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <button className="orm-track-btn" onClick={onTrackOrder}><MapPin size={18} /> Track Order</button>
               {businessPhone && (
-                <a href={`tel:${businessPhone}`} className="orm-contact-btn"
-                  style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", borderRadius: "12px", background: "#f3f4f6", color: "#374151", textDecoration: "none", fontSize: "0.95rem", fontWeight: "600", border: "1.5px solid #e5e7eb" }}>
+                <a href={`tel:${businessPhone}`} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", padding: "1rem", borderRadius: "12px", background: "#f3f4f6", color: "#374151", textDecoration: "none", fontSize: "0.95rem", fontWeight: "600", border: "1.5px solid #e5e7eb" }}>
                   <Phone size={18} />
                   <span>Contact Restaurant: {businessPhone}</span>
                   <span style={{ marginLeft: "0.5rem", padding: "0.25rem 0.5rem", background: "#10b981", color: "white", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "700" }}>Call</span>
@@ -172,8 +165,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, t
   );
 }
 
-// ── saveUserOrder ─────────────────────────────────────────────────────────────
-const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone }) => {
+const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone }) => {
   const orderNumber = String(orderId || `ORD-${Date.now()}`);
   const storedOrders = JSON.parse(localStorage.getItem("zw_user_orders") || "[]");
   const orderSnapshot = {
@@ -187,6 +179,7 @@ const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, car
     businessPhone: businessPhone || cartItems[0]?.phone || cartItems[0]?.vendor_phone || "",
     subtotal: cartTotal,
     deliveryFee,
+    commission,
     total,
     items: cartItems.map((item) => ({
       id: item.id,
@@ -204,24 +197,21 @@ const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, car
   return orderSnapshot;
 };
 
-// ── PaymentMethodPage ─────────────────────────────────────────────────────────
 export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  
-  const { cartItems, clearCart, fetchOffers } = useCart(); 
-  
+  const { cartItems, clearCart } = useCart();
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showReviewModal, setShowReviewModal] = useState(false);
-  const [apiSuccess, setApiSuccess] = useState(false); 
 
   const deliveryMethod = searchParams.get("method") || "pickup";
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
   const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
   const cartTotal = propCartTotal || subtotal;
-  const total = cartTotal + deliveryFee;
+  const commission = parseFloat((cartTotal * 0.06).toFixed(2));  // ✅ 6% service fee
+  const total = cartTotal + deliveryFee + commission;             // ✅ total شامل الـ commission
 
   const [cardDetails, setCardDetails] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
 
@@ -271,99 +261,50 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
-      const customerLat = localStorage.getItem("userLocationLat");
+      const customerLat  = localStorage.getItem("userLocationLat");
       const customerLong = localStorage.getItem("userLocationLng");
-
-      if (deliveryMethod === "delivery" && (!customerLat || !customerLong)) {
-        setSubmitError("Please set your location first");
-        setIsSubmitting(false);
-        return;
-      }
 
       const items = cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity }));
 
+      const submitData = new FormData();
+      items.forEach((item, index) => {
+       submitData.append(`items[${index}][offer_id]`, item.offer_id);
+       submitData.append(`items[${index}][quantity]`, item.quantity);
+      });    
+       submitData.append("payment_method", selectedMethod);
+       submitData.append("delivery_type", deliveryMethod);
+
+      if (deliveryMethod === "delivery") {
+        if (!customerLat || !customerLong) { setSubmitError("Please set your location first"); setIsSubmitting(false); return; }
+        submitData.append("customer_lat", customerLat);
+        submitData.append("customer_long", customerLong);
+      }
+
       const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
         method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          items,
-          payment_method: selectedMethod,
-          delivery_type: deliveryMethod,
-          ...(deliveryMethod === "delivery" && {
-            customer_lat: customerLat,
-            customer_long: customerLong,
-          }),
-        }),
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        body: submitData,
       });
 
       const data = await response.json();
 
-      if (response.ok || response.status === 200 || response.status === 201) {
-        const firstItem = cartItems[0];
+      if (response.ok) {
+        const firstItem   = cartItems[0];
         const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
         const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
 
-        // 1. حفظ الطلب احتياطياً
-        saveUserOrder({
-          orderId: data.order?.id || data.id || `ORD-${Date.now()}`,
-          cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, total, businessName, businessPhone,
+        const savedOrder = saveUserOrder({
+          orderId: data.order?.id || `ORD-${Date.now()}`,
+          cartItems, deliveryMethod, selectedMethod,
+          cartTotal, deliveryFee, commission, total,
+          businessName, businessPhone,
         });
 
-        // 2. تحديث كمية الـ Offers المتاحة محلياً
-        const storedOffers = JSON.parse(localStorage.getItem("zw_offers") || "[]");
-        if (storedOffers.length > 0) {
-          const updatedOffers = storedOffers.map(offer => {
-            const orderedItem = cartItems.find(item => item.id === offer.id);
-            if (orderedItem) {
-              return {
-                ...offer,
-                available_portions: Math.max(0, (offer.available_portions || offer.portions || 0) - orderedItem.quantity)
-              };
-            }
-            return offer;
-          });
-          localStorage.setItem("zw_offers", JSON.stringify(updatedOffers));
-          window.dispatchEvent(new Event("zw-offers-updated"));
-        }
-
-        // 3. إعادة جلب العروض من الـ API
-        if (fetchOffers) {
-          try {
-            await fetchOffers();
-          } catch (e) {
-            console.error("Error refreshing offers from API:", e);
-          }
-        }
-
-        // 4. مسح الكارت
         clearCart();
-        
-        // 5. 🔔 تحديث الـ orders في كل الـ listeners - ORDER PLACED EVENT
-        const orderData = {
-          id: data.order?.id || data.id || `ORD-${Date.now()}`,
-          status: "pending",
-          total_amount: total,
-          vendor_name: businessName,
-          payment_method: selectedMethod,
-          delivery_type: deliveryMethod,
-          order_items: cartItems.map(item => ({
-            offer: { title: item.title },
-            quantity: item.quantity,
-            price: item.discountedPrice || item.discountPrice || 0
-          })),
-          created_at: new Date().toISOString()
-        };
-        
-        window.dispatchEvent(new CustomEvent("order-placed", { 
-          detail: orderData
-        }));
-        
-        setIsSubmitting(false);
-        setApiSuccess(true);
+
+        navigate("/order-confirmation", {
+          state: { deliveryMethod, cartTotal, deliveryFee, commission, total, orderId: savedOrder.orderNumber, businessName, businessPhone },
+        });
       } else {
         if (response.status === 422 && data.errors) {
           setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
@@ -444,6 +385,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
             <div className="summary-rows">
               <div className="summary-row"><span>Subtotal</span><span>EGP {cartTotal.toFixed(2)}</span></div>
               {deliveryFee > 0 && <div className="summary-row"><span>Delivery Fee</span><span>EGP {deliveryFee.toFixed(2)}</span></div>}
+              <div className="summary-row"><span>Service Fee (6%)</span><span>EGP {commission.toFixed(2)}</span></div>
             </div>
             <hr className="summary-divider" />
             <div className="summary-total"><span>Total</span><span>EGP {total.toFixed(2)}</span></div>
@@ -460,16 +402,16 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           deliveryMethod={deliveryMethod}
           cartTotal={cartTotal}
           deliveryFee={deliveryFee}
+          commission={commission}
           total={total}
           onConfirm={handleFinalConfirm}
           onCancel={handleModalCancel}
-          apiSuccess={apiSuccess}
           onTrackOrder={() => {
             const latestOrder = JSON.parse(localStorage.getItem("zw_user_orders") || "[]")[0];
             navigate("/home", {
               state: {
                 trackingActive: true,
-                orderNumber: latestOrder?.orderNumber || "ORD-000",
+                orderNumber: latestOrder?.orderNumber || "ORD-2026-001",
                 deliveryMethod, total,
                 orderTime: latestOrder?.createdAt || new Date().toISOString(),
                 offerId: cartItems[0]?.id || 1,

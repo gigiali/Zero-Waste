@@ -244,6 +244,12 @@ export default function MyProfileBusiness() {
     status: "",
   });
   const [editData, setEditData] = useState({ ...vendorData });
+  const [editOwner, setEditOwner] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    address: "",
+  });
 
   const ownerInfo = {
     name: user?.name || "",
@@ -251,6 +257,15 @@ export default function MyProfileBusiness() {
     phone: user?.phone || "",
     address: user?.address || "",
   };
+
+  useEffect(() => {
+    setEditOwner({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+    });
+  }, [user]);
 
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState("");
@@ -325,6 +340,10 @@ export default function MyProfileBusiness() {
       formData.append("business_name", editData.business_name.trim());
       if (editData.tax_number.trim()) formData.append("tax_number", editData.tax_number.trim());
       if (editData.vendor_type) formData.append("vendor_type", editData.vendor_type);
+      if (editOwner.name.trim()) formData.append("name", editOwner.name.trim());
+      if (editOwner.email.trim()) formData.append("email", editOwner.email.trim());
+      if (editOwner.phone.trim()) formData.append("phone", editOwner.phone.trim());
+      if (editOwner.address.trim()) formData.append("address", editOwner.address.trim());
       if (logoFile) formData.append("logo", logoFile);
       if (commercialFile) formData.append("commercial_register", commercialFile);
       if (taxCardFile) formData.append("tax_card", taxCardFile);
@@ -366,6 +385,12 @@ export default function MyProfileBusiness() {
 
   const handleCancel = () => {
     setEditData({ ...vendorData });
+    setEditOwner({
+      name: user?.name || "",
+      email: user?.email || "",
+      phone: user?.phone || "",
+      address: user?.address || "",
+    });
     setLogoFile(null);
     setCommercialFile(null);
     setTaxCardFile(null);
@@ -466,7 +491,37 @@ export default function MyProfileBusiness() {
                 <Edit2 size={15} />
                 {isEditing ? "Cancel Editing" : "Edit Profile"}
               </button>
-              <button className="biz-hero-btn" onClick={() => navigate("/business")}>
+              <button className="biz-hero-btn" onClick={async () => {
+                  try {
+                    const res = await fetch(`${BASE_URL}/myprofile`, {
+                      headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+                    });
+                    const data = await res.json();
+                    const v = data.data?.vendor || data.vendor || data.data || data;
+                    const freshStatus = data.data?.status || "";
+
+                    if (freshStatus !== "approved" && freshStatus !== "active") {
+                      setTimeoutMsg("⏳ Your account is still waiting for admin approval. You cannot access the dashboard yet.");
+                      setTimeoutType("warning");
+                    } else {
+                    
+const branchRes = await fetch(`${BASE_URL}/my-branches`, {
+                      headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+                    });
+                    const branchData = await branchRes.json();
+                    const branches = branchData.data || branchData.branches || branchData || [];
+                    const branchList = Array.isArray(branches) ? branches : [];
+                    if (branchList.length === 0) {
+                      navigate("/add-branch");
+                    } else {
+                      navigate("/business");
+                    }
+                    }
+                  } catch {
+                    setTimeoutMsg("Network error. Please try again.");
+                    setTimeoutType("error");
+                  }
+                }}>
                 Dashboard →
               </button>
             </div>
@@ -481,12 +536,27 @@ export default function MyProfileBusiness() {
               <div className="biz-card">
                 <h2 className="biz-card-title">Owner Information</h2>
                 <div className="biz-info-list">
-                  {ownerRows.map(([label, value]) => (
-                    <div className="biz-info-row" key={label}>
+                  {[
+                    ["Owner Name", "name"],
+                    ["Email", "email"],
+                    ["Phone", "phone"],
+                    ["Address", "address"],
+                  ].map(([label, field]) => (
+                    <div className="biz-info-row" key={field}>
                       <span className="biz-info-icon"><Building2 size={17} /></span>
                       <div className="biz-info-text">
                         <span className="biz-info-label">{label}</span>
-                        <span className="biz-info-value">{value || "—"}</span>
+                        {isEditing ? (
+                          <input
+                            className={`biz-input${errors[field] ? " has-error" : ""}`}
+                            type="text"
+                            value={editOwner[field]}
+                            onChange={(e) => setEditOwner((p) => ({ ...p, [field]: e.target.value }))}
+                          />
+                        ) : (
+                          <span className="biz-info-value">{ownerInfo[field] || "—"}</span>
+                        )}
+                        {errors[field] && <span className="biz-input-error">{errors[field]}</span>}
                       </div>
                     </div>
                   ))}

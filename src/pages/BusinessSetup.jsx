@@ -15,14 +15,6 @@ function BusinessSetup() {
     commercialRegister: null,
     taxCard: null,
     logo: null,
-    // Branch fields
-    branchName: "",
-    openingHours: "",
-    storeAddress: "",
-    contactEmail: "",
-    contactPhone: "",
-    lat: "",
-    long: "",
   });
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -30,7 +22,7 @@ function BusinessSetup() {
 
   const validateForm = () => {
     const newErrors = {};
-    // Vendor fields
+    // Vendor fields validation
     if (!formData.businessName.trim())
       newErrors.businessName = t("businessSetup.errors.businessNameRequired");
     if (!formData.businessType)
@@ -41,21 +33,6 @@ function BusinessSetup() {
       newErrors.commercialRegister = t("businessSetup.errors.commercialRegisterRequired");
     if (!formData.taxCard)
       newErrors.taxCard = t("businessSetup.errors.taxCardRequired");
-    // Branch fields
-    if (!formData.branchName.trim())
-      newErrors.branchName = "Branch name is required";
-    if (!formData.openingHours.trim())
-      newErrors.openingHours = "Opening hours are required";
-    if (!formData.storeAddress.trim())
-      newErrors.storeAddress = "Store address is required";
-    if (!formData.contactEmail.trim())
-      newErrors.contactEmail = "Contact email is required";
-    if (!formData.contactPhone.trim())
-      newErrors.contactPhone = "Contact phone is required";
-    if (!formData.lat.toString().trim())
-      newErrors.lat = "Latitude is required";
-    if (!formData.long.toString().trim())
-      newErrors.long = "Longitude is required";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -106,41 +83,19 @@ function BusinessSetup() {
           });
           setErrors(newErrors);
         }
-        setSubmitMessage(vendorJson.message || t("businessSetup.errors.genericError"));
-        return;
-      }
-
-      // ── Step 2: add branch ──
-      const branchData = new FormData();
-      branchData.append("branch_name",   formData.branchName.trim());
-      branchData.append("opening_hours", formData.openingHours.trim());
-      branchData.append("store_address", formData.storeAddress.trim());
-      branchData.append("contact_email", formData.contactEmail.trim());
-      branchData.append("contact_phone", formData.contactPhone.trim());
-      branchData.append("lat",           formData.lat.toString().trim());
-      branchData.append("long",          formData.long.toString().trim());
-
-      const branchRes = await fetch("/api/branches", {
-        method: "POST",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        body: branchData,
-      });
-      const branchJson = await branchRes.json();
-
-      if (!branchRes.ok) {
-        if (branchRes.status === 422 && branchJson.errors) {
-          const newErrors = {};
-          Object.keys(branchJson.errors).forEach((f) => {
-            newErrors[f] = branchJson.errors[f][0];
-          });
-          setErrors(newErrors);
+        const msg = vendorJson.message || "";
+        if (msg.toLowerCase().includes("review") || msg.toLowerCase().includes("resubmit")) {
+          return;
         }
-        setSubmitMessage(branchJson.message || "Failed to create branch. Please try again.");
+        setSubmitMessage(msg || t("businessSetup.errors.genericError"));
         return;
       }
 
-      // ── Both succeeded ──
-      navigate("/business/profile");
+      // ── Success: Redirect to add branch page ──
+      setSubmitMessage("✓ Business setup completed!");
+      setTimeout(() => {
+        navigate("/business/profile");
+      }, 1500);
 
     } catch (error) {
       console.error("Submit error:", error);
@@ -163,17 +118,6 @@ function BusinessSetup() {
     }
   };
 
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) { alert("Geolocation not supported"); return; }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        handleInputChange("lat",  pos.coords.latitude.toString());
-        handleInputChange("long", pos.coords.longitude.toString());
-      },
-      () => alert("Unable to get location. Please enter manually.")
-    );
-  };
-
   return (
     <div className="business-setup-page">
       <div className="business-setup-container">
@@ -185,11 +129,9 @@ function BusinessSetup() {
         <div className="business-setup-form-section">
           <form className="business-setup-form" onSubmit={handleSubmit}>
 
-            {/* ── Business Info ── */}
+            {/* ── Business Info Only ── */}
             <div className="form-section">
-              <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: 600, color: "#374151" }}>
-                Business Information
-              </h3>
+              <h3>Business Information</h3>
 
               <div className="form-group">
                 <label>{t("businessSetup.businessName")}</label>
@@ -225,113 +167,44 @@ function BusinessSetup() {
               <div className="form-group">
                 <label>{t("businessSetup.commercialRegister")} <span style={{ color: "#ef4444" }}>*</span></label>
                 <div className="file-upload">
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png"
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="commercialRegister"
                     onChange={(e) => handleFileUpload("commercialRegister", e)} className="file-input" />
-                  <div className="file-upload-label">
+                  <label htmlFor="commercialRegister" className="file-upload-label">
                     {formData.commercialRegister ? formData.commercialRegister.name : t("businessSetup.uploadDocumentPlaceholder")}
-                  </div>
+                  </label>
                 </div>
                 {errors.commercialRegister && <span className="error-text">{errors.commercialRegister}</span>}
-                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>Required: PDF, JPG or PNG (max 4MB)</small>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.4rem" }}>Required: PDF, JPG or PNG (max 4MB)</small>
               </div>
 
               <div className="form-group">
                 <label>{t("businessSetup.taxCard")} <span style={{ color: "#ef4444" }}>*</span></label>
                 <div className="file-upload">
-                  <input type="file" accept=".pdf,.jpg,.jpeg,.png"
+                  <input type="file" accept=".pdf,.jpg,.jpeg,.png" id="taxCard"
                     onChange={(e) => handleFileUpload("taxCard", e)} className="file-input" />
-                  <div className="file-upload-label">
+                  <label htmlFor="taxCard" className="file-upload-label">
                     {formData.taxCard ? formData.taxCard.name : t("businessSetup.uploadDocumentPlaceholder")}
-                  </div>
+                  </label>
                 </div>
                 {errors.taxCard && <span className="error-text">{errors.taxCard}</span>}
-                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>Required: PDF, JPG or PNG (max 4MB)</small>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.4rem" }}>Required: PDF, JPG or PNG (max 4MB)</small>
               </div>
 
               <div className="form-group">
                 <label>{t("businessSetup.businessLogo")} <span style={{ color: "#6b7280" }}>{t("businessSetup.optional")}</span></label>
                 <div className="file-upload">
-                  <input type="file" accept="image/jpeg,image/png,image/jpg"
+                  <input type="file" accept="image/jpeg,image/png,image/jpg" id="logo"
                     onChange={(e) => handleFileUpload("logo", e)} className="file-input" />
-                  <div className="file-upload-label">
+                  <label htmlFor="logo" className="file-upload-label">
                     {formData.logo ? formData.logo.name : t("businessSetup.chooseLogoPlaceholder")}
-                  </div>
+                  </label>
                 </div>
-                <small style={{ color: "#6b7280", fontSize: "0.8rem" }}>{t("businessSetup.logoOptionalHint")}</small>
-              </div>
-            </div>
-
-            {/* ── Branch Info ── */}
-            <div className="form-section" style={{ marginTop: "2rem" }}>
-              <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: 600, color: "#374151" }}>
-                Branch Information
-              </h3>
-
-              <div className="form-group">
-                <label>Branch Name <span style={{ color: "#ef4444" }}>*</span></label>
-                <input type="text" placeholder="e.g. Main Branch" className="form-input"
-                  value={formData.branchName}
-                  onChange={(e) => handleInputChange("branchName", e.target.value)} />
-                {errors.branchName && <span className="error-text">{errors.branchName}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Opening Hours <span style={{ color: "#ef4444" }}>*</span></label>
-                <input type="text" placeholder="e.g. 9:00 AM - 10:00 PM" className="form-input"
-                  value={formData.openingHours}
-                  onChange={(e) => handleInputChange("openingHours", e.target.value)} />
-                {errors.openingHours && <span className="error-text">{errors.openingHours}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Store Address <span style={{ color: "#ef4444" }}>*</span></label>
-                <input type="text" placeholder="e.g. 123 Main St, Cairo" className="form-input"
-                  value={formData.storeAddress}
-                  onChange={(e) => handleInputChange("storeAddress", e.target.value)} />
-                {errors.storeAddress && <span className="error-text">{errors.storeAddress}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Contact Email <span style={{ color: "#ef4444" }}>*</span></label>
-                <input type="email" placeholder="branch@example.com" className="form-input"
-                  value={formData.contactEmail}
-                  onChange={(e) => handleInputChange("contactEmail", e.target.value)} />
-                {errors.contactEmail && <span className="error-text">{errors.contactEmail}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Contact Phone <span style={{ color: "#ef4444" }}>*</span></label>
-                <input type="tel" placeholder="01012345678" className="form-input"
-                  value={formData.contactPhone}
-                  onChange={(e) => handleInputChange("contactPhone", e.target.value)} />
-                {errors.contactPhone && <span className="error-text">{errors.contactPhone}</span>}
-              </div>
-
-              <div className="form-group">
-                <label>Branch Location <span style={{ color: "#ef4444" }}>*</span></label>
-                <button type="button" onClick={handleGetLocation}
-                  style={{ display: "flex", alignItems: "center", gap: "6px", padding: "8px 14px", background: "#f0fdf4", border: "1px solid #86efac", borderRadius: "8px", color: "#16a34a", fontWeight: 600, cursor: "pointer", fontSize: "0.88rem", marginBottom: "8px" }}>
-                  📍 Use My Current Location
-                </button>
-                <div style={{ display: "flex", gap: "12px" }}>
-                  <div style={{ flex: 1 }}>
-                    <input type="number" step="any" placeholder="Latitude" className="form-input"
-                      value={formData.lat}
-                      onChange={(e) => handleInputChange("lat", e.target.value)} />
-                    {errors.lat && <span className="error-text">{errors.lat}</span>}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <input type="number" step="any" placeholder="Longitude" className="form-input"
-                      value={formData.long}
-                      onChange={(e) => handleInputChange("long", e.target.value)} />
-                    {errors.long && <span className="error-text">{errors.long}</span>}
-                  </div>
-                </div>
+                <small style={{ color: "#6b7280", fontSize: "0.8rem", marginTop: "0.4rem" }}>{t("businessSetup.logoOptionalHint")}</small>
               </div>
             </div>
 
             {submitMessage && (
-              <div className={`submit-message ${submitMessage.includes("successfully") ? "success" : submitMessage.includes("error") || submitMessage.includes("failed") ? "error" : "warning"}`}>
+              <div className={`submit-message ${submitMessage.includes("✓") ? "success" : submitMessage.includes("error") || submitMessage.includes("failed") ? "error" : "warning"}`}>
                 {submitMessage}
               </div>
             )}
