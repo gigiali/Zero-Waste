@@ -25,15 +25,13 @@ export default function Navigation({
 }) {
   const navigate = useNavigate();
   const { totalItems } = useCart();
-  const { isLoggedIn, logout, user, updateUser, role } = useAuth();
+  const { isLoggedIn, logout, user, updateUser } = useAuth();
   const { t, i18n } = useTranslation();
-  const { locationName, loadingLocation, fetchNearbyAndFee, clearLocation } =
-    useLocationContext();
+  const { locationName, loadingLocation, fetchNearbyAndFee, clearLocation } = useLocationContext();
 
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState(() => {
-    const initial =
-      user?.language || localStorage.getItem("language") || i18n.language || "en";
+    const initial = user?.language || localStorage.getItem("language") || i18n.language || "en";
     return (typeof initial === "string" ? initial : "en").toUpperCase();
   });
   const [showMap, setShowMap] = useState(false);
@@ -44,7 +42,17 @@ export default function Navigation({
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState([]);
   const [showMapSearchResults, setShowMapSearchResults] = useState(false);
-  const [favoritesCount, setFavoritesCount] = useState(0);
+
+  // ✅ Favorites count
+  const [favCount, setFavCount] = useState(() =>
+    parseInt(localStorage.getItem("zw_favorites_count") || "0")
+  );
+
+  useEffect(() => {
+    const handler = () => setFavCount(parseInt(localStorage.getItem("zw_favorites_count") || "0"));
+    window.addEventListener("zw-favorites-updated", handler);
+    return () => window.removeEventListener("zw-favorites-updated", handler);
+  }, []);
 
   const mapSearchTimeoutRef = useRef(null);
   const mapRef = useRef(null);
@@ -54,29 +62,21 @@ export default function Navigation({
 
   useEffect(() => {
     if (!showNotifications) return;
-    const handler = (e) => {
-      if (notifRef.current && !notifRef.current.contains(e.target))
-        setShowNotifications(false);
-    };
+    const handler = (e) => { if (notifRef.current && !notifRef.current.contains(e.target)) setShowNotifications(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showNotifications]);
 
   useEffect(() => {
     if (!showProfileMenu) return;
-    const handler = (e) => {
-      if (profileMenuRef.current && !profileMenuRef.current.contains(e.target))
-        setShowProfileMenu(false);
-    };
+    const handler = (e) => { if (profileMenuRef.current && !profileMenuRef.current.contains(e.target)) setShowProfileMenu(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [showProfileMenu]);
 
   useEffect(() => {
     if (!isLangDropdownOpen) return;
-    const handler = (e) => {
-      if (!e.target.closest("[data-lang-dropdown]")) setIsLangDropdownOpen(false);
-    };
+    const handler = (e) => { if (!e.target.closest("[data-lang-dropdown]")) setIsLangDropdownOpen(false); };
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [isLangDropdownOpen]);
@@ -87,61 +87,24 @@ export default function Navigation({
     return () => i18n.off("languageChanged", handleLanguageChanged);
   }, [i18n]);
 
-  // ── Favorites Count ───────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!isLoggedIn || role !== "customer") return;
-
-    const fetchFavCount = async () => {
-      const token =
-        localStorage.getItem("auth_token") ||
-        localStorage.getItem("token") ||
-        sessionStorage.getItem("auth_token") ||
-        sessionStorage.getItem("token");
-      if (!token) return;
-      try {
-        const res = await fetch("https://zero-waste-production.up.railway.app/api/favorites", {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        const data = await res.json();
-        const raw = data?.data ?? data?.favorites ?? (Array.isArray(data) ? data : []);
-        setFavoritesCount(Array.isArray(raw) ? raw.length : 0);
-      } catch { setFavoritesCount(0); }
-    };
-
-    fetchFavCount();
-    window.addEventListener("zw-favorites-updated", fetchFavCount);
-    return () => window.removeEventListener("zw-favorites-updated", fetchFavCount);
-  }, [isLoggedIn, role]);
-
-  // ── Language ──────────────────────────────────────────────────────────────
-
   const getToken = () =>
-    localStorage.getItem("auth_token") ||
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("auth_token") ||
-    sessionStorage.getItem("token");
+    localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
 
   const updateLanguageOnServer = async (lang) => {
     if (!isLoggedIn || !user) return;
     const token = getToken();
     if (!token) return;
     let route = "/api/customer/profile";
-    if (role === "vendor") route = "/api/vendor/myprofile/update";
-    else if (role === "admin" || role === "super_admin" || role === "manager")
-      route = "/api/profile";
+    if (user.role === "vendor") route = "/api/vendor/myprofile/update";
+    else if (user.role === "admin") route = "/api/profile";
     try {
       await fetch(route, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ language: lang }),
       });
-    } catch (err) {
-      console.warn("Language preference update failed:", err);
-    }
+    } catch (err) { console.warn("Language preference update failed:", err); }
   };
 
   const handleLanguageChange = async (code) => {
@@ -152,102 +115,57 @@ export default function Navigation({
     updateLanguageOnServer(lang);
   };
 
-  // ── Helpers ───────────────────────────────────────────────────────────────
-
   const isCairoArea = (input) => {
     const raw = JSON.stringify(input).toLowerCase();
     return (
-      raw.includes("cairo governorate") ||
-      raw.includes("governorate of cairo") ||
-      raw.includes('"state":"cairo"') ||
-      raw.includes('"state": "cairo"') ||
-      raw.includes("giza governorate") ||
-      raw.includes("governorate of giza") ||
-      raw.includes('"state":"giza"') ||
-      raw.includes('"state": "giza"') ||
-      raw.includes("qalyubia governorate") ||
-      raw.includes("qalyubiyya governorate") ||
-      raw.includes("governorate of qalyubia") ||
-      raw.includes('"state":"qalyubia"') ||
-      raw.includes('"state": "qalyubia"') ||
-      raw.includes('"state":"qalyubiyya"') ||
-      raw.includes('"state": "qalyubiyya"')
+      raw.includes("cairo governorate") || raw.includes("governorate of cairo") ||
+      raw.includes('"'+'state'+'":"'+'cairo'+'"') ||
+      raw.includes("giza governorate") || raw.includes("governorate of giza") ||
+      raw.includes("qalyubia governorate") || raw.includes("qalyubiyya governorate")
     );
   };
 
-  const applyLocation = (lat, lng, name) => {
-    fetchNearbyAndFee(lat, lng, name);
-  };
+  const applyLocation = (lat, lng, name) => { fetchNearbyAndFee(lat, lng, name); };
 
   const handleGetCurrentLocation = (onSuccess) => {
-    if (!navigator.geolocation) {
-      alert("Geolocation is not supported by your browser.");
-      return;
-    }
+    if (!navigator.geolocation) { alert("Geolocation is not supported by your browser."); return; }
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const { latitude, longitude } = position.coords;
-        fetch(
-          `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-        )
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`)
           .then((res) => res.json())
           .then((data) => {
-            const name =
-              data.address?.suburb ||
-              data.address?.neighbourhood ||
-              data.address?.quarter ||
-              data.address?.city_district ||
-              data.address?.city ||
-              data.address?.town ||
-              data.address?.village ||
-              data.display_name ||
-              "Current Location";
+            const name = data.address?.suburb || data.address?.neighbourhood || data.address?.city || data.display_name || "Current Location";
             applyLocation(latitude, longitude, name);
             if (onSuccess) onSuccess(name);
           })
           .catch(() => applyLocation(latitude, longitude, "Current Location"));
       },
-      (err) => {
-        console.error("Geolocation error:", err);
-        alert("Unable to get your location. Please enable location services.");
-      },
+      (err) => { console.error("Geolocation error:", err); alert("Unable to get your location."); },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
   };
-
-  // ── Map search ────────────────────────────────────────────────────────────
 
   const handleMapSearchInput = (e) => {
     const val = e.target.value;
     setMapSearchQuery(val);
     setAreaNotAvailable(false);
     if (mapSearchTimeoutRef.current) clearTimeout(mapSearchTimeoutRef.current);
-    if (val.length < 2) {
-      setMapSearchResults([]);
-      setShowMapSearchResults(false);
-      return;
-    }
+    if (val.length < 2) { setMapSearchResults([]); setShowMapSearchResults(false); return; }
     mapSearchTimeoutRef.current = setTimeout(async () => {
       try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&addressdetails=1&limit=10&countrycodes=eg&accept-language=en`
-        );
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&addressdetails=1&limit=10&countrycodes=eg&accept-language=en`);
         const data = await res.json();
         setMapSearchResults(data.filter(isCairoArea));
         setShowMapSearchResults(true);
-      } catch (err) {
-        console.error("Map search failed:", err);
-      }
+      } catch (err) { console.error("Map search failed:", err); }
     }, 500);
   };
 
   const selectMapSearchLocation = (place) => {
     setShowMapSearchResults(false);
     setMapSearchQuery(place.display_name);
-    if (!isCairoArea(place)) {
-      setAreaNotAvailable(true);
-      return;
-    }
+    if (!isCairoArea(place)) { setAreaNotAvailable(true); return; }
     setAreaNotAvailable(false);
     if (mapInstanceRef.current) {
       const lat = parseFloat(place.lat);
@@ -255,89 +173,41 @@ export default function Navigation({
       mapInstanceRef.current.flyTo([lat, lng], 14, { duration: 1.5 });
       const L = window.L;
       if (L) {
-        if (mapInstanceRef.current.tempMarker)
-          mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
-        mapInstanceRef.current.tempMarker = L.marker([lat, lng])
-          .addTo(mapInstanceRef.current)
-          .bindPopup(place.display_name)
-          .openPopup();
+        if (mapInstanceRef.current.tempMarker) mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
+        mapInstanceRef.current.tempMarker = L.marker([lat, lng]).addTo(mapInstanceRef.current).bindPopup(place.display_name).openPopup();
       }
     }
   };
-
-  // ── Map lifecycle ─────────────────────────────────────────────────────────
 
   useEffect(() => {
     if (showMap && mapRef.current && !mapInstanceRef.current) {
       const L = window.L;
       if (L) {
-        const initLat = 30.0444;
-        const initLng = 31.2357;
-
-        const map = L.map(mapRef.current).setView([initLat, initLng], 15);
-        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-          attribution: "© OpenStreetMap contributors",
-        }).addTo(map);
-
+        const map = L.map(mapRef.current).setView([30.0444, 31.2357], 15);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", { attribution: "© OpenStreetMap contributors" }).addTo(map);
         map.on("click", async (e) => {
           const { lat, lng } = e.latlng;
           try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
-            );
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
             const data = await res.json();
-            if (!isCairoArea(data)) {
-              setAreaNotAvailable(true);
-              setTimeout(() => setAreaNotAvailable(false), 4000);
-              return;
-            }
+            if (!isCairoArea(data)) { setAreaNotAvailable(true); setTimeout(() => setAreaNotAvailable(false), 4000); return; }
             const a = data.address || {};
-            const name =
-              a.suburb ||
-              a.neighbourhood ||
-              a.quarter ||
-              a.city_district ||
-              a.residential ||
-              a.road ||
-              a.city ||
-              a.town ||
-              a.village ||
-              data.display_name ||
-              "Unknown";
-            if (mapInstanceRef.current.tempMarker)
-              mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
-            window.L.marker([lat, lng])
-              .addTo(mapInstanceRef.current)
-              .bindPopup("Your location")
-              .openPopup();
+            const name = a.suburb || a.neighbourhood || a.city || data.display_name || "Unknown";
+            if (mapInstanceRef.current.tempMarker) mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
+            window.L.marker([lat, lng]).addTo(mapInstanceRef.current).bindPopup("Your location").openPopup();
             applyLocation(lat, lng, name);
             setAreaNotAvailable(false);
             setShowMap(false);
-          } catch (err) {
-            console.error("Geocoding failed:", err);
-          }
+          } catch (err) { console.error("Geocoding failed:", err); }
         });
-
         mapInstanceRef.current = map;
         setTimeout(() => map.invalidateSize(), 100);
       }
     }
-    if (!showMap && mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
+    if (!showMap && mapInstanceRef.current) { mapInstanceRef.current.remove(); mapInstanceRef.current = null; }
   }, [showMap]);
 
-  // ── Auth ──────────────────────────────────────────────────────────────────
-
-  const handleLogoutConfirmed = () => {
-    logout();
-    clearLocation();
-    setShowLogoutConfirm(false);
-    navigate("/home");
-  };
-
-  // ── Styles ────────────────────────────────────────────────────────────────
+  const handleLogoutConfirmed = () => { logout(); clearLocation(); setShowLogoutConfirm(false); navigate("/home"); };
 
   const pillStyle = {
     display: "flex", alignItems: "center", gap: "0.5rem",
@@ -345,19 +215,16 @@ export default function Navigation({
     border: "1px solid #e5e7eb", background: "var(--nav-pill-bg, white)",
     cursor: "pointer", transition: "all 0.2s ease",
   };
-  const pillHoverIn = (e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#cbd5e1"; };
+  const pillHoverIn  = (e) => { e.currentTarget.style.background = "#f8fafc"; e.currentTarget.style.borderColor = "#cbd5e1"; };
   const pillHoverOut = (e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; };
   const avatarStyle = {
     width: "36px", height: "36px", borderRadius: "50%", background: "white",
     border: "2px solid #10b981", display: "flex", alignItems: "center",
     justifyContent: "center", cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(16,185,129,0.2)",
-    transition: "transform 0.15s, box-shadow 0.15s",
+    boxShadow: "0 2px 8px rgba(16,185,129,0.2)", transition: "transform 0.15s, box-shadow 0.15s",
   };
-  const avatarHoverIn = (e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.35)"; };
+  const avatarHoverIn  = (e) => { e.currentTarget.style.transform = "scale(1.08)"; e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.35)"; };
   const avatarHoverOut = (e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(16,185,129,0.2)"; };
-
-  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
@@ -369,50 +236,28 @@ export default function Navigation({
         position: "sticky", top: 0, zIndex: 200,
       }}>
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer" }}
-          onClick={() => navigate("/home")}>
-          <img src="/images/e.png" alt="ZeroWaste Logo"
-            style={{ width: "48px", height: "48px", objectFit: "contain", borderRadius: "8px", boxShadow: "0 2px 4px rgba(16,185,129,0.15)" }} />
-          <h1 style={{ color: "#10b981", fontSize: "1.5rem", fontWeight: "700", margin: 0, letterSpacing: "-0.5px" }}>
-            ZeroWaste
-          </h1>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", cursor: "pointer" }} onClick={() => navigate("/home")}>
+          <img src="/images/e.png" alt="ZeroWaste Logo" style={{ width: "48px", height: "48px", objectFit: "contain", borderRadius: "8px", boxShadow: "0 2px 4px rgba(16,185,129,0.15)" }} />
+          <h1 style={{ color: "#10b981", fontSize: "1.5rem", fontWeight: "700", margin: 0, letterSpacing: "-0.5px" }}>ZeroWaste</h1>
         </div>
 
         {/* Right side */}
         <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
 
-          {/* Location pill */}
+          {/* Location */}
           {!hideLocation && (
-            <div
-              style={{
-                ...pillStyle,
-                color: locationName ? "#10b981" : "#6b7280",
-                fontWeight: locationName ? 600 : 500,
-                border: locationName ? "1px solid #22c55e" : "1px solid #e5e7eb",
-                background: locationName ? "#f0fdf4" : "white",
-                opacity: loadingLocation ? 0.7 : 1,
-              }}
+            <div style={{ ...pillStyle, color: locationName ? "#10b981" : "#6b7280", fontWeight: locationName ? 600 : 500, border: locationName ? "1px solid #22c55e" : "1px solid #e5e7eb", background: locationName ? "#f0fdf4" : "white", opacity: loadingLocation ? 0.7 : 1 }}
               onClick={() => setShowMap(true)}
               onMouseEnter={(e) => { if (!locationName) { e.currentTarget.style.background = "#f0fdf4"; e.currentTarget.style.borderColor = "#d1fae5"; } }}
               onMouseLeave={(e) => { if (!locationName) { e.currentTarget.style.background = "white"; e.currentTarget.style.borderColor = "#e5e7eb"; } }}
             >
               <MapPin size={18} />
-              <span style={{ fontSize: "0.9rem" }}>
-                {loadingLocation ? "Getting fee..." : locationName || "Location"}
-              </span>
+              <span style={{ fontSize: "0.9rem" }}>{loadingLocation ? "Getting fee..." : locationName || "Location"}</span>
               {locationName && !loadingLocation && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); clearLocation(); }}
-                  title="Clear location"
-                  style={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    background: "none", color: "#10b981", border: "none",
-                    borderRadius: "50%", padding: "0.1rem", cursor: "pointer",
-                    fontSize: "0.75rem", transition: "color 0.2s",
-                  }}
+                <button onClick={(e) => { e.stopPropagation(); clearLocation(); }} title="Clear location"
+                  style={{ display: "flex", alignItems: "center", justifyContent: "center", background: "none", color: "#10b981", border: "none", borderRadius: "50%", padding: "0.1rem", cursor: "pointer", fontSize: "0.75rem", transition: "color 0.2s" }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = "#ef4444")}
-                  onMouseLeave={(e) => (e.currentTarget.style.color = "#10b981")}
-                >
+                  onMouseLeave={(e) => (e.currentTarget.style.color = "#10b981")}>
                   <X size={14} />
                 </button>
               )}
@@ -421,18 +266,10 @@ export default function Navigation({
 
           {/* Cart */}
           {!hideCart && (
-            <div style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
-              onClick={() => navigate("/card")} title="Cart"
-              onMouseEnter={pillHoverIn} onMouseLeave={pillHoverOut}>
+            <div style={{ ...pillStyle, position: "relative", color: "#6b7280" }} onClick={() => navigate("/card")} title="Cart" onMouseEnter={pillHoverIn} onMouseLeave={pillHoverOut}>
               <ShoppingCart size={18} />
               {totalItems > 0 && (
-                <span style={{
-                  position: "absolute", top: "-6px", right: "-6px",
-                  background: "#22c55e", color: "white", borderRadius: "50%",
-                  width: "16px", height: "16px", display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold",
-                  border: "2px solid white", boxShadow: "0 2px 4px rgba(34,197,94,0.2)",
-                }}>
+                <span style={{ position: "absolute", top: "-6px", right: "-6px", background: "#22c55e", color: "white", borderRadius: "50%", width: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold", border: "2px solid white", boxShadow: "0 2px 4px rgba(34,197,94,0.2)" }}>
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
@@ -440,49 +277,24 @@ export default function Navigation({
           )}
 
           {/* Favorites */}
-          {isLoggedIn && role === "customer" && (
-            <div
-              style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
-              onClick={() => navigate("/favorites")}
-              title="Favorites"
-              onMouseEnter={pillHoverIn}
-              onMouseLeave={pillHoverOut}
-            >
-              <Heart size={18} />
-              {favoritesCount > 0 && (
-                <span style={{
-                  position: "absolute", top: "-6px", right: "-6px",
-                  background: "#ef4444", color: "white", borderRadius: "50%",
-                  width: "16px", height: "16px", display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold",
-                  border: "2px solid white", boxShadow: "0 2px 4px rgba(239,68,68,0.2)",
-                }}>
-                  {favoritesCount > 99 ? "99+" : favoritesCount}
-                </span>
-              )}
-            </div>
-          )}
+          <div style={{ ...pillStyle, position: "relative", color: "#6b7280" }} onClick={() => navigate("/favorites")} title="Favorites" onMouseEnter={pillHoverIn} onMouseLeave={pillHoverOut}>
+            <Heart size={18} />
+            {favCount > 0 && (
+              <span style={{ position: "absolute", top: "-6px", right: "-6px", background: "#ef4444", color: "white", borderRadius: "50%", width: "16px", height: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.65rem", fontWeight: "bold", border: "2px solid white" }}>
+                {favCount > 99 ? "99+" : favCount}
+              </span>
+            )}
+          </div>
 
           {/* Notifications */}
-          <NotificationsBell
-            show={showNotifications}
-            onToggle={() => setShowNotifications((v) => !v)}
-            notifRef={notifRef}
-          />
+          <NotificationsBell show={showNotifications} onToggle={() => setShowNotifications((v) => !v)} notifRef={notifRef} />
 
           {/* Language */}
-          <div data-lang-dropdown
-            style={{ position: "relative", display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", color: "#374151" }}
-            onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}>
+          <div data-lang-dropdown style={{ position: "relative", display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", color: "#374151" }} onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}>
             <Globe size={20} />
             <span>{selectedLanguage}</span>
             {isLangDropdownOpen && (
-              <div style={{
-                position: "absolute", top: "calc(100% + 8px)", right: 0,
-                background: "var(--nav-pill-bg, white)", borderRadius: "8px",
-                boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb",
-                minWidth: "150px", zIndex: 1000,
-              }}>
+              <div style={{ position: "absolute", top: "calc(100% + 8px)", right: 0, background: "var(--nav-pill-bg, white)", borderRadius: "8px", boxShadow: "0 4px 12px rgba(0,0,0,0.15)", border: "1px solid #e5e7eb", minWidth: "150px", zIndex: 1000 }}>
                 {[["EN", "English"], ["AR", "Arabic"]].map(([code, label]) => (
                   <div key={code}
                     style={{ padding: "0.75rem 1rem", cursor: "pointer", backgroundColor: selectedLanguage === code ? "#f0fdf4" : "white", display: "flex", justifyContent: "space-between" }}
@@ -490,9 +302,7 @@ export default function Navigation({
                     onMouseEnter={(e) => { if (selectedLanguage !== code) e.currentTarget.style.backgroundColor = "#f9fafb"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = selectedLanguage === code ? "#f0fdf4" : "white"; }}>
                     <span>{label}</span>
-                    {selectedLanguage === code && (
-                      <div style={{ width: "8px", height: "8px", background: "#10b981", borderRadius: "50%", alignSelf: "center" }} />
-                    )}
+                    {selectedLanguage === code && <div style={{ width: "8px", height: "8px", background: "#10b981", borderRadius: "50%", alignSelf: "center" }} />}
                   </div>
                 ))}
               </div>
@@ -503,8 +313,7 @@ export default function Navigation({
           {!hideProfile ? (
             isLoggedIn ? (
               <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                <div onClick={() => navigate("/profile")} title="My Profile"
-                  style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
+                <div onClick={() => navigate("/profile")} title="My Profile" style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
                   <User size={18} color="#10b981" />
                 </div>
                 <button onClick={() => setShowLogoutConfirm(true)}
@@ -513,16 +322,13 @@ export default function Navigation({
                 </button>
               </div>
             ) : (
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", background: "#10b981", color: "white", borderRadius: "8px", padding: "0.45rem 1rem", fontWeight: 600, fontSize: "0.9rem" }}
-                onClick={() => navigate("/signin")}>
-                <LogIn size={18} />
-                <span>Sign In</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", cursor: "pointer", background: "#10b981", color: "white", borderRadius: "8px", padding: "0.45rem 1rem", fontWeight: 600, fontSize: "0.9rem" }} onClick={() => navigate("/signin")}>
+                <LogIn size={18} /><span>Sign In</span>
               </div>
             )
           ) : (
             <div ref={profileMenuRef} style={{ position: "relative" }}>
-              <div onClick={() => navigate("/profile")} title="My Profile"
-                style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
+              <div onClick={() => navigate("/profile")} title="My Profile" style={avatarStyle} onMouseEnter={avatarHoverIn} onMouseLeave={avatarHoverOut}>
                 <User size={18} color="#10b981" />
               </div>
             </div>
@@ -536,16 +342,10 @@ export default function Navigation({
           <div style={{ background: "var(--nav-pill-bg, white)", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", boxShadow: "0 20px 60px rgba(0,0,0,0.2)", textAlign: "center" }}>
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👋</div>
             <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.2rem" }}>Log Out?</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Are you sure you want to log out of your account?</p>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Are you sure you want to log out?</p>
             <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button onClick={() => setShowLogoutConfirm(false)}
-                style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
-                Cancel
-              </button>
-              <button onClick={handleLogoutConfirmed}
-                style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#ef4444", color: "white", fontWeight: 600, cursor: "pointer" }}>
-                Yes, Log Out
-              </button>
+              <button onClick={() => setShowLogoutConfirm(false)} style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>Cancel</button>
+              <button onClick={handleLogoutConfirmed} style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#ef4444", color: "white", fontWeight: 600, cursor: "pointer" }}>Yes, Log Out</button>
             </div>
           </div>
         </div>
@@ -558,10 +358,8 @@ export default function Navigation({
           <div style={{ background: "white", borderRadius: "12px", width: "90%", maxWidth: "800px", height: "70vh", position: "relative", overflow: "hidden", boxShadow: "0 20px 60px rgba(0,0,0,0.3)" }}>
             <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #e5e7eb" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h3 style={{ margin: 0, color: "#1f2937" }}>📍 Set your location</h3>
-                <button onClick={() => setShowMap(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280" }}>
-                  <X size={20} />
-                </button>
+                <h3 style={{ margin: 0, color: "#1f2937" }}>Set your location</h3>
+                <button onClick={() => setShowMap(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#6b7280" }}><X size={20} /></button>
               </div>
               <div style={{ position: "relative" }}>
                 <Search size={18} style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af" }} />
@@ -570,14 +368,12 @@ export default function Navigation({
                   onFocus={() => mapSearchResults.length > 0 && setShowMapSearchResults(true)}
                   style={{ width: "100%", padding: "10px 36px", border: "1px solid #e5e7eb", borderRadius: "10px", fontSize: "0.95rem", outline: "none", boxSizing: "border-box" }} />
                 {mapSearchQuery && (
-                  <X size={16}
-                    style={{ position: "absolute", right: "48px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", cursor: "pointer" }}
+                  <X size={16} style={{ position: "absolute", right: "48px", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", cursor: "pointer" }}
                     onClick={() => { setMapSearchQuery(""); setMapSearchResults([]); setShowMapSearchResults(false); }} />
                 )}
-                <button
-                  onClick={() => handleGetCurrentLocation((name) => { setMapSearchQuery(name); setMapSearchResults([]); setShowMapSearchResults(false); setShowMap(false); })}
+                <button onClick={() => handleGetCurrentLocation((name) => { setMapSearchQuery(name); setMapSearchResults([]); setShowMapSearchResults(false); setShowMap(false); })}
                   title="Use my current location"
-                  style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "center", background: "#10b981", color: "white", border: "none", borderRadius: "6px", padding: "0.25rem 0.5rem", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600, transition: "background 0.2s" }}
+                  style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", justifyContent: "center", background: "#10b981", color: "white", border: "none", borderRadius: "6px", padding: "0.25rem 0.5rem", cursor: "pointer", fontSize: "0.7rem", fontWeight: 600 }}
                   onMouseEnter={(e) => (e.currentTarget.style.background = "#22c55e")}
                   onMouseLeave={(e) => (e.currentTarget.style.background = "#10b981")}>
                   📍
@@ -599,7 +395,7 @@ export default function Navigation({
             </div>
             {areaNotAvailable && (
               <div style={{ position: "absolute", top: "80px", left: "50%", transform: "translateX(-50%)", background: "#fef2f2", color: "#dc2626", padding: "12px 24px", borderRadius: "8px", border: "1px solid #fecaca", fontWeight: 500, zIndex: 10001, whiteSpace: "nowrap" }}>
-                🚫 We are not available in your area yet
+                We are not available in your area yet
               </div>
             )}
             <div ref={mapRef} style={{ width: "100%", height: "calc(100% - 120px)" }} />
