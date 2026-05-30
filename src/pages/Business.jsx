@@ -161,7 +161,7 @@ export default function Business() {
   const [offers, setOffers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [salesData, setSalesData] = useState([]);
-  const [kpiRevenue, setKpiRevenue] = useState("N/A");
+  const [kpiData, setKpiData] = useState({ activeOffers: 0, totalOrders: 0, revenue: "EGP 0" });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
@@ -173,6 +173,7 @@ export default function Business() {
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
 
+  // Initial data load
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -214,6 +215,115 @@ export default function Business() {
     fetchData();
   }, []);
 
+  // Fetch Dashboard Overview Stats
+  useEffect(() => {
+    const fetchOverviewStats = async () => {
+      const token = getToken();
+      if (!token || !selectedBranch) return;
+      try {
+        const res = await fetch("/api/vendor/dashboard/overview", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          // Response structure: { data: { activeOffers, totalOrders, revenue } }
+          if (data.data) {
+            setKpiData({
+              activeOffers: data.data.activeOffers || 0,
+              totalOrders: data.data.totalOrders || 0,
+              revenue: `EGP ${(data.data.revenue || 0).toLocaleString()}`,
+            });
+          }
+        }
+      } catch (err) { console.error("Overview stats error:", err); }
+    };
+    if (selectedBranch) fetchOverviewStats();
+  }, [selectedBranch]);
+
+  // Fetch Monthly Chart Data
+  useEffect(() => {
+    const fetchMonthlyChart = async () => {
+      const token = getToken();
+      if (!token || !selectedBranch) return;
+      try {
+        const res = await fetch("/api/vendor/dashboard/monthly-chart", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          // Response structure: { data: { chartData: [{day, sales, orders}, ...] } }
+          if (data.data?.chartData && Array.isArray(data.data.chartData)) {
+            setSalesData(data.data.chartData);
+          } else {
+            setSalesData(FALLBACK_CHART);
+          }
+        }
+      } catch (err) { 
+        console.error("Monthly chart error:", err);
+        setSalesData(FALLBACK_CHART);
+      }
+    };
+    if (selectedBranch) fetchMonthlyChart();
+  }, [selectedBranch]);
+
+  // Fetch Offers
+  const fetchOffers = React.useCallback(async () => {
+    if (isFetchingOffersRef.current) return;
+    isFetchingOffersRef.current = true;
+    const token = getToken();
+    if (!token) { isFetchingOffersRef.current = false; return; }
+    try {
+      const res = await fetch("/api/vendor/myoffers", {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await readJson(res);
+        setOffers(extractList(data, ["offers"]).map(normalizeOffer));
+      }
+    } catch (err) { console.error("Offers fetch error:", err); }
+    finally { isFetchingOffersRef.current = false; }
+  }, []);
+
+  useEffect(() => { if (selectedBranch?.id) fetchOffers(); }, [selectedBranch?.id, fetchOffers]);
+
+  // Fetch Top Selling Products
+  useEffect(() => {
+    const fetchTopSelling = async () => {
+      const token = getToken();
+      if (!token || !selectedBranch) return;
+      try {
+        const res = await fetch("/api/vendor/dashboard/top-selling", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          // Handle response: { data: { topSelling: [...] } }
+          console.log("Top selling data:", data);
+        }
+      } catch (err) { console.error("Top selling fetch error:", err); }
+    };
+    if (selectedBranch) fetchTopSelling();
+  }, [selectedBranch]);
+
+  // Fetch Orders
+  useEffect(() => {
+    const fetchOrders = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const res = await fetch("/api/vendor/orders", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          setOrders(extractList(data, ["orders"]).map(normalizeOrder));
+        }
+      } catch (err) { console.error("Orders fetch error:", err); }
+    };
+    if (selectedBranch) fetchOrders();
+  }, [selectedBranch]);
+
+  // Listen for order updates
   useEffect(() => {
     const handleOrderPlaced = () => {
       if (!selectedBranch) return;
@@ -240,42 +350,6 @@ export default function Business() {
     };
   }, [selectedBranch]);
 
-  const fetchOffers = React.useCallback(async () => {
-    if (isFetchingOffersRef.current) return;
-    isFetchingOffersRef.current = true;
-    const token = getToken();
-    if (!token) { isFetchingOffersRef.current = false; return; }
-    try {
-      const res = await fetch("/api/vendor/myoffers", {
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await readJson(res);
-        setOffers(extractList(data, ["offers"]).map(normalizeOffer));
-      }
-    } catch (err) { console.error("Offers fetch error:", err); }
-    finally { isFetchingOffersRef.current = false; }
-  }, []);
-
-  useEffect(() => { if (selectedBranch?.id) fetchOffers(); }, [selectedBranch?.id]);
-
-  useEffect(() => {
-    const fetchOrders = async () => {
-      const token = getToken();
-      if (!token) return;
-      try {
-        const res = await fetch("/api/vendor/orders", {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await readJson(res);
-          setOrders(extractList(data, ["orders"]).map(normalizeOrder));
-        }
-      } catch (err) { console.error("Orders fetch error:", err); }
-    };
-    if (selectedBranch) fetchOrders();
-  }, [selectedBranch]);
-
   const selectedBranchName = branchName(selectedBranch);
   const filteredOffers = selectedBranch
     ? offers.filter((o) => o.branch_id === selectedBranch.id || o.branch === selectedBranchName)
@@ -283,28 +357,6 @@ export default function Business() {
   const filteredOrders = selectedBranch
     ? orders.filter((o) => o.branch_id === selectedBranch.id || o.branch === selectedBranchName)
     : orders;
-
-  useEffect(() => {
-    const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-    const map = {};
-    days.forEach((d) => { map[d] = { day: d, sales: 0, orders: 0 }; });
-    filteredOrders.forEach((order) => {
-      const amount = Number(String(order.amount).replace("EGP ", "")) || 0;
-      const dateKey = order.created_at;
-      if (dateKey) {
-        const d = new Date(dateKey);
-        if (!isNaN(d.getTime())) {
-          const day = days[d.getDay()];
-          if (map[day]) { map[day].sales += amount; map[day].orders += 1; }
-        }
-      }
-    });
-    const chartData = days.map((d) => map[d]);
-    const hasData = chartData.some((d) => d.sales > 0 || d.orders > 0);
-    setSalesData(hasData ? chartData : FALLBACK_CHART);
-    const totalRevenue = filteredOrders.reduce((sum, order) => sum + (Number(String(order.amount).replace("EGP ", "")) || 0), 0);
-    setKpiRevenue(totalRevenue > 0 ? `EGP ${totalRevenue.toLocaleString()}` : "EGP 0");
-  }, [orders, selectedBranch]);
 
   const openAdd = () => { setEditingId(null); setForm(EMPTY_FORM); setSubmitError(""); setSubmitSuccess(""); setDrawerOpen(true); };
   const closeDrawer = () => { setDrawerOpen(false); setEditingId(null); setForm(EMPTY_FORM); setSubmitError(""); setSubmitSuccess(""); };
@@ -416,14 +468,14 @@ export default function Business() {
   };
 
   const navItems = [
-  { id: "charts", icon: BarChart2, label: "Sales Charts", onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
-  { id: "sustainability", icon: Leaf, label: "Sustainability Impact", onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
-  { id: "offers", icon: Package, label: "My Offers", onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
-  { id: "orders", icon: ShoppingCart, label: "Recent Orders", onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
-  { id: "notifications", icon: Bell, label: "Notifications", badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
-  { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => setLanguage((l) => (l === "en" ? "ar" : "en")) },
-  { id: "branches", icon: GitBranch, label: "Branches", expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
-];
+    { id: "charts", icon: BarChart2, label: "Sales Charts", onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "sustainability", icon: Leaf, label: "Sustainability Impact", onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "offers", icon: Package, label: "My Offers", onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "orders", icon: ShoppingCart, label: "Recent Orders", onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "notifications", icon: Bell, label: "Notifications", badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
+    { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => setLanguage((l) => (l === "en" ? "ar" : "en")) },
+    { id: "branches", icon: GitBranch, label: "Branches", expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
+  ];
 
   return (
     <div className="biz-root">
@@ -515,9 +567,9 @@ export default function Business() {
 
             <div className="biz-kpis">
               {[
-                { label: "Active Offers", value: filteredOffers.filter((o) => o.status === "active" || o.status === "Active").length, icon: "📦" },
-                { label: "Total Orders", value: filteredOrders.length, icon: "🛒" },
-                { label: "Revenue", value: kpiRevenue, icon: "💰" },
+                { label: "Active Offers", value: kpiData.activeOffers, icon: "📦" },
+                { label: "Total Orders", value: kpiData.totalOrders, icon: "🛒" },
+                { label: "Revenue", value: kpiData.revenue, icon: "💰" },
               ].map((kpi) => (
                 <div key={kpi.label} className="biz-kpi-card">
                   <p className="biz-kpi-label">{kpi.label}</p>
@@ -566,10 +618,10 @@ export default function Business() {
               </div>
             </div>
 
-           {/* ── Sustainability Impact ── */}
-<div id="sustainability-section">
-  <VendorSustainabilitySection />
-</div>
+            {/* ── Sustainability Impact ── */}
+            <div id="sustainability-section">
+              <VendorSustainabilitySection />
+            </div>
 
             <div className="biz-section" id="offers-section">
               <div className="biz-section-header">

@@ -45,6 +45,8 @@ import {
   ResponsiveContainer,
   AreaChart,
   Area,
+  BarChart,
+  Bar,
 } from "recharts";
 import { useAuth } from "../Context/AuthContext";
 import { useTranslation } from "react-i18next";
@@ -91,8 +93,10 @@ const STATUS_COLORS = {
   preparing:        { bg: "#e3f2fd", text: "#696cff",  label: "Preparing" },
   out_for_delivery: { bg: "#f3e5f5", text: "#9c27b0",  label: "Out for Delivery" },
   delivered:        { bg: "#e8f5e9", text: "#1b5e20",  label: "Delivered" },
+  completed:        { bg: "#e8f5e9", text: "#1b5e20",  label: "Completed" },
   cancelled:        { bg: "#ffebee", text: "#ff4d49",  label: "Cancelled" },
   rejected:         { bg: "#fce4ec", text: "#c62828",  label: "Rejected" },
+  processing:       { bg: "#e3f2fd", text: "#696cff",  label: "Processing" },
 };
 
 const StatusBadge = ({ status }) => {
@@ -181,6 +185,9 @@ const Admin = () => {
   const [statsLoading, setStatsLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
 
+  const [earningsData, setEarningsData] = useState([]);
+  const [earningsLoading, setEarningsLoading] = useState(false);
+
   const [notifications, setNotifications] = useState([]);
   const [notifLoading, setNotifLoading] = useState(false);
   const [notifUnread, setNotifUnread] = useState(0);
@@ -237,6 +244,7 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
+  // FETCH DASHBOARD STATS - Updated for new endpoint
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
@@ -256,13 +264,29 @@ const Admin = () => {
 
         if (!res.ok) throw new Error(`Stats ${res.status}`);
         const data = await res.json();
-        const realData = data?.data ?? data;
-        setRawStats(realData);
+        const statsData = data?.data ?? data;
+        
+        // Parse the correct data structure from Backend
+        const parsedStats = {
+          total_customers: statsData?.total_customers ?? 0,
+          total_vendors: statsData?.total_vendors ?? 0,
+          total_orders: statsData?.total_orders ?? 0,
+          total_active_offers: statsData?.total_active_offers ?? 0,
+          gross_revenue: statsData?.financials?.total_market_sales ?? 0,
+          customer_fees: statsData?.financials?.customer_fees_6_pct ?? 0,
+          vendor_fees: statsData?.financials?.vendor_fees_12_pct ?? 0,
+          net_profit: statsData?.financials?.net_platform_profit ?? 0,
+          currency: statsData?.financials?.currency ?? "EGP",
+        };
+        
+        setRawStats(parsedStats);
+        
+        // Set pie data based on available stats
         setPieData([
-          { name: "Customers",      value: realData?.total_customers ?? 0 },
-          { name: "Vendors",        value: realData?.total_vendors   ?? 0 },
-          { name: "Active Offers",  value: realData?.active_offers   ?? 0 },
-          { name: "Expired Offers", value: realData?.expired_offers  ?? 0 },
+          { name: "Customers",      value: parsedStats.total_customers },
+          { name: "Vendors",        value: parsedStats.total_vendors },
+          { name: "Active Offers",  value: parsedStats.total_active_offers },
+          { name: "Total Orders",   value: parsedStats.total_orders },
         ]);
       } catch (err) {
         if (err.name !== "AbortError") {
@@ -274,6 +298,54 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
+  // FETCH EARNINGS DATA - Updated for new endpoint
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    (async () => {
+      setEarningsLoading(true);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        const res = await fetch(`${BASE_URL}/dashboard/earnings`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) throw new Error(`Earnings ${res.status}`);
+        const data = await res.json();
+        
+        // 🔍 DEBUG: شوف البيانات اللي بتيجي من الـ Backend
+        console.log("💰 Earnings - Full Response:", data);
+        
+        const earningsArray = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+        console.log("💰 Earnings - Extracted Array:", earningsArray);
+        
+        // Map to chart format
+        const chartData = earningsArray.map(item => ({
+          month: item.month,
+          earnings: item.net_sales || 0,
+          net_sales: item.net_sales || 0,
+        }));
+        
+        console.log("📊 Earnings Chart Data (formatted):", chartData);
+        
+        setEarningsData(chartData);
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("❌ Earnings fetch error:", err);
+        }
+      } finally {
+        setEarningsLoading(false);
+      }
+    })();
+  }, [isLoggedIn, token]);
+
+  // FETCH ACTIVITY DATA
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
@@ -320,6 +392,7 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
+  // FETCH NOTIFICATIONS
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
@@ -352,6 +425,7 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
+  // FETCH ALL ORDERS
   useEffect(() => {
     if (!isLoggedIn || !token) return;
     (async () => {
@@ -372,6 +446,9 @@ const Admin = () => {
 
         if (!res.ok) throw new Error(`Orders ${res.status}`);
         const data = await res.json();
+        
+        // 🔍 DEBUG: شوف البيانات اللي بتيجي من الـ Backend
+        console.log("📋 Orders - Full Response:", data);
 
         const list =
           Array.isArray(data)               ? data :
@@ -383,6 +460,9 @@ const Admin = () => {
             ? Object.values(data.data).find(Array.isArray) ?? []
             : [];
 
+        console.log("📋 Orders - Extracted Array:", list);
+        console.log("📊 Total Orders:", list.length);
+        
         setAllOrders(list);
         if (list.length > 0) {
           setWeeklyData(buildWeeklyData(list));
@@ -391,7 +471,7 @@ const Admin = () => {
         }
       } catch (err) {
         if (err.name !== "AbortError") {
-          console.error("Orders fetch error:", err);
+          console.error("❌ Orders fetch error:", err);
           setOrdersError(err.message);
         }
       } finally {
@@ -400,15 +480,16 @@ const Admin = () => {
     })();
   }, [isLoggedIn, token]);
 
-  const totalUsers    = rawStats?.total_customers ?? 0;
-  const totalVendors  = rawStats?.total_vendors   ?? 0;
-  const activeOffers  = rawStats?.active_offers   ?? 0;
-  const expiredOffers = rawStats?.expired_offers  ?? 0;
-  const totalOrdersF  = rawStats?.total_orders    ?? allOrders.length;
-  const totalRevF     = rawStats?.total_revenue   ??
-    allOrders.reduce((s, o) => s + parseFloat(o.total_amount || o.total || 0), 0);
-  const commission = (totalRevF * 0.15).toFixed(2);
-  const avgOrder   = totalOrdersF > 0 ? (totalRevF / totalOrdersF).toFixed(2) : "0.00";
+  // Calculate stats from raw data
+  const totalCustomers = rawStats?.total_customers ?? 0;
+  const totalVendors   = rawStats?.total_vendors ?? 0;
+  const totalOrders    = rawStats?.total_orders ?? 0;
+  const activeOffers   = rawStats?.total_active_offers ?? 0;
+  const grossRev       = rawStats?.gross_revenue ?? 0;
+  const customerFees   = rawStats?.customer_fees ?? 0;
+  const vendorFees     = rawStats?.vendor_fees ?? 0;
+  const netProfit      = rawStats?.net_profit ?? 0;
+  const avgOrder       = totalOrders > 0 ? (grossRev / totalOrders).toFixed(2) : "0.00";
 
   const filteredOrders = allOrders
     .filter((o) => {
@@ -452,6 +533,15 @@ const Admin = () => {
         day: "2-digit",
         month: "short",
         year: "numeric",
+      });
+    } catch { return v; }
+  };
+
+  const fmtCurrency = (v) => {
+    try {
+      return Number(v).toLocaleString("en-EG", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
       });
     } catch { return v; }
   };
@@ -617,23 +707,19 @@ const Admin = () => {
                 <div className="stats-grid">
                   <StatCard
                     title="Total Customers"
-                    value={Number(totalUsers).toLocaleString()}
+                    value={Number(totalCustomers).toLocaleString()}
                     icon={Users}
                     color="#696cff"
-                    trend="+12% this month"
-                    trendUp
                   />
                   <StatCard
                     title="Total Vendors"
                     value={Number(totalVendors).toLocaleString()}
                     icon={ShoppingBag}
                     color="#28c76f"
-                    trend="+5% this month"
-                    trendUp
                   />
                   <StatCard
                     title="Total Orders"
-                    value={Number(totalOrdersF).toLocaleString()}
+                    value={Number(totalOrders).toLocaleString()}
                     icon={Package}
                     color="#ff9f43"
                     trend={`Avg EGP ${avgOrder}`}
@@ -643,24 +729,32 @@ const Admin = () => {
                     value={Number(activeOffers).toLocaleString()}
                     icon={Star}
                     color="#ff4d49"
-                    subtitle={`${expiredOffers} expired`}
                   />
                   {canManage(role) && (
                     <>
                       <StatCard
-                        title="Total Revenue"
-                        value={`EGP ${Number(totalRevF).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        title="Gross Revenue"
+                        value={`EGP ${fmtCurrency(grossRev)}`}
                         icon={DollarSign}
                         color="#03c3ec"
-                        trend="+8.2% this week"
-                        trendUp
                       />
                       <StatCard
-                        title="Platform Commission (15%)"
-                        value={`EGP ${Number(commission).toLocaleString()}`}
-                        icon={Percent}
+                        title="Platform Profit (Net)"
+                        value={`EGP ${fmtCurrency(netProfit)}`}
+                        icon={TrendingUp}
                         color="#28c76f"
-                        subtitle="Based on total revenue"
+                      />
+                      <StatCard
+                        title="Customer Fees (6%)"
+                        value={`EGP ${fmtCurrency(customerFees)}`}
+                        icon={Users}
+                        color="#ff6b6b"
+                      />
+                      <StatCard
+                        title="Vendor Fees (12%)"
+                        value={`EGP ${fmtCurrency(vendorFees)}`}
+                        icon={ShoppingBag}
+                        color="#ffa500"
                       />
                     </>
                   )}
@@ -758,6 +852,49 @@ const Admin = () => {
                   </div>
                 </div>
               </div>
+
+              {canManage(role) && (
+                <div className="chart-card">
+                  <div className="chart-card__header">
+                    <div>
+                      <h3 className="chart-card__title">Monthly Earnings</h3>
+                      <p className="chart-card__sub">Net sales — last 12 months</p>
+                    </div>
+                    <TrendingUp size={18} color="#03c3ec" />
+                  </div>
+                  {earningsLoading ? (
+                    <div className="loading-state">
+                      <Loader2 size={16} className="spin" /> Loading earnings…
+                    </div>
+                  ) : earningsData.length === 0 ? (
+                    <div className="empty-state">
+                      <DollarSign size={32} color="#cbd5e1" />
+                      <p>No earnings data available.</p>
+                    </div>
+                  ) : (
+                    <ResponsiveContainer width="100%" height={260}>
+                      <BarChart data={earningsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="earningsGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%"  stopColor="#03c3ec" stopOpacity={0.2} />
+                            <stop offset="95%" stopColor="#03c3ec" stopOpacity={0}   />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                        <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
+                        <YAxis tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
+                        <Tooltip
+                          contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff", boxShadow: "0 4px 24px rgba(3,195,236,0.1)" }}
+                          labelStyle={{ color: "#566a7f", fontWeight: 600 }}
+                          formatter={(value) => [`EGP ${fmtCurrency(value)}`, "Net Sales"]}
+                        />
+                        <Legend iconType="circle" iconSize={8} />
+                        <Bar dataKey="earnings" fill="#03c3ec" name="Net Sales (EGP)" radius={[8, 8, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  )}
+                </div>
+              )}
 
               <div className="quick-actions">
                 <h3 className="section-heading">Quick Actions</h3>
@@ -995,7 +1132,7 @@ const Admin = () => {
                               {order.customer?.name || order.customer_name || "—"}
                             </td>
                             <td className="order-amount">
-                              {parseFloat(order.total_amount || order.total || 0).toFixed(2)}
+                              {fmtCurrency(order.total_amount || order.total || 0)}
                             </td>
                             <td className="order-delivery">
                               {order.delivery_type || "—"}
