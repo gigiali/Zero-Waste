@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   CreditCard, Banknote, ArrowLeft, Package, MapPin,
@@ -7,10 +7,14 @@ import {
 import "./PaymentMethod.css";
 import { useCart } from "../Context/CartContext";
 
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone }) {
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, frozenTotal, frozenCartTotal, frozenCommission, frozenDeliveryFee }) {
   const [phase, setPhase] = useState(1);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (orderSuccess) setConfirmed(true);
+  }, [orderSuccess]);
 
   useEffect(() => {
     let elapsed = 0;
@@ -136,7 +140,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
           </div>
         )}
 
-        {confirmed && (
+        {(confirmed || orderSuccess) && (
           <div className="orm-body orm-fade-in">
             <div className="orm-confirm-icon orm-success"><CheckCircle size={48} /></div>
             <h3 className="orm-confirm-title">Order Confirmed!</h3>
@@ -205,6 +209,9 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [showReviewModal, setShowReviewModal] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
+  const orderDataRef = React.useRef(null);
+  const frozenCartItemsRef = React.useRef([]);
 
   const deliveryMethod = searchParams.get("method") || "pickup";
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
@@ -272,7 +279,10 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
        submitData.append(`items[${index}][quantity]`, item.quantity);
       });    
        submitData.append("payment_method", selectedMethod);
+       console.log("delivery_type:", deliveryMethod);
+console.log("customer_lat:", localStorage.getItem("userLocationLat"));
        submitData.append("delivery_type", deliveryMethod);
+       
 
       if (deliveryMethod === "delivery") {
         if (!customerLat || !customerLong) { setSubmitError("Please set your location first"); setIsSubmitting(false); return; }
@@ -300,18 +310,17 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
           businessName, businessPhone,
         });
 
+        orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone };
+        frozenCartItemsRef.current = [...cartItems];
         clearCart();
-
-        navigate("/order-confirmation", {
-          state: { deliveryMethod, cartTotal, deliveryFee, commission, total, orderId: savedOrder.orderNumber, businessName, businessPhone },
-        });
+        setOrderSuccess(true);
       } else {
         if (response.status === 422 && data.errors) {
           setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
         } else if (response.status === 401) {
           setSubmitError("Please login to continue");
         } else {
-          setSubmitError(data.message || "Failed to place order. Please try again.");
+          setSubmitError(data.message + " | " + (data.error_debug || "") + " line: " + (data.line || ""));
         }
         setIsSubmitting(false);
         setShowReviewModal(false);
@@ -324,7 +333,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     }
   };
 
-  const handleModalCancel = () => setShowReviewModal(false);
+  const handleModalCancel = () => { if (!orderSuccess) setShowReviewModal(false); };
 
   return (
     <>
@@ -396,18 +405,20 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
         </div>
       </div>
 
-      {showReviewModal && (
+      {(showReviewModal || orderSuccess) && (
         <OrderReviewModal
-          cartItems={cartItems}
+          cartItems={orderSuccess ? frozenCartItemsRef.current : cartItems}
           deliveryMethod={deliveryMethod}
-          cartTotal={cartTotal}
-          deliveryFee={deliveryFee}
-          commission={commission}
-          total={total}
+          cartTotal={orderDataRef.current?.cartTotal ?? cartTotal}
+          deliveryFee={orderDataRef.current?.deliveryFee ?? deliveryFee}
+          commission={orderDataRef.current?.commission ?? commission}
+          total={orderDataRef.current?.total ?? total}
           onConfirm={handleFinalConfirm}
           onCancel={handleModalCancel}
+          orderSuccess={orderSuccess}
           onTrackOrder={() => {
             const latestOrder = JSON.parse(localStorage.getItem("zw_user_orders") || "[]")[0];
+            setShowReviewModal(false);
             navigate("/home", {
               state: {
                 trackingActive: true,

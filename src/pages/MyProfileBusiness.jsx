@@ -251,14 +251,15 @@ export default function MyProfileBusiness() {
     address: "",
   });
 
-  const ownerInfo = {
+  const [ownerInfo, setOwnerInfo] = useState({
     name: user?.name || "",
     email: user?.email || "",
     phone: user?.phone || "",
     address: user?.address || "",
-  };
+  });
 
   useEffect(() => {
+    console.log("user object:", user);
     setEditOwner({
       name: user?.name || "",
       email: user?.email || "",
@@ -343,12 +344,12 @@ export default function MyProfileBusiness() {
       if (editOwner.name.trim()) formData.append("name", editOwner.name.trim());
       if (editOwner.email.trim()) formData.append("email", editOwner.email.trim());
       if (editOwner.phone.trim()) formData.append("phone", editOwner.phone.trim());
-      if (editOwner.address.trim()) formData.append("address", editOwner.address.trim());
+      formData.append("address", editOwner.address?.trim() || "");
       if (logoFile) formData.append("logo", logoFile);
       if (commercialFile) formData.append("commercial_register", commercialFile);
       if (taxCardFile) formData.append("tax_card", taxCardFile);
 
-      const res = await fetch(`${BASE_URL}/vendor/complete-setup`, {
+      const res = await fetch(`${BASE_URL}/vendor/myprofile/update`, {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
         body: formData,
@@ -362,6 +363,12 @@ export default function MyProfileBusiness() {
         setIsEditing(false);
         setTimeoutMsg("Profile updated successfully");
         setTimeoutType("success");
+        setOwnerInfo({
+          name: editOwner.name,
+          email: editOwner.email,
+          phone: editOwner.phone,
+          address: editOwner.address,
+        });
         await fetchVendorData();
       } else if (res.status === 422 && data.errors) {
         const newErrors = {};

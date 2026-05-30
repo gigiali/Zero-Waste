@@ -138,6 +138,8 @@ export default function Business() {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteBranchId, setDeleteBranchId] = useState(null);
+  const isSavingRef = React.useRef(false);
+  const isFetchingOffersRef = React.useRef(false);
 
   // ── Fetch profile + branches on mount ──
   useEffect(() => {
@@ -236,34 +238,30 @@ export default function Business() {
     };
   }, [selectedBranch]);
   
-  // ── Fetch offers when branch changes ──
-  useEffect(() => {
-    const fetchOffers = async () => {
-      const token = getToken();
-      if (!token) return;
-
-      try {
-        const res = await fetch("/api/vendor/myoffers", {
-          headers: {
-            Accept: "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (res.ok) {
-          const data = await readJson(res);
-          const offerList = extractList(data, ["offers"]);
-          setOffers(offerList.map(normalizeOffer));
-        } else {
-          console.warn("Failed to fetch offers");
-        }
-      } catch (err) {
-        console.error("Offers fetch error:", err);
+  const fetchOffers = React.useCallback(async () => {
+    if (isFetchingOffersRef.current) return;
+    isFetchingOffersRef.current = true;
+    const token = getToken();
+    if (!token) { isFetchingOffersRef.current = false; return; }
+    try {
+      const res = await fetch("/api/vendor/myoffers", {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await readJson(res);
+        const offerList = extractList(data, ["offers"]);
+        setOffers(offerList.map(normalizeOffer));
       }
-    };
+    } catch (err) {
+      console.error("Offers fetch error:", err);
+    } finally {
+      isFetchingOffersRef.current = false;
+    }
+  }, []);
 
-    if (selectedBranch) fetchOffers();
-  }, [selectedBranch]);
+  useEffect(() => {
+    if (selectedBranch?.id) fetchOffers();
+  }, [selectedBranch?.id]);
 
   // ── Fetch orders when branch changes ──
   useEffect(() => {
@@ -397,6 +395,7 @@ export default function Business() {
   };
 
   const handleSave = async () => {
+    if (isSubmitting) return;
     if (!form.title.trim() || !form.description.trim()) {
       setSubmitError("Please fill in title and description");
       return;
@@ -407,6 +406,7 @@ export default function Business() {
       return;
     }
 
+    isSavingRef.current = true;
     setIsSubmitting(true);
     setSubmitError("");
     setSubmitSuccess("");
@@ -420,6 +420,13 @@ export default function Business() {
       fd.append("quantity_available", parseInt(form.quantityAvailable) || 1);
       fd.append("original_price", parseFloat(form.originalPrice) || 0);
       fd.append("discount_price", parseFloat(form.discountPrice) || 0);
+
+      // frontend validation to match backend lt:original_price rule
+      if (parseFloat(form.discountPrice) >= parseFloat(form.originalPrice)) {
+        setSubmitError("Discount price must be less than original price");
+        setIsSubmitting(false);
+        return;
+      }
       fd.append("status", form.status || "active");
 
       if (!editingId) {
@@ -460,44 +467,11 @@ export default function Business() {
       });
 
       const responseData = await readJson(res);
-
       if (res.ok) {
-        if (editingId) {
-          const refreshRes = await fetch("/api/vendor/myoffers", {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          });
-          if (refreshRes.ok) {
-            const data = await readJson(refreshRes);
-            const offerList = extractList(data, ["offers"]);
-            setOffers(offerList.map(normalizeOffer));
-          }
-          setSubmitSuccess("Offer updated successfully!");
-        } else {
-          const newOffer = responseData.offer || responseData.data || {};
-          setOffers((prev) => [
-            normalizeOffer({
-              ...newOffer,
-              title: form.title,
-              description: form.description,
-              original_price: parseFloat(form.originalPrice) || 0,
-              discount_price: parseFloat(form.discountPrice) || 0,
-              quantity_available: parseInt(form.quantityAvailable) || 1,
-              expiration_time: form.expiresIn + "h",
-              status: "active",
-              branch_id: selectedBranch?.id,
-              branch: selectedBranch,
-            }),
-            ...prev,
-          ]);
-          setSubmitSuccess("Offer created successfully!");
-        }
+        setSubmitSuccess(editingId ? "Offer updated successfully!" : "Offer created successfully!");
+        fetchOffers();
 
-        setTimeout(() => {
-          closeDrawer();
-        }, 800);
+        closeDrawer();
       } else {
         const errMsg = responseData.message || responseData.error || "Failed to save offer";
         setSubmitError(errMsg);
@@ -507,6 +481,7 @@ export default function Business() {
       setSubmitError("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
+      isSavingRef.current = false;
     }
   };
 
