@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { useCart } from "../Context/CartContext";
 import { useLocationContext } from "../Context/LocationContext";
+import Footer from "../Components/Footer";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app";
 
@@ -71,40 +72,70 @@ function CountdownTimer({ pickupTime }) {
 function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
+
+  const statusToStep = (status, deliveryMethod) => {
+    switch (status?.toLowerCase()) {
+      case "pending":      return 1;
+      case "processing":   return 2;
+      case "completed":    return deliveryMethod === "delivery" ? 3 : 4;
+      case "in_transit":   return 3;
+      case "delivered":    return 4;
+      case "cancelled":    return 1;
+      default:             return 1;
+    }
+  };
+
+  const pickupSteps = [
+    { id: 1, label: "Pending",    icon: <Clock size={14} /> },
+    { id: 2, label: "Processing", icon: <Package size={14} /> },
+    { id: 3, label: "Completed",  icon: <CheckCircle size={14} /> },
+  ];
+
+  const deliverySteps = [
+    { id: 1, label: "Pending",    icon: <Clock size={14} /> },
+    { id: 2, label: "Processing", icon: <Package size={14} /> },
+    { id: 3, label: "On the Way", icon: <Truck size={14} /> },
+    { id: 4, label: "Delivered",  icon: <CheckCircle size={14} /> },
+  ];
+
+  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
+
+  useEffect(() => {
+    const fetchOrderStatus = async () => {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      if (!token || !order.orderNumber) return;
+      try {
+        const res = await fetch(`${BASE_URL}/api/orders/${order.orderNumber}`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok) {
+          const status = data.data?.order_status || data.order?.order_status || data.order_status;
+          setCurrentStep(statusToStep(status, order.deliveryMethod));
+          if (status === "delivered" || status === "completed") {
+            setShowReview(true);
+            sessionStorage.removeItem("zw_active_order");
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch order status:", err);
+      }
+    };
+
+    fetchOrderStatus();
+    const interval = setInterval(fetchOrderStatus, 10000);
+    return () => clearInterval(interval);
+  }, [order.orderNumber, order.deliveryMethod]);
+
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
   const [reviewImage, setReviewImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (currentStep < 4) setCurrentStep((s) => s + 1);
-    }, 4000);
-    return () => clearTimeout(timer);
-  }, [currentStep]);
-
-  useEffect(() => {
-    if (currentStep === 4 && !submitted) {
-      const timer = setTimeout(() => setShowReview(true), 500);
-      return () => clearTimeout(timer);
-    }
-  }, [currentStep, submitted]);
-
-  const pickupSteps = [
-    { id: 1, label: "Confirmed", icon: <CheckCircle size={14} /> },
-    { id: 2, label: "Preparing", icon: <Package size={14} /> },
-    { id: 3, label: "Ready", icon: <CheckCircle size={14} /> },
-    { id: 4, label: "Picked Up", icon: <CheckCircle size={14} /> },
-  ];
-  const deliverySteps = [
-    { id: 1, label: "Confirmed", icon: <CheckCircle size={14} /> },
-    { id: 2, label: "Preparing", icon: <Package size={14} /> },
-    { id: 3, label: "On the Way", icon: <Truck size={14} /> },
-    { id: 4, label: "Delivered", icon: <CheckCircle size={14} /> },
-  ];
-
-  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
   const handleSubmitReview = async () => {
     const token =
@@ -304,6 +335,75 @@ function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn }) {
   );
 }
 
+// ── Sustainability Section ────────────────────────────────────────────────────
+function SustainabilitySection() {
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchMetrics = async () => {
+      try {
+        const token =
+          localStorage.getItem("auth_token") ||
+          localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") ||
+          sessionStorage.getItem("token");
+        if (!token) return;
+        const res = await fetch(`${BASE_URL}/api/customer/sustainability/metrics`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.metrics) setMetrics(data.metrics);
+      } catch (err) {
+        console.error("Failed to fetch sustainability metrics:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchMetrics();
+  }, []);
+
+  if (loading || !metrics) return null;
+
+  const cards = [
+    { icon: "🍽️", value: metrics.meals_saved ?? 0,          label: "Meals Rescued",     color: "#10b981", bg: "#f0fdf4" },
+    { icon: "🌍", value: `${metrics.co2_prevented_kg ?? 0} kg`, label: "CO₂ Prevented",  color: "#3b82f6", bg: "#eff6ff" },
+    { icon: "💰", value: `EGP ${Number(metrics.total_money_saved ?? 0).toFixed(0)}`, label: "Money Saved", color: "#f59e0b", bg: "#fffbeb" },
+  ];
+
+  return (
+    <section style={{ padding: "32px 24px", maxWidth: "1200px", margin: "0 auto" }}>
+      <div style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)", borderRadius: "20px", padding: "28px 32px", border: "1px solid #d1fae5" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+          <div style={{ background: "linear-gradient(135deg, #10b981, #059669)", borderRadius: "10px", padding: "6px 8px", display: "flex" }}>
+            <span style={{ fontSize: "1.1rem" }}>🌱</span>
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#065f46" }}>Your Sustainability Impact</h2>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>Your contribution to reducing food waste</p>
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "16px" }}>
+          {cards.map((card) => (
+            <div key={card.label} style={{ background: card.bg, borderRadius: "14px", padding: "18px 20px", border: `1px solid ${card.color}22`, textAlign: "center" }}>
+              <div style={{ fontSize: "2rem", marginBottom: "8px" }}>{card.icon}</div>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: card.color, marginBottom: "4px" }}>{card.value}</div>
+              <div style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: 500 }}>{card.label}</div>
+            </div>
+          ))}
+        </div>
+
+        {metrics.thank_you_message && (
+          <p style={{ margin: "16px 0 0", fontSize: "0.85rem", color: "#065f46", textAlign: "center", fontStyle: "italic" }}>
+            {metrics.thank_you_message}
+          </p>
+        )}
+      </div>
+    </section>
+  );
+}
+
 const categoryIcons = {
   All: <Store size={16} />,
   Restaurant: <Utensils size={16} />,
@@ -348,11 +448,16 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("highest_discount");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [activeOrder, setActiveOrder] = useState(null);
+  const [activeOrder, setActiveOrder] = useState(() => {
+    const saved = sessionStorage.getItem("zw_active_order");
+    return saved ? JSON.parse(saved) : null;
+  });
 
   useEffect(() => {
     if (location.state?.trackingActive) {
-      setActiveOrder(location.state);
+      const orderData = location.state;
+      setActiveOrder(orderData);
+      sessionStorage.setItem("zw_active_order", JSON.stringify(orderData));
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
@@ -365,7 +470,6 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
-  // ── Fetch Recommended Offers ──────────────────────────────────────────────
   useEffect(() => {
     const fetchRecommended = async () => {
       const token =
@@ -389,7 +493,6 @@ export default function HomePage() {
 
   const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
 
-  // ── Fetch Offers with Real-Time Updates (every 30s) ───────────────────────
   useEffect(() => {
     const fetchOffers = async () => {
       setLoading(true);
@@ -461,9 +564,9 @@ export default function HomePage() {
       }
     };
 
-    fetchOffers(); // ✅ اجري فوراً
-    const interval = setInterval(fetchOffers, 30000); // ✅ كل 30 ثانية
-    return () => clearInterval(interval); // ✅ cleanup
+    fetchOffers();
+    const interval = setInterval(fetchOffers, 30000);
+    return () => clearInterval(interval);
   }, [selectedCategory]);
 
   const filteredOffers = offers
@@ -514,11 +617,10 @@ export default function HomePage() {
               value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
             <button className="search-btn">Search</button>
           </div>
-          {activeOrder && <OrderTrackingStrip order={activeOrder} onDismiss={() => setActiveOrder(null)} />}
+          {activeOrder && <OrderTrackingStrip order={activeOrder} onDismiss={() => { setActiveOrder(null); sessionStorage.removeItem("zw_active_order"); }} />}
         </div>
       </section>
 
-      {/* ── Recommended Section ── */}
       {recommendedOffers.length > 0 && (
         <section style={{ padding: "32px 24px 0", maxWidth: "1200px", margin: "0 auto" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
@@ -693,6 +795,13 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
+      {/* ── Sustainability Impact ── */}
+      {isLoggedIn && <SustainabilitySection />}
+
+      {/* ── Footer ── */}
+      <Footer />
+
     </div>
   );
 }
