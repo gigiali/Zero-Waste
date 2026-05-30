@@ -431,8 +431,6 @@
   padding: 20px;
 }
 
-.chart-card--wide { /* already takes 1fr */ }
-
 .chart-card__header {
   display: flex;
   align-items: flex-start;
@@ -943,4 +941,365 @@
   .search-box input { width: 100px; }
   .quick-actions-grid { grid-template-columns: 1fr; }
   .charts-row { grid-template-columns: 1fr; }
+}
+/* ════════════════════════════════════════
+   SUSTAINABILITY SECTION CSS
+════════════════════════════════════════ */
+
+.sustainability-section {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sustainability-section__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0;
+  border-bottom: 2px solid #e7e7ff;
+}
+
+.sustainability-section__title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #111827;
+  margin-bottom: 8px;
+  background: linear-gradient(135deg, #10b981 0%, #28c76f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sustainability-section__subtitle {
+  font-size: 0.95rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* ── Sustainability Metrics Grid ── */
+.sustainability-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+  width: 100%;
+  margin: 16px 0;
+}
+
+.sustainability-metric-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  border-top: 4px solid #28c76f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sustainability-metric-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, transparent 0%, rgba(16, 185, 129, 0.03) 100%);
+  pointer-events: none;
+}
+
+.sustainability-metric-card:hover {
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.15);
+  transform: translateY(-4px);
+}
+
+.sustainability-metric-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.sustainability-metric-card__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: rgba(16, 185, 129, 0.1);
+}
+
+.sustainability-metric-card__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.sustainability-metric-card__value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #111827;
+  margin: 12px 0 8px 0;
+  word-break: break-word;
+  line-height: 1.2;
+}
+
+.sustainability-metric-card__subtitle {
+  font-size: 0.8rem;
+  color: #9ca3af;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* Color variants for different metrics */
+.sustainability-metric-card:nth-child(1) {
+  border-top-color: #28c76f;
+}
+
+.sustainability-metric-card:nth-child(1) .sustainability-metric-card__icon {
+  background: rgba(40, 199, 111, 0.12);
+}
+
+.sustainability-metric-card:nth-child(2) {
+  border-top-color: #10b981;
+}
+
+.sustainability-metric-card:nth-child(2) .sustainability-metric-card__icon {
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.sustainability-metric-card:nth-child(3) {
+  border-top-color: #3b82f6;
+}
+
+.sustainability-metric-card:nth-child(3) .sustainability-metric-card__icon {
+  background: rgba(59, 130, 246, 0.12);
+}
+
+.sustainability-metric-card:nth-child(4) {
+  border-top-color: #f59e0b;
+}
+
+.sustainability-metric-card:nth-child(4) .sustainability-metric-card__icon {
+  background: rgba(245, 158, 11, 0.12);
+}
+
+/* ── Sustainability Chart ── */
+.sustainability-chart {
+  margin-top: 24px;
+}
+
+.sustainability-chart .chart-card__header {
+  background: linear-gradient(135deg, #f0fdf4 0%, #f0fef9 100%);
+  padding: 20px 24px;
+  border-bottom: 2px solid #d1fae5;
+}
+
+.sustainability-chart .chart-card__title {
+  color: #065f46;
+}
+
+.sustainability-chart .chart-card__sub {
+  color: #059669;
+}
+
+/* ── Loading & Error States ── */
+.loading-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px;
+  background: white;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.error-state {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 0.9rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  background: white;
+  border-radius: 12px;
+  border: 1px dashed #d1d5db;
+}
+
+.empty-state svg {
+  margin-bottom: 12px;
+}
+
+.empty-state p {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 4px;
+}
+
+.empty-state span {
+  font-size: 0.875rem;
+  color: #9ca3af;
+}
+
+/* ── Refresh Button ── */
+.refresh-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid #e5e7eb;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.refresh-btn:hover {
+  background: #f9fafb;
+  border-color: #28c76f;
+  color: #28c76f;
+  transform: rotate(90deg);
+  transition: all 0.3s ease;
+}
+
+/* ── Chart Card Base ── */
+.chart-card {
+  background: white;
+  border-radius: 12px;
+  padding: 24px;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.chart-card__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.chart-card__sub {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 4px 0 0 0;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .sustainability-metrics-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+
+  .sustainability-metric-card {
+    padding: 18px;
+  }
+
+  .sustainability-metric-card__value {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sustainability-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sustainability-section__title {
+    font-size: 1.5rem;
+  }
+
+  .sustainability-section__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+
+  .loading-state {
+    padding: 32px 16px;
+  }
+
+  .empty-state {
+    padding: 32px 16px;
+  }
+}
+
+/* ── Animation for chart data ── */
+@keyframes slideInChart {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.sustainability-chart {
+  animation: slideInChart 0.4s ease 0.2s backwards;
+}
+
+/* ── Print Styles ── */
+@media print {
+  .sustainability-section {
+    gap: 16px;
+  }
+
+  .sustainability-metric-card {
+    page-break-inside: avoid;
+  }
+
+  .refresh-btn {
+    display: none;
+  }
 }

@@ -28,6 +28,7 @@ import {
   BarChart2,
   Menu,
   X,
+  Leaf,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -128,6 +129,19 @@ const StatCard = ({ title, value, subtitle, icon: Icon, color, trend, trendUp })
   </div>
 );
 
+const SustainabilityCard = ({ title, value, subtitle, icon: Icon, color }) => (
+  <div className="sustainability-metric-card" style={{ borderTopColor: color }}>
+    <div className="sustainability-metric-card__header">
+      <div className="sustainability-metric-card__icon" style={{ background: `${color}15` }}>
+        <Icon size={24} color={color} />
+      </div>
+      <p className="sustainability-metric-card__label">{title}</p>
+    </div>
+    <h2 className="sustainability-metric-card__value">{value}</h2>
+    {subtitle && <p className="sustainability-metric-card__subtitle">{subtitle}</p>}
+  </div>
+);
+
 const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
   <button
     type="button"
@@ -179,6 +193,49 @@ const Admin = () => {
   const [ordersSortField, setOrdersSortField] = useState("created_at");
   const [ordersSortDir, setOrdersSortDir] = useState("desc");
   const ORDERS_PER_PAGE = 10;
+
+  // 🌍 SUSTAINABILITY STATE
+  const [sustainabilityMetrics, setSustainabilityMetrics] = useState(null);
+  const [sustainabilityChartData, setSustainabilityChartData] = useState([]);
+  const [sustainabilityLoading, setSustainabilityLoading] = useState(false);
+  const [sustainabilityError, setSustainabilityError] = useState(null);
+
+  // 🌍 FETCH SUSTAINABILITY METRICS
+  useEffect(() => {
+    if (!isLoggedIn || !token) return;
+    (async () => {
+      setSustainabilityLoading(true);
+      setSustainabilityError(null);
+      try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+
+        const res = await fetch(`${BASE_URL}/admin/sustainability/metrics`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          signal: controller.signal,
+        });
+        clearTimeout(timeout);
+
+        if (!res.ok) throw new Error(`Sustainability ${res.status}`);
+        const data = await res.json();
+        
+        if (data.success) {
+          setSustainabilityMetrics(data.metrics);
+          setSustainabilityChartData(data.chart_data || []);
+        }
+      } catch (err) {
+        if (err.name !== "AbortError") {
+          console.error("Sustainability fetch error:", err);
+          setSustainabilityError(err.message);
+        }
+      } finally {
+        setSustainabilityLoading(false);
+      }
+    })();
+  }, [isLoggedIn, token]);
 
   useEffect(() => {
     if (!isLoggedIn || !token) return;
@@ -412,6 +469,7 @@ const Admin = () => {
     { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
     { id: "orders",    icon: ShoppingBag,     label: "All Orders", badge: allOrders.length || null },
     { id: "activity",  icon: Activity,        label: "Activity" },
+    { id: "sustainability", icon: Leaf,       label: "Sustainability Impact" },
   ];
 
   const managementItems = [
@@ -531,6 +589,7 @@ const Admin = () => {
               {activeSection === "dashboard"     && "Dashboard"}
               {activeSection === "orders"        && "All Orders"}
               {activeSection === "activity"      && "Recent Activity"}
+              {activeSection === "sustainability" && "Sustainability Impact"}
               {activeSection === "notifications" && "Notifications"}
             </h1>
             <div className="admin-topbar__breadcrumb">
@@ -545,6 +604,9 @@ const Admin = () => {
 
         <div className="admin-page-content">
 
+          {/* ═══════════════════════════════════════
+              DASHBOARD SECTION
+          ═══════════════════════════════════════ */}
           {activeSection === "dashboard" && (
             <>
               {statsLoading ? (
@@ -732,23 +794,132 @@ const Admin = () => {
                   </button>
                 </div>
               </div>
-
-              {canManage(role) && (
-                <div className="impact-banner">
-                  <div className="impact-banner__item">
-                    <p className="impact-banner__label">Avg Order Value</p>
-                    <p className="impact-banner__value">EGP {avgOrder}</p>
-                  </div>
-                  <div className="impact-banner__divider" />
-                  <div className="impact-banner__item">
-                    <p className="impact-banner__label">Food Saved</p>
-                    <p className="impact-banner__value">2,450 kg</p>
-                  </div>
-                </div>
-              )}
             </>
           )}
 
+          {/* ═══════════════════════════════════════
+              🌍 SUSTAINABILITY IMPACT SECTION
+          ═══════════════════════════════════════ */}
+          {activeSection === "sustainability" && (
+            <div className="sustainability-section">
+              <div className="sustainability-section__header">
+                <div>
+                  <h2 className="sustainability-section__title">🌍 Sustainability Impact</h2>
+                  <p className="sustainability-section__subtitle">Environmental impact metrics across the platform</p>
+                </div>
+                <button
+                  type="button"
+                  className="refresh-btn"
+                  onClick={() => window.location.reload()}
+                  title="Refresh"
+                >
+                  <RefreshCw size={16} />
+                </button>
+              </div>
+
+              {sustainabilityLoading ? (
+                <div className="loading-state">
+                  <Loader2 size={20} className="spin" /> Loading sustainability data…
+                </div>
+              ) : sustainabilityError ? (
+                <div className="error-state">
+                  <AlertCircle size={16} />
+                  Failed to load sustainability data: {sustainabilityError}
+                </div>
+              ) : sustainabilityMetrics ? (
+                <>
+                  <div className="sustainability-metrics-grid">
+                    <SustainabilityCard
+                      title="Meals Saved"
+                      value={Number(sustainabilityMetrics.meals_saved).toLocaleString()}
+                      subtitle="Food items rescued from waste"
+                      icon={Package}
+                      color="#28c76f"
+                    />
+                    <SustainabilityCard
+                      title="CO₂ Prevented"
+                      value={`${sustainabilityMetrics.co2_prevented_kg.toFixed(2)} kg`}
+                      subtitle="Carbon emissions avoided"
+                      icon={Leaf}
+                      color="#10b981"
+                    />
+                    <SustainabilityCard
+                      title="Recovered Revenue"
+                      value={`EGP ${Number(sustainabilityMetrics.recovered_revenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle="From rescued food items"
+                      icon={DollarSign}
+                      color="#3b82f6"
+                    />
+                    <SustainabilityCard
+                      title="Consumer Savings"
+                      value={`EGP ${Number(sustainabilityMetrics.consumer_savings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      subtitle="Amount saved by customers"
+                      icon={TrendingUp}
+                      color="#f59e0b"
+                    />
+                  </div>
+
+                  {sustainabilityChartData && sustainabilityChartData.length > 0 && (
+                    <div className="chart-card sustainability-chart">
+                      <div className="chart-card__header">
+                        <div>
+                          <h3 className="chart-card__title">Monthly Sustainability Trends</h3>
+                          <p className="chart-card__sub">Meals saved & CO₂ prevented — last 12 months</p>
+                        </div>
+                        <BarChart2 size={18} color="#28c76f" />
+                      </div>
+                      <ResponsiveContainer width="100%" height={320}>
+                        <LineChart data={sustainabilityChartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
+                          <defs>
+                            <linearGradient id="mealsGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%"  stopColor="#28c76f" stopOpacity={0.2} />
+                              <stop offset="95%" stopColor="#28c76f" stopOpacity={0}   />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                          <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#8592a3" }} />
+                          <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#8592a3" }} />
+                          <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} />
+                          <Tooltip
+                            contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff", boxShadow: "0 4px 24px rgba(39,174,96,0.1)" }}
+                            labelStyle={{ color: "#566a7f", fontWeight: 600 }}
+                          />
+                          <Legend iconType="circle" />
+                          <Line 
+                            yAxisId="left"
+                            type="monotone" 
+                            dataKey="meals_saved" 
+                            stroke="#28c76f" 
+                            dot={{ fill: "#28c76f", r: 4 }}
+                            name="Meals Saved"
+                            strokeWidth={2}
+                          />
+                          <Line 
+                            yAxisId="right"
+                            type="monotone" 
+                            dataKey="co2_prevented" 
+                            stroke="#10b981" 
+                            dot={{ fill: "#10b981", r: 4 }}
+                            name="CO₂ Prevented (kg)"
+                            strokeWidth={2}
+                          />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="empty-state">
+                  <Package size={40} color="#cbd5e1" />
+                  <p>No sustainability data available.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* ═══════════════════════════════════════
+              ORDERS SECTION
+          ═══════════════════════════════════════ */}
           {activeSection === "orders" && (
             <div className="orders-card">
               <div className="orders-card__header">
@@ -880,6 +1051,9 @@ const Admin = () => {
             </div>
           )}
 
+          {/* ═══════════════════════════════════════
+              ACTIVITY SECTION
+          ═══════════════════════════════════════ */}
           {activeSection === "activity" && (
             <div className="orders-card">
               <div className="orders-card__header">
@@ -913,6 +1087,9 @@ const Admin = () => {
             </div>
           )}
 
+          {/* ═══════════════════════════════════════
+              NOTIFICATIONS SECTION
+          ═══════════════════════════════════════ */}
           {activeSection === "notifications" && (
             <div className="orders-card">
               <div className="orders-card__header">
