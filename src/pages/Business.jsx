@@ -69,6 +69,14 @@ const normalizeOrder = (order) => {
   };
 };
 
+// normalize top selling item coming from /vendor/dashboard/top-selling
+// shape: { offer_id, total_sold, offer: { id, title } }
+const normalizeTopSelling = (item) => ({
+  offer_id: item.offer_id,
+  total_sold: Number(item.total_sold ?? 0),
+  title: item.offer?.title || item.offer?.name || `Offer #${item.offer_id}`,
+});
+
 const FALLBACK_CHART = [
   { day: "Mon", sales: 0, orders: 0 }, { day: "Tue", sales: 0, orders: 0 },
   { day: "Wed", sales: 0, orders: 0 }, { day: "Thu", sales: 0, orders: 0 },
@@ -137,6 +145,158 @@ function VendorSustainabilitySection() {
   );
 }
 
+// ── Top Selling Section ───────────────────────────────────────────────────────
+function TopSellingSection() {
+  const [items, setItems] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTop = async () => {
+      const token = getToken();
+      if (!token) { setLoading(false); return; }
+      try {
+        // ✅ Route الجديد: /api/vendor/dashboard/top-selling
+        const res = await fetch("/api/vendor/dashboard/top-selling", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          const list = extractList(data, ["data"]);
+          setItems(list.map(normalizeTopSelling));
+        }
+      } catch (err) { console.error("Top selling fetch error:", err); }
+      finally { setLoading(false); }
+    };
+    fetchTop();
+  }, []);
+
+  if (loading) return null;
+  if (items.length === 0) return null;
+
+  const maxSold = Math.max(...items.map((i) => i.total_sold), 1);
+
+  return (
+    <div className="biz-section">
+      <div style={{ background: "#fff", borderRadius: "16px", padding: "24px 28px", border: "1px solid #e5e7eb" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+          <div style={{ background: "linear-gradient(135deg, #f59e0b, #d97706)", borderRadius: "10px", padding: "6px 8px", display: "flex" }}>
+            <span style={{ fontSize: "1.1rem" }}>🏆</span>
+          </div>
+          <div>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111827" }}>Top Selling Offers</h2>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>Your best performing offers by units sold</p>
+          </div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+          {items.map((item, idx) => (
+            <div key={item.offer_id} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+              <span style={{ fontSize: "0.85rem", fontWeight: 700, color: idx === 0 ? "#f59e0b" : idx === 1 ? "#9ca3af" : idx === 2 ? "#b45309" : "#6b7280", minWidth: "20px" }}>
+                {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
+              </span>
+              <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 500, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</span>
+              <div style={{ flex: 2, background: "#f3f4f6", borderRadius: "20px", height: "8px", overflow: "hidden" }}>
+                <div style={{ width: `${(item.total_sold / maxSold) * 100}%`, height: "100%", background: "linear-gradient(90deg, #10b981, #059669)", borderRadius: "20px", transition: "width 0.6s ease" }} />
+              </div>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#10b981", minWidth: "50px", textAlign: "right" }}>{item.total_sold} sold</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Sales History Section ─────────────────────────────────────────────────────
+function SalesHistorySection() {
+  const navigate = useNavigate();
+  const [sales, setSales] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const fetchSales = async () => {
+      const token = getToken();
+      if (!token) { setLoading(false); return; }
+      try {
+        // ✅ Route الجديد: /api/vendor/dashboard/sales
+        const res = await fetch("/api/vendor/dashboard/sales", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          setSales(extractList(data, ["data"]));
+        }
+      } catch (err) { console.error("Sales history fetch error:", err); }
+      finally { setLoading(false); }
+    };
+    fetchSales();
+  }, []);
+
+  if (loading) return null;
+  if (sales.length === 0) return null;
+
+  const displayed = showAll ? sales : sales.slice(0, 5);
+
+  return (
+    <div className="biz-section" id="sales-section">
+      <div className="biz-section-header">
+        <h2 className="biz-section-title">Sales History</h2>
+        {sales.length > 5 && (
+          <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
+            {showAll ? "Show Less" : `View All (${sales.length})`}
+          </button>
+        )}
+      </div>
+      <div className="biz-table-wrap">
+        <table className="biz-table">
+          <thead>
+            <tr>
+              <th>Sale ID</th>
+              <th>Offer</th>
+              <th>Qty</th>
+              <th>Price</th>
+              <th>Order Status</th>
+              <th>Date</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {displayed.map((sale) => (
+              <tr key={sale.id}>
+                <td className="biz-td-id">#{sale.id}</td>
+                <td>{sale.offer?.title || sale.offer?.name || "—"}</td>
+                <td>{sale.quantity ?? "—"}</td>
+                <td className="biz-td-amount">EGP {sale.price ?? "—"}</td>
+                <td>
+                  <span className={`biz-badge ${sale.order?.order_status === "completed" ? "active" : sale.order?.order_status === "cancelled" ? "expired" : "pending"}`}>
+                    {sale.order?.order_status || "—"}
+                  </span>
+                </td>
+                <td style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                  {sale.order?.order_date ? new Date(sale.order.order_date).toLocaleDateString("en-EG") : "—"}
+                </td>
+                <td>
+                  {/* ✅ Route الجديد: /api/vendor/dashboard/sales/{id} */}
+                  <button
+                    type="button"
+                    className="biz-icon-btn edit"
+                    title="View details"
+                    onClick={() => navigate(`/vendor/dashboard/sales/${sale.id}`)}
+                    style={{ fontSize: "0.75rem", padding: "4px 8px" }}
+                  >
+                    👁️
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ── Main Business Component ───────────────────────────────────────────────────
 export default function Business() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -161,7 +321,7 @@ export default function Business() {
   const [offers, setOffers] = useState([]);
   const [orders, setOrders] = useState([]);
   const [salesData, setSalesData] = useState([]);
-  const [kpiData, setKpiData] = useState({ activeOffers: 0, totalOrders: 0, revenue: "EGP 0" });
+  const [kpiData, setKpiData] = useState({ activeOffers: 0, totalOrders: 0, revenue: "EGP 0", unitsSold: 0, grossRevenue: 0 });
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSlowLoading, setIsSlowLoading] = useState(false);
@@ -173,7 +333,7 @@ export default function Business() {
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
 
-  // Initial data load
+  // ── Initial data load ──────────────────────────────────────────────────────
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -215,23 +375,28 @@ export default function Business() {
     fetchData();
   }, []);
 
-  // Fetch Dashboard Overview Stats
+  // ── Fetch Overview Stats (/api/vendor/dashboard/overview) ─────────────────
   useEffect(() => {
     const fetchOverviewStats = async () => {
       const token = getToken();
       if (!token || !selectedBranch) return;
       try {
+        // ✅ Route الجديد
         const res = await fetch("/api/vendor/dashboard/overview", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await readJson(res);
-          // Response structure: { data: { activeOffers, totalOrders, revenue } }
           if (data.data) {
             setKpiData({
-              activeOffers: data.data.activeOffers || 0,
-              totalOrders: data.data.totalOrders || 0,
-              revenue: `EGP ${(data.data.revenue || 0).toLocaleString()}`,
+              activeOffers:  data.data.active_offers ?? 0,
+              totalOrders:   data.data.total_orders ?? 0,
+              unitsSold:     data.data.total_units_sold ?? 0,
+              grossRevenue:  data.data.financials?.gross_revenue ?? 0,
+              platformCut:   data.data.financials?.platform_deduction ?? 0,
+              revenue: `EGP ${(data.data.financials?.net_revenue || 0).toLocaleString("en-EG", {
+                minimumFractionDigits: 2, maximumFractionDigits: 2,
+              })}`,
             });
           }
         }
@@ -240,25 +405,32 @@ export default function Business() {
     if (selectedBranch) fetchOverviewStats();
   }, [selectedBranch]);
 
-  // Fetch Monthly Chart Data
+  // ── Fetch Monthly Chart (/api/vendor/dashboard/monthly-chart) ─────────────
   useEffect(() => {
     const fetchMonthlyChart = async () => {
       const token = getToken();
       if (!token || !selectedBranch) return;
       try {
+        // ✅ Route الجديد
         const res = await fetch("/api/vendor/dashboard/monthly-chart", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
           const data = await readJson(res);
-          // Response structure: { data: { chartData: [{day, sales, orders}, ...] } }
-          if (data.data?.chartData && Array.isArray(data.data.chartData)) {
-            setSalesData(data.data.chartData);
+          if (Array.isArray(data.data) && data.data.length > 0) {
+            const chartData = data.data.map((item) => ({
+              day: item.month,          // اسم الشهر جاي من الـ backend
+              sales: item.net_sales || 0,
+              orders: 0,               // الـ backend مش بيبعت orders في الـ monthly chart
+            }));
+            setSalesData(chartData);
           } else {
             setSalesData(FALLBACK_CHART);
           }
+        } else {
+          setSalesData(FALLBACK_CHART);
         }
-      } catch (err) { 
+      } catch (err) {
         console.error("Monthly chart error:", err);
         setSalesData(FALLBACK_CHART);
       }
@@ -266,7 +438,7 @@ export default function Business() {
     if (selectedBranch) fetchMonthlyChart();
   }, [selectedBranch]);
 
-  // Fetch Offers
+  // ── Fetch Offers ───────────────────────────────────────────────────────────
   const fetchOffers = React.useCallback(async () => {
     if (isFetchingOffersRef.current) return;
     isFetchingOffersRef.current = true;
@@ -286,26 +458,7 @@ export default function Business() {
 
   useEffect(() => { if (selectedBranch?.id) fetchOffers(); }, [selectedBranch?.id, fetchOffers]);
 
-  // Fetch Top Selling Products
-  useEffect(() => {
-    const fetchTopSelling = async () => {
-      const token = getToken();
-      if (!token || !selectedBranch) return;
-      try {
-        const res = await fetch("/api/vendor/dashboard/top-selling", {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await readJson(res);
-          // Handle response: { data: { topSelling: [...] } }
-          console.log("Top selling data:", data);
-        }
-      } catch (err) { console.error("Top selling fetch error:", err); }
-    };
-    if (selectedBranch) fetchTopSelling();
-  }, [selectedBranch]);
-
-  // Fetch Orders
+  // ── Fetch Orders ───────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchOrders = async () => {
       const token = getToken();
@@ -323,7 +476,7 @@ export default function Business() {
     if (selectedBranch) fetchOrders();
   }, [selectedBranch]);
 
-  // Listen for order updates
+  // ── Listen for order updates ───────────────────────────────────────────────
   useEffect(() => {
     const handleOrderPlaced = () => {
       if (!selectedBranch) return;
@@ -364,7 +517,12 @@ export default function Business() {
   const openEdit = (offer) => {
     setEditingId(offer.id);
     const expDate = offer.expiresIn && offer.expiresIn !== "N/A" ? new Date(offer.expiresIn).toISOString().slice(0, 16) : "";
-    setForm({ title: offer.title, description: offer.description, originalPrice: String(offer.originalPrice), discountPrice: String(offer.discountPrice), quantityAvailable: String(offer.quantity), expiresIn: "", image: null, status: offer.status?.toLowerCase() || "active", expirationDate: expDate });
+    setForm({
+      title: offer.title, description: offer.description,
+      originalPrice: String(offer.originalPrice), discountPrice: String(offer.discountPrice),
+      quantityAvailable: String(offer.quantity), expiresIn: "", image: null,
+      status: offer.status?.toLowerCase() || "active", expirationDate: expDate,
+    });
     setSubmitError(""); setSubmitSuccess(""); setDrawerOpen(true);
   };
 
@@ -433,7 +591,10 @@ export default function Business() {
     const id = deleteBranchId;
     const token = getToken();
     try {
-      const res = await fetch(`/api/branches/${id}`, { method: "DELETE", headers: { Accept: "application/json", Authorization: `Bearer ${token}` } });
+      const res = await fetch(`/api/branches/${id}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
       if (res.ok) {
         setBranches((prev) => prev.filter((b) => b.id !== id));
         if (selectedBranch?.id === id) setSelectedBranch(branches.find((b) => b.id !== id) || null);
@@ -445,9 +606,18 @@ export default function Business() {
   const handleDelete = async (id) => {
     const token = getToken();
     try {
-      const res = await fetch(`/api/vendor/offers/${id}`, { method: "DELETE", headers: { Accept: "application/json", Authorization: `Bearer ${token}` } });
-      if (res.ok) { setOffers((prev) => prev.filter((o) => o.id !== id)); setSubmitSuccess("Offer deleted!"); setTimeout(() => setSubmitSuccess(""), 2000); }
-      else { const data = await readJson(res); setSubmitError(data.message || "Failed to delete offer"); }
+      const res = await fetch(`/api/vendor/offers/${id}`, {
+        method: "DELETE",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setOffers((prev) => prev.filter((o) => o.id !== id));
+        setSubmitSuccess("Offer deleted!");
+        setTimeout(() => setSubmitSuccess(""), 2000);
+      } else {
+        const data = await readJson(res);
+        setSubmitError(data.message || "Failed to delete offer");
+      }
     } catch (err) { console.error("Delete error:", err); setSubmitError("Network error."); }
     finally { setDeleteConfirmId(null); }
   };
@@ -554,6 +724,7 @@ export default function Business() {
 
         {!isLoading && !apiError && (
           <>
+            {/* ── Welcome ── */}
             <div className="biz-welcome">
               <div>
                 <h1 className="biz-welcome-title">Welcome back, {businessName || "Your Business"} 👋</h1>
@@ -565,11 +736,13 @@ export default function Business() {
               </div>
             </div>
 
+            {/* ── KPI Cards (4 cards: active offers, total orders, units sold, net revenue) ── */}
             <div className="biz-kpis">
               {[
-                { label: "Active Offers", value: kpiData.activeOffers, icon: "📦" },
-                { label: "Total Orders", value: kpiData.totalOrders, icon: "🛒" },
-                { label: "Revenue", value: kpiData.revenue, icon: "💰" },
+                { label: "Active Offers",  value: kpiData.activeOffers,  icon: "📦" },
+                { label: "Total Orders",   value: kpiData.totalOrders,   icon: "🛒" },
+                { label: "Units Sold",     value: kpiData.unitsSold,     icon: "📊" },
+                { label: "Net Revenue",    value: kpiData.revenue,       icon: "💰" },
               ].map((kpi) => (
                 <div key={kpi.label} className="biz-kpi-card">
                   <p className="biz-kpi-label">{kpi.label}</p>
@@ -579,9 +752,17 @@ export default function Business() {
               ))}
             </div>
 
+            {/* ── Platform deduction note ── */}
+            {kpiData.platformCut > 0 && (
+              <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", padding: "10px 16px", fontSize: "0.82rem", color: "#92400e", marginBottom: "8px" }}>
+                ℹ️ Platform deduction (12%): <strong>EGP {Number(kpiData.platformCut).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong> — Gross revenue was <strong>EGP {Number(kpiData.grossRevenue).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong>
+              </div>
+            )}
+
+            {/* ── Charts ── */}
             <div id="charts-section" className="biz-charts" style={{ display: "flex", flexDirection: "row", gap: "16px", width: "100%" }}>
               <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
-                <h3 className="biz-chart-title">Revenue Overview (EGP)</h3>
+                <h3 className="biz-chart-title">Net Revenue by Month (EGP)</h3>
                 <ResponsiveContainer width="100%" height={260}>
                   <AreaChart data={salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                     <defs>
@@ -593,9 +774,9 @@ export default function Business() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `EGP ${v}`} />
-                    <Tooltip formatter={(value) => [`EGP ${value.toLocaleString()}`, "Revenue"]} />
+                    <Tooltip formatter={(value) => [`EGP ${value.toLocaleString()}`, "Net Revenue"]} />
                     <Legend />
-                    <Area type="monotone" dataKey="sales" name="Revenue (EGP)" stroke="#10b981" strokeWidth={2} fill="url(#revenueGrad)" />
+                    <Area type="monotone" dataKey="sales" name="Net Revenue (EGP)" stroke="#10b981" strokeWidth={2} fill="url(#revenueGrad)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -623,6 +804,10 @@ export default function Business() {
               <VendorSustainabilitySection />
             </div>
 
+            {/* ── Top Selling (/api/vendor/dashboard/top-selling) ── */}
+            <TopSellingSection />
+
+            {/* ── Offers ── */}
             <div className="biz-section" id="offers-section">
               <div className="biz-section-header">
                 <h2 className="biz-section-title">My Offers</h2>
@@ -700,6 +885,7 @@ export default function Business() {
               </div>
             </div>
 
+            {/* ── Orders ── */}
             <div className="biz-section" id="orders-section">
               <div className="biz-section-header">
                 <h2 className="biz-section-title">Recent Orders</h2>
@@ -737,10 +923,14 @@ export default function Business() {
                 </table>
               </div>
             </div>
+
+            {/* ── Sales History (/api/vendor/dashboard/sales) ── */}
+            <SalesHistorySection />
           </>
         )}
       </main>
 
+      {/* ── Modals ── */}
       {editingBranch && (
         <div className="biz-modal-overlay">
           <div className="biz-modal">

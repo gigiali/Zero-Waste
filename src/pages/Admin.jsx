@@ -1129,7 +1129,7 @@ const Admin = () => {
                               <div className="customer-avatar">
                                 {(order.customer?.name || order.customer_name || "?")[0].toUpperCase()}
                               </div>
-                              {order.customer?.name || order.customer_name || "—"}
+                              {order.customer?.user?.name}
                             </td>
                             <td className="order-amount">
                               {fmtCurrency(order.total_amount || order.total || 0)}

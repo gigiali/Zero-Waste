@@ -204,8 +204,8 @@ function ActionMenu({ user, role, token, onStatusChange, onDelete, addToast }) {
 
   const handleDeleteConfirm = async () => {
     const endpoint = user.role === "vendor"
-      ? `${BASE_URL}/admin/vendor/${user.id}`
-      : `${BASE_URL}/admin/customers/${user.id}`;
+      ? `${BASE_URL}/admin/vendors/${user.user_id}`
+: `${BASE_URL}/admin/customers/${user.user_id}`;
 
     const ok = await doRequest(endpoint, "DELETE");
     if (ok) {
