@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LocationProvider } from "./Context/LocationContext";
-
+import { CartProvider } from "./Context/CartContext";
 import Navigation from "./Components/Navigation";
 
 // User Pages
@@ -11,6 +11,7 @@ import PaymentMethodPage from "./pages/PaymentMethod";
 import UserProfile from "./pages/MyProfileUser";
 import OfferDetail from "./pages/OfferDetail";
 import RestaurantDetail from "./pages/RestaurantDetail"
+import BranchDetail from "./pages/BranchDetail";
 import Favorites from "./pages/Favorites";
 
 // Auth Pages
@@ -39,6 +40,7 @@ import AdminProfile from "./pages/MyProfileAdmin";
 function App() {
   return (
     <LocationProvider>
+      <CartProvider>
       <BrowserRouter>
         <Routes>
 
@@ -62,6 +64,9 @@ function App() {
           <Route path="/favorites"      element={<Favorites />} />
           <Route path="/offer/:id"      element={<><Navigation /> <OfferDetail /></>} />
           <Route path="/restaurant/:id" element={<><Navigation /> <RestaurantDetail /></>} />
+          <Route path="/branch/:id" element={<><Navigation /> <BranchDetail /></>} />
+<Route path="/branch/:id/:vendorId" element={<><Navigation /> <BranchDetail /></>} />
+
           {/* Business */}
           <Route path="/business-setup"   element={<BusinessSetup />} />
           <Route path="/business"         element={<Business />} />
@@ -77,6 +82,7 @@ function App() {
 
         </Routes>
       </BrowserRouter>
+      </CartProvider>
     </LocationProvider>
   );
 }

@@ -162,11 +162,12 @@ const NavItem = ({ icon: Icon, label, path, active, onClick, badge }) => (
 const Admin = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
-  const { role, isLoggedIn, token: contextToken } = useAuth();
-  const token =
-    contextToken ||
-    localStorage.getItem("token") ||
-    sessionStorage.getItem("token");
+  const { role, isLoggedIn } = useAuth();
+const token =
+  localStorage.getItem("auth_token") ||
+  localStorage.getItem("token") ||
+  sessionStorage.getItem("auth_token") ||
+  sessionStorage.getItem("token");
 
   const ROLE_LABEL = {
     super_admin: "Super Admin",
@@ -325,12 +326,11 @@ const Admin = () => {
         const earningsArray = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
         console.log("💰 Earnings - Extracted Array:", earningsArray);
         
-        // Map to chart format
         const chartData = earningsArray.map(item => ({
-          month: item.month,
-          earnings: item.net_sales || 0,
-          net_sales: item.net_sales || 0,
-        }));
+  month: item.month,
+  earnings: item.pure_profit || item.net_sales || 0,
+  net_sales: item.pure_profit || item.net_sales || 0,
+}));
         
         console.log("📊 Earnings Chart Data (formatted):", chartData);
         
@@ -494,13 +494,29 @@ const Admin = () => {
   const filteredOrders = allOrders
     .filter((o) => {
       const q = ordersSearch.toLowerCase();
+      const customerName = (
+        o.customer?.name ||
+        o.customer?.user?.name ||
+        o.customer?.full_name ||
+        o.customer_name ||
+        ""
+      ).toLowerCase();
       return (
         !q ||
         String(o.id).includes(q) ||
-        (o.customer?.name || o.customer_name || "").toLowerCase().includes(q) ||
-        (o.status || "").toLowerCase().includes(q)
+        customerName.includes(q) ||
+        (o.status || o.order_status || "").toLowerCase().includes(q) ||
+        (o.delivery_type || "").toLowerCase().includes(q) ||
+        String(o.total_amount || o.total || "").includes(q) ||
+        (o.created_at || o.order_date
+  ? new Date(o.created_at || o.order_date).toLocaleDateString("en-EG", {
+      day: "2-digit", month: "short", year: "numeric",
+    }).toLowerCase()
+  : ""
+).includes(q)
       );
     })
+
     .sort((a, b) => {
       const av = a[ordersSortField] ?? "";
       const bv = b[ordersSortField] ?? "";
@@ -1127,9 +1143,8 @@ const Admin = () => {
                             <td className="order-id">#{order.id}</td>
                             <td className="order-customer">
                               <div className="customer-avatar">
-                                {(order.customer?.name || order.customer_name || "?")[0].toUpperCase()}
-                              </div>
-                              {order.customer?.user?.name}
+{(order.customer?.name || order.customer?.full_name || order.customer_name || "C")[0].toUpperCase()}                              </div>
+                              {order.customer?.name || order.customer?.user?.name || order.customer_name || "—"}
                             </td>
                             <td className="order-amount">
                               {fmtCurrency(order.total_amount || order.total || 0)}
@@ -1138,8 +1153,7 @@ const Admin = () => {
                               {order.delivery_type || "—"}
                             </td>
                             <td>
-                              <StatusBadge status={order.status} />
-                            </td>
+<StatusBadge status={order.order_status || order.status} />                            </td>
                             <td className="order-date">
                               {fmtDate(order.created_at || order.order_date)}
                             </td>

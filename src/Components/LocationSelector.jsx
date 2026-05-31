@@ -1,171 +1,43 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { MapPin, X, Search } from "lucide-react";
+import { useLocationContext } from "../Context/LocationContext";
 
 export default function LocationSelector() {
-  const [selectedLocation, setSelectedLocation] = useState(() => {
-    return localStorage.getItem('userLocationName') || null;
-  });
+  const {
+    locationName,
+    mapSearchQuery,
+    mapSearchResults,
+    showMapSearchResults,
+    locationError,
+    selectedCoordinates,
+    mapRef,
+    mapInstanceRef,
+    handleMapSearchChange,
+    handleSelectMapSuggestion,
+    handleGeolocation,
+    initializeMap,
+    destroyMap,
+    setShowMapSearchResults,
+    setLocationError,
+  } = useLocationContext();
+
   const [showMap, setShowMap] = useState(false);
-  const [areaNotAvailable, setAreaNotAvailable] = useState(false);
-
-  // Map search state
-  const [mapSearchQuery, setMapSearchQuery] = useState("");
-  const [mapSearchResults, setMapSearchResults] = useState([]);
-  const [showMapSearchResults, setShowMapSearchResults] = useState(false);
-  const mapSearchTimeoutRef = useRef(null);
-  const mapRef = useRef(null);
-  const mapInstanceRef = useRef(null);
-
-  const isCairoArea = (address) => {
-    const cairoNames = ['cairo', 'giza', 'nasr city', 'maadi', 'helwan', '6th of october', 'shubra', 'ain shams', 'matariya', 'dokki', 'mohandessin', 'agouza', 'zamalek', 'helipolis', 'misr el gdeda', 'obour', 'shorouk', 'new cairo', 'madinaty', 'rehab', 'tagamo3', 'katameya'];
-    const text = JSON.stringify(address).toLowerCase();
-    return cairoNames.some(name => text.includes(name));
-  };
-
-  const handleMapSearchInput = (e) => {
-    const val = e.target.value;
-    setMapSearchQuery(val);
-    setAreaNotAvailable(false);
-    if (mapSearchTimeoutRef.current) clearTimeout(mapSearchTimeoutRef.current);
-    if (val.length < 2) {
-      setMapSearchResults([]);
-      setShowMapSearchResults(false);
-      return;
-    }
-    mapSearchTimeoutRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(val)}&format=json&limit=10&countrycodes=eg&accept-language=en` 
-        );
-        const data = await res.json();
-        // Filter to only show Cairo area locations
-        const filtered = data.filter(place => isCairoArea(place));
-        setMapSearchResults(filtered);
-        setShowMapSearchResults(true);
-      } catch (err) {
-        console.error('Map search geocoding failed:', err);
-      }
-    }, 500);
-  };
-
-  const selectMapSearchLocation = async (place) => {
-    setShowMapSearchResults(false);
-    setMapSearchQuery(place.display_name);
-
-    if (!isCairoArea(place)) {
-      setAreaNotAvailable(true);
-      setSelectedLocation(null);
-      localStorage.removeItem('userLocationName');
-      localStorage.removeItem('userLocationLat');
-      localStorage.removeItem('userLocationLng');
-      return;
-    }
-
-    setAreaNotAvailable(false);
-
-    // Fly to selected location on map
-    if (mapInstanceRef.current) {
-      const lat = parseFloat(place.lat);
-      const lng = parseFloat(place.lon);
-      mapInstanceRef.current.flyTo([lat, lng], 14, {
-        duration: 1.5
-      });
-
-      // Add a temporary marker
-      const L = window.L;
-      if (L) {
-        // Remove existing temporary marker if any
-        if (mapInstanceRef.current.tempMarker) {
-          mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
-        }
-        const marker = L.marker([lat, lng]).addTo(mapInstanceRef.current)
-          .bindPopup(place.display_name)
-          .openPopup();
-        mapInstanceRef.current.tempMarker = marker;
-      }
-    }
-  };
 
   useEffect(() => {
-    if (showMap && mapRef.current && !mapInstanceRef.current) {
-      const L = window.L;
-      if (L) {
-        const map = L.map(mapRef.current).setView([30.0444, 31.2357], 13);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-        L.marker([30.0444, 31.2357]).addTo(map)
-          .bindPopup('ZeroWaste - Cairo')
-          .openPopup();
-
-        // Click to select exact location (after search)
-        map.on('click', async (e) => {
-          const { lat, lng } = e.latlng;
-          try {
-            const res = await fetch(
-              `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json` 
-            );
-            const data = await res.json();
-            
-            // Extract area/district name for display
-            const getAreaName = (address) => {
-              // Priority order for area names
-              const areaFields = [
-                address?.suburb,
-                address?.district,
-                address?.neighbourhood,
-                address?.quarter,
-                address?.city_district,
-                address?.town,
-                address?.village,
-                address?.city
-              ];
-              
-              return areaFields.find(field => field && field.toLowerCase() !== 'cairo') || 'Unknown Area';
-            };
-            
-            const areaName = getAreaName(data.address);
-            const locationName = areaName;
-
-            if (!isCairoArea(data.address)) {
-              setAreaNotAvailable(true);
-              setTimeout(() => setAreaNotAvailable(false), 4000);
-              return;
-            }
-
-            // Remove temporary marker
-            if (mapInstanceRef.current.tempMarker) {
-              mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);
-            }
-
-            // Add permanent marker
-            const L = window.L;
-            if (L) {
-              L.marker([lat, lng]).addTo(mapInstanceRef.current)
-                .bindPopup('Your selected location')
-                .openPopup();
-            }
-
-            setSelectedLocation(locationName);
-            localStorage.setItem('userLocationName', locationName);
-            localStorage.setItem('userLocationLat', String(lat));
-            localStorage.setItem('userLocationLng', String(lng));
-            setAreaNotAvailable(false);
-            setShowMap(false);
-          } catch (err) {
-            console.error('Geocoding failed:', err);
-          }
-        });
-
-        mapInstanceRef.current = map;
-        setTimeout(() => map.invalidateSize(), 100);
+    if (showMap) {
+      initializeMap();
+    }
+    return () => {
+      if (!showMap) {
+        destroyMap();
       }
-    }
-    if (!showMap && mapInstanceRef.current) {
-      mapInstanceRef.current.remove();
-      mapInstanceRef.current = null;
-    }
+    };
   }, [showMap]);
+
+  const handleCloseMap = () => {
+    setShowMap(false);
+    destroyMap();
+  };
 
   return (
     <>
@@ -175,17 +47,16 @@ export default function LocationSelector() {
           alignItems: "center",
           gap: "0.5rem",
           cursor: "pointer",
-          color: selectedLocation ? "#10b981" : "#374151",
-          fontWeight: selectedLocation ? 600 : 400,
+          color: locationName ? "#10b981" : "#374151",
+          fontWeight: locationName ? 600 : 400,
         }}
         onClick={() => setShowMap(true)}
-        title={selectedLocation || "Click to select your location"}
+        title={locationName || "Click to select your location"}
       >
         <MapPin size={20} />
-        <span>{selectedLocation || "Location"}</span>
+        <span>{locationName || "Location"}</span>
       </div>
 
-      {/* Map Modal */}
       {showMap && (
         <div
           style={{
@@ -201,7 +72,7 @@ export default function LocationSelector() {
             justifyContent: "center",
           }}
           onClick={(e) => {
-            if (e.target === e.currentTarget) setShowMap(false);
+            if (e.target === e.currentTarget) handleCloseMap();
           }}
         >
           <div
@@ -209,13 +80,16 @@ export default function LocationSelector() {
               background: "white",
               borderRadius: "12px",
               width: "90%",
-              maxWidth: "800px",
-              height: "70vh",
+              maxWidth: "900px",
+              height: "75vh",
               position: "relative",
               overflow: "hidden",
               boxShadow: "0 20px 60px rgba(0,0,0,0.3)",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
+            {/* Header */}
             <div
               style={{
                 padding: "1rem 1.5rem",
@@ -232,10 +106,10 @@ export default function LocationSelector() {
                 }}
               >
                 <h3 style={{ margin: 0, color: "#1f2937", fontSize: "1.1rem" }}>
-                  📍 Set your location
+                  📍 Select Your Location
                 </h3>
                 <button
-                  onClick={() => setShowMap(false)}
+                  onClick={handleCloseMap}
                   style={{
                     background: "none",
                     border: "none",
@@ -248,8 +122,8 @@ export default function LocationSelector() {
                 </button>
               </div>
 
-              {/* Map Search Bar */}
-              <div style={{ position: "relative" }}>
+              {/* Search Bar */}
+              <div style={{ position: "relative", marginBottom: "8px" }}>
                 <Search
                   size={18}
                   style={{
@@ -264,7 +138,7 @@ export default function LocationSelector() {
                   type="text"
                   placeholder="Search for a city, area..."
                   value={mapSearchQuery}
-                  onChange={handleMapSearchInput}
+                  onChange={(e) => handleMapSearchChange(e.target.value)}
                   onFocus={() => mapSearchResults.length > 0 && setShowMapSearchResults(true)}
                   style={{
                     width: "100%",
@@ -288,13 +162,14 @@ export default function LocationSelector() {
                       cursor: "pointer",
                     }}
                     onClick={() => {
-                      setMapSearchQuery("");
-                      setMapSearchResults([]);
+                      handleMapSearchChange("");
                       setShowMapSearchResults(false);
-                      setAreaNotAvailable(false);
+                      setLocationError("");
                     }}
                   />
                 )}
+
+                {/* Search Results Dropdown */}
                 {showMapSearchResults && mapSearchResults.length > 0 && (
                   <div
                     style={{
@@ -312,10 +187,10 @@ export default function LocationSelector() {
                       overflowY: "auto",
                     }}
                   >
-                    {mapSearchResults.map((place, idx) => (
+                    {mapSearchResults.map((result, idx) => (
                       <div
                         key={idx}
-                        onClick={() => selectMapSearchLocation(place)}
+                        onClick={() => handleSelectMapSuggestion(result)}
                         style={{
                           padding: "10px 14px",
                           cursor: "pointer",
@@ -332,19 +207,46 @@ export default function LocationSelector() {
                       >
                         <MapPin size={14} color="#9ca3af" />
                         <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                          {place.display_name}
+                          {result.display_name}
                         </span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
+
+              {/* Geolocation Button */}
+              <button
+                onClick={handleGeolocation}
+                style={{
+                  width: "100%",
+                  padding: "8px 12px",
+                  background: "#f3f4f6",
+                  border: "1px solid #e5e7eb",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  fontSize: "0.9rem",
+                  color: "#374151",
+                  fontWeight: 500,
+                  transition: "all 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#e5e7eb";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#f3f4f6";
+                }}
+              >
+                📍 Use My Current Location
+              </button>
             </div>
-            {areaNotAvailable && (
+
+            {/* Error Message */}
+            {locationError && (
               <div
                 style={{
                   position: "absolute",
-                  top: "80px",
+                  top: "130px",
                   left: "50%",
                   transform: "translateX(-50%)",
                   background: "#fef2f2",
@@ -358,16 +260,34 @@ export default function LocationSelector() {
                   boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
                 }}
               >
-                🚫 We are not available in your area yet
+                {locationError}
               </div>
             )}
+
+            {/* Map */}
             <div
               ref={mapRef}
               style={{
                 width: "100%",
-                height: "calc(100% - 60px)",
+                height: "100%",
+                flex: 1,
               }}
             />
+
+            {/* Coordinates Display */}
+            {selectedCoordinates.lat !== null && selectedCoordinates.lng !== null && (
+              <div
+                style={{
+                  padding: "12px 1.5rem",
+                  borderTop: "1px solid #e5e7eb",
+                  background: "#f9fafb",
+                  fontSize: "0.85rem",
+                  color: "#6b7280",
+                }}
+              >
+                📍 Lat: {selectedCoordinates.lat.toFixed(6)} | Lng: {selectedCoordinates.lng.toFixed(6)}
+              </div>
+            )}
           </div>
         </div>
       )}

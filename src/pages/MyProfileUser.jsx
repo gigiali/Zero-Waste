@@ -184,8 +184,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
       formData.append("offer_id", offerId);
       formData.append("rating", rating);
       formData.append("comment", comment);
-      formData.append("order_id", order.id);
-      formData.append("delivery_method", order.delivery_type || order.delivery_method || "pickup");
+      formData.append("offer_title", order.offer?.title || order.items?.[0]?.offer?.title || order.items?.[0]?.title || "Food Item");
       if (image) formData.append("image", image);
 
       const res = await fetch(`${BASE_URL}/reviews`, {
@@ -354,7 +353,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
           {orders.map((order) => {
             const currentStatus = order.order_status || order.status || "pending";
             const normalizedStatus = currentStatus.toLowerCase();
-            const isDelivered = normalizedStatus === "delivered" || normalizedStatus === "completed";
+            const isDelivered = normalizedStatus === "completed";
             const isCancelled = normalizedStatus === "cancelled" || normalizedStatus === "rejected" || normalizedStatus === "failed";
             const submittedReview = localReviews[order.id];
 
@@ -498,6 +497,12 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
           {reviews.map((rev) => (
             <div className="usr-review-card" key={rev.id}>
               <div>
+                {/* ✅ اعرض offer_title */}
+                {(rev.offer_title || rev.offer?.title) && (
+                  <h4 style={{ margin: "0 0 8px", fontSize: "13px", fontWeight: 600, color: "#111827" }}>
+                    {rev.offer_title || rev.offer?.title}
+                  </h4>
+                )}
                 <div className="usr-stars">
                   {Array.from({ length: rev.rating || rev.Rating || 5 }).map((_, i) => (
                     <Star key={i} size={15} fill="currentColor" />

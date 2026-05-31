@@ -11,11 +11,13 @@ import {
   Store,
   Package,
   Tag,
+  User,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/AuthContext";
+import { useLocationContext } from "../Context/LocationContext";
 import "./OfferDetail.css";
 
 const normalizeOffer = (payload) => {
@@ -75,6 +77,31 @@ const normalizeOffer = (payload) => {
   };
 };
 
+// استخراج اسم المستخدم من الـ review object بكل الاحتمالات
+const getReviewerName = (review) => {
+  return (
+    review.customer?.user?.name ||
+    review.customer?.name ||
+    review.customer?.full_name ||
+    review.user?.name ||
+    review.user?.full_name ||
+    review.reviewer_name ||
+    review.author_name ||
+    review.name ||
+    "Anonymous"
+  );
+};
+
+// أول حرفين من الاسم عشان نعملهم avatar
+const getInitials = (name) => {
+  if (!name || name === "Anonymous") return "?";
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0]?.toUpperCase())
+    .join("");
+};
+
 function CountdownTimer({ expirationRaw }) {
   const [timeLeft, setTimeLeft] = useState({
     hours: 0,
@@ -127,8 +154,9 @@ export default function OfferDetail() {
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
-  const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
+  const { addToCart, showSignInPopup, setShowSignInPopup, showLocationPopup, setShowLocationPopup } = useCart();
 const { isLoggedIn } = useAuth();
+const { locationName } = useLocationContext();
   const [offer, setOffer] = useState(null);
   const [loadingOffer, setLoadingOffer] = useState(true);
   const [offerReviews, setOfferReviews] = useState([]);
@@ -199,7 +227,8 @@ const { isLoggedIn } = useAuth();
   const handleAddToCart = () => {
     if (!offer) return;
     if (!isLoggedIn) { setShowSignInPopup(true); return; }
-    addToCart(offer, qty, true);
+    if (!locationName) { setShowLocationPopup(true); return; }
+    addToCart(offer, qty, true, locationName);
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
@@ -555,54 +584,87 @@ const { isLoggedIn } = useAuth();
                   {offerReviews
                     .slice()
                     .reverse()
-                    .map((review, idx) => (
-                      <div key={idx} className="od-review-card">
-                        <div className="od-review-top">
-                          <div className="od-review-stars">
-                            {[1, 2, 3, 4, 5].map((s) => (
-                              <Star
-                                key={s}
-                                size={14}
-                                fill={s <= review.rating ? "#fbbf24" : "none"}
-                                color={
-                                  s <= review.rating ? "#fbbf24" : "#d1d5db"
-                                }
-                              />
-                            ))}
+                    .map((review, idx) => {
+                      const reviewerName = getReviewerName(review);
+                      const initials = getInitials(reviewerName);
+                      return (
+                        <div key={idx} className="od-review-card">
+                          <div className="od-review-top">
+                            {/* ── Reviewer info ── */}
+                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                              <div style={{
+                                width: "36px", height: "36px", borderRadius: "50%",
+                                background: "linear-gradient(135deg, #10b981, #059669)",
+                                display: "flex", alignItems: "center", justifyContent: "center",
+                                color: "white", fontWeight: 700, fontSize: "0.82rem", flexShrink: 0,
+                              }}>
+                                {initials === "?" ? <User size={16} color="white" /> : initials}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#111827" }}>
+                                  {reviewerName}
+                                </div>
+                                <div className="od-review-stars" style={{ marginTop: "2px" }}>
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      size={12}
+                                      fill={s <= review.rating ? "#fbbf24" : "none"}
+                                      color={s <= review.rating ? "#fbbf24" : "#d1d5db"}
+                                    />
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                            <span className="od-review-date">
+                              {review.created_at
+                                ? new Date(review.created_at).toLocaleDateString()
+                                : ""}
+                            </span>
                           </div>
-                          <span className="od-review-date">
-                            {review.created_at
-                              ? new Date(review.created_at).toLocaleDateString()
-                              : ""}
-                          </span>
+                          {review.comment && (
+                            <p className="od-review-comment">
+                              "{review.comment}"
+                            </p>
+                          )}
+                          {review.image_url && (
+                            <img
+                              src={review.image_url}
+                              alt="Review"
+                              className="od-review-img"
+                            />
+                          )}
+                          <div className="od-review-footer">
+                            <span className="od-review-method">
+                              {review.delivery_method === "delivery"
+                                ? t("offerDetail.reviewDelivery")
+                                : t("offerDetail.reviewPickup")}
+                            </span>
+                          </div>
                         </div>
-                        {review.comment && (
-                          <p className="od-review-comment">
-                            "{review.comment}"
-                          </p>
-                        )}
-                        {review.image_url && (
-                          <img
-                            src={review.image_url}
-                            alt="Review"
-                            className="od-review-img"
-                          />
-                        )}
-                        <div className="od-review-footer">
-                          <span className="od-review-method">
-                            {review.delivery_method === "delivery"
-                              ? t("offerDetail.reviewDelivery")
-                              : t("offerDetail.reviewPickup")}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                 </div>
               </>
             )}
           </div>
         )}
       </div>
+      {showLocationPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowLocationPopup(false)}>
+          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📍</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Location Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Please set your location first before adding items to your cart.</p>
+            <button onClick={() => setShowLocationPopup(false)}
+              style={{ width: "100%", padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       {showSignInPopup && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setShowSignInPopup(false)}>

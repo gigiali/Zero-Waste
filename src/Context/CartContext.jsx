@@ -1,3 +1,4 @@
+// @refresh reset
 import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext();
@@ -5,10 +6,15 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cartItems, setCartItems] = useState([]);
   const [showSignInPopup, setShowSignInPopup] = useState(false);
+  const [showLocationPopup, setShowLocationPopup] = useState(false);
 
-  const addToCart = (item, quantity = 1, isLoggedIn = false) => {
+  const addToCart = (item, quantity = 1, isLoggedIn = false, locationName = null) => {
     if (!isLoggedIn) {
       setShowSignInPopup(true);
+      return;
+    }
+    if (!locationName) {
+      setShowLocationPopup(true);
       return;
     }
     setCartItems((prev) => {
@@ -40,7 +46,18 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ cartItems, addToCart, updateQuantity, removeFromCart, clearCart, totalItems, showSignInPopup, setShowSignInPopup }}
+      value={{
+        cartItems,
+        addToCart,
+        updateQuantity,
+        removeFromCart,
+        clearCart,
+        totalItems,
+        showSignInPopup,
+        setShowSignInPopup,
+        showLocationPopup,
+        setShowLocationPopup,
+      }}
     >
       {children}
     </CartContext.Provider>

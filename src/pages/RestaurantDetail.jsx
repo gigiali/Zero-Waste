@@ -226,51 +226,6 @@ export default function RestaurantDetail() {
           </p>
         </div>
 
-        {branches.length > 0 && (
-          <div className="branches-section">
-            <h2>Our Branches ({branches.length})</h2>
-            <div className="branches-list">
-              {branches.map((b) => (
-                <div key={b.id} className="branch-card">
-                  <div className="branch-card-header">
-                    <MapPin size={16} />
-                    <span className="branch-name">{b.branch_name}</span>
-                    <span className={`branch-status ${b.status === 'active' ? 'active' : 'inactive'}`}>
-                      {b.status}
-                    </span>
-                  </div>
-                  <div className="branch-card-body">
-                    <div className="branch-info-row">
-                      <MapPin size={13} />
-                      <span>{b.store_address}</span>
-                    </div>
-                    {b.opening_hours && (
-                      <div className="branch-info-row">
-                        <Clock size={13} />
-                        <span>{b.opening_hours}</span>
-                      </div>
-                    )}
-                    {b.contact_phone && (
-                      <div className="branch-info-row">
-                        <Phone size={13} />
-                        <span>{b.contact_phone}</span>
-                      </div>
-                    )}
-                  </div>
-                  {b.lat && b.lng && (
-                    <button
-                      className="branch-directions-btn"
-                      onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${b.lat},${b.lng}`, '_blank')}
-                    >
-                      <NavigationIcon size={14} /> Get Directions
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
         <div className="offers-section">
           <h2>Available Offers ({vendorOffers.length})</h2>
           {vendorOffers.length === 0 ? (
@@ -278,53 +233,154 @@ export default function RestaurantDetail() {
               No offers available right now.
             </p>
           ) : (
-            vendorOffers.map((o) => {
-              const discount = o.original_price && o.discount_price
-                ? Math.round(((o.original_price - o.discount_price) / o.original_price) * 100)
-                : 0;
-              const expTime = o.expiration_time
-                ? new Date(o.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
-                : "Today";
-              return (
-                <div key={o.id} className="offer-card" onClick={() => navigate(`/offer/${o.id}`)}>
-                  <img
-                    src={(() => {
-                      const BASE = "https://zero-waste-production.up.railway.app";
-                      if (!o.image) return "/images/e.png";
-                      const raw = o.image.trim();
-                      if (raw.startsWith("http")) return raw.replace(`${BASE}/storage/`, `${BASE}/`);
-                      return `${BASE}/${raw.replace(/^\/+/, "").replace(/^storage\//, "")}`;
-                    })()}
-                    alt={o.title}
-                    className="offer-card-image"
-                    onError={(e) => { e.target.src = "/images/e.png"; }}
-                  />
-                  <div className="offer-card-body">
-                    <div className="offer-card-top">
-                      <span className="offer-card-title">{o.title}</span>
-                      {discount > 0 && <span className="offer-badge">-{discount}%</span>}
-                    </div>
-                    <p className="offer-card-desc">{o.description}</p>
-                    <div className="offer-card-bottom">
-                      <div className="offer-prices">
-                        <span className="offer-original">EGP {o.original_price}</span>
-                        <span className="offer-discounted">EGP {o.discount_price}</span>
+            <div className="offers-container">
+              {vendorOffers.map((o) => {
+                const discount = o.original_price && o.discount_price
+                  ? Math.round(((o.original_price - o.discount_price) / o.original_price) * 100)
+                  : 0;
+                const expTime = o.expiration_time
+                  ? new Date(o.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+                  : "Today";
+                return (
+                  <div key={o.id} className="offer-card" onClick={() => navigate(`/offer/${o.id}`)}>
+                    <img
+                      src={(() => {
+                        const BASE = "https://zero-waste-production.up.railway.app";
+                        if (!o.image) return "/images/e.png";
+                        const raw = o.image.trim();
+                        if (raw.startsWith("http")) return raw.replace(`${BASE}/storage/`, `${BASE}/`);
+                        return `${BASE}/${raw.replace(/^\/+/, "").replace(/^storage\//, "")}`;
+                      })()}
+                      alt={o.title}
+                      className="offer-card-image"
+                      onError={(e) => { e.target.src = "/images/e.png"; }}
+                    />
+                    <div className="offer-card-body">
+                      <div className="offer-card-top">
+                        <span className="offer-card-title">{o.title}</span>
+                        {discount > 0 && <span className="offer-badge">-{discount}%</span>}
                       </div>
-                      <div className="offer-meta">
-                        <span className="offer-quantity">
-                          <Package size={12} /> {o.quantity_available} left
-                        </span>
-                        <span className="offer-time">
-                          <Clock size={12} /> {expTime}
-                        </span>
+                      <p className="offer-card-desc">{o.description}</p>
+                      <div className="offer-card-bottom">
+                        <div className="offer-prices">
+                          <span className="offer-original">EGP {o.original_price}</span>
+                          <span className="offer-discounted">EGP {o.discount_price}</span>
+                        </div>
+                        <div className="offer-meta">
+                          <span className="offer-quantity">
+                            <Package size={12} /> {o.quantity_available} left
+                          </span>
+                          <span className="offer-time">
+                            <Clock size={12} /> {expTime}
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
+
+        {branches.length > 0 && (
+          <div className="branches-section">
+            <h2>Our Branches ({branches.length})</h2>
+            
+            {/* Current Branch */}
+            <div className="branches-current">
+              <h3>Current Branch</h3>
+              <div className="current-branch-card">
+                <div className="branch-grid-card-header">
+                  <MapPin size={16} color="#10b981" />
+                  <h3 className="branch-grid-title">{branch.branch_name}</h3>
+                </div>
+
+                <div className="branch-grid-info">
+                  <div className="branch-grid-row">
+                    <MapPin size={14} />
+                    <span>{branch.store_address}</span>
+                  </div>
+                  {branch.opening_hours && (
+                    <div className="branch-grid-row">
+                      <Clock size={14} />
+                      <span>{branch.opening_hours}</span>
+                    </div>
+                  )}
+                  {branch.contact_phone && (
+                    <div className="branch-grid-row">
+                      <Phone size={14} />
+                      <span>{branch.contact_phone}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="branch-grid-footer">
+                  <span className={`branch-grid-status ${branch.status === 'active' ? 'active' : 'inactive'}`}>
+                    {branch.status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Other Branches */}
+            {branches.length > 1 && (
+              <div className="branches-other">
+                <h3>Other Branches ({branches.length - 1})</h3>
+                <div className="branches-grid">
+                  {branches.filter(b => b.id !== branch.id).map((b) => (
+                    <div
+                      key={b.id}
+                      className="branch-grid-card"
+                      onClick={() => navigate(`/branch/${b.id}`)}
+                    >
+                      <div className="branch-grid-card-header">
+                        <MapPin size={16} color="#10b981" />
+                        <h3 className="branch-grid-title">{b.branch_name}</h3>
+                      </div>
+
+                      <div className="branch-grid-info">
+                        <div className="branch-grid-row">
+                          <MapPin size={14} />
+                          <span>{b.store_address}</span>
+                        </div>
+                        {b.opening_hours && (
+                          <div className="branch-grid-row">
+                            <Clock size={14} />
+                            <span>{b.opening_hours}</span>
+                          </div>
+                        )}
+                        {b.contact_phone && (
+                          <div className="branch-grid-row">
+                            <Phone size={14} />
+                            <span>{b.contact_phone}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="branch-grid-footer">
+                        <span className={`branch-grid-status ${b.status === 'active' ? 'active' : 'inactive'}`}>
+                          {b.status}
+                        </span>
+                        {b.lat && b.long && (
+                          <button
+                            className="branch-grid-directions-btn"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(`https://www.google.com/maps/search/?api=1&query=${b.lat},${b.long}`, '_blank');
+                            }}
+                          >
+                            <NavigationIcon size={14} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {lat && lng && (
           <div className="navigation-section">

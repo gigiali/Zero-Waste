@@ -155,7 +155,6 @@ function TopSellingSection() {
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        // ✅ Route الجديد: /api/vendor/dashboard/top-selling
         const res = await fetch("/api/vendor/dashboard/top-selling", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
@@ -218,7 +217,6 @@ function SalesHistorySection() {
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        // ✅ Route الجديد: /api/vendor/dashboard/sales
         const res = await fetch("/api/vendor/dashboard/sales", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
@@ -276,7 +274,6 @@ function SalesHistorySection() {
                   {sale.order?.order_date ? new Date(sale.order.order_date).toLocaleDateString("en-EG") : "—"}
                 </td>
                 <td>
-                  {/* ✅ Route الجديد: /api/vendor/dashboard/sales/{id} */}
                   <button
                     type="button"
                     className="biz-icon-btn edit"
@@ -381,7 +378,6 @@ export default function Business() {
       const token = getToken();
       if (!token || !selectedBranch) return;
       try {
-        // ✅ Route الجديد
         const res = await fetch("/api/vendor/dashboard/overview", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
@@ -411,7 +407,6 @@ export default function Business() {
       const token = getToken();
       if (!token || !selectedBranch) return;
       try {
-        // ✅ Route الجديد
         const res = await fetch("/api/vendor/dashboard/monthly-chart", {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
@@ -419,9 +414,9 @@ export default function Business() {
           const data = await readJson(res);
           if (Array.isArray(data.data) && data.data.length > 0) {
             const chartData = data.data.map((item) => ({
-              day: item.month,          // اسم الشهر جاي من الـ backend
+              day: item.month,
               sales: item.net_sales || 0,
-              orders: 0,               // الـ backend مش بيبعت orders في الـ monthly chart
+              orders: 0,
             }));
             setSalesData(chartData);
           } else {
@@ -909,7 +904,13 @@ export default function Business() {
                           <td>{order.customer}</td>
                           <td className="biz-td-amount">{order.amount}</td>
                           <td>
-                            <select value={order.status} onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)} disabled={updatingOrderId === order.id} className={`biz-status-select status-${order.status?.toLowerCase()}`}>
+                            <select 
+                              value={order.status} 
+                              onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)} 
+                              disabled={updatingOrderId === order.id} 
+                              className={`biz-status-select status-${order.status?.toLowerCase()}`}
+                            >
+                              <option value="pending">Pending</option>
                               <option value="processing">Processing</option>
                               <option value="completed">Completed</option>
                               <option value="cancelled">Cancelled</option>

@@ -171,11 +171,10 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
 const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone }) => {
   const orderNumber = String(orderId || `ORD-${Date.now()}`);
-  const storedOrders = JSON.parse(localStorage.getItem("zw_user_orders") || "[]");
-  const orderSnapshot = {
+  return {
     id: orderNumber,
     orderNumber,
-    status: "Confirmed",
+    status: "pending",
     createdAt: new Date().toISOString(),
     deliveryMethod,
     paymentMethod: selectedMethod === "card" ? "Card Payment" : "Cash",
@@ -196,9 +195,6 @@ const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, car
       category: item.category,
     })),
   };
-  localStorage.setItem("zw_user_orders", JSON.stringify([orderSnapshot, ...storedOrders]));
-  window.dispatchEvent(new Event("zw-user-orders-updated"));
-  return orderSnapshot;
 };
 
 export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) {
@@ -212,6 +208,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const [orderSuccess, setOrderSuccess] = useState(false);
   const orderDataRef = React.useRef(null);
   const frozenCartItemsRef = React.useRef([]);
+  const serverOrderRef = React.useRef(null);
 
   const deliveryMethod = searchParams.get("method") || "pickup";
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
@@ -299,6 +296,7 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
       const data = await response.json();
 
       if (response.ok) {
+        serverOrderRef.current = data.order;
         const firstItem   = cartItems[0];
         const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
         const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
@@ -314,6 +312,7 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
         frozenCartItemsRef.current = [...cartItems];
         clearCart();
         setOrderSuccess(true);
+        window.dispatchEvent(new Event("order-placed"));
       } else {
         if (response.status === 422 && data.errors) {
           setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
@@ -417,15 +416,15 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
           onCancel={handleModalCancel}
           orderSuccess={orderSuccess}
           onTrackOrder={() => {
-            const latestOrder = JSON.parse(localStorage.getItem("zw_user_orders") || "[]")[0];
             setShowReviewModal(false);
             navigate("/home", {
               state: {
                 trackingActive: true,
-                orderNumber: latestOrder?.orderNumber || "ORD-2026-001",
-                deliveryMethod, total,
-                orderTime: latestOrder?.createdAt || new Date().toISOString(),
-                offerId: cartItems[0]?.id || 1,
+                orderNumber: serverOrderRef.current?.id || "ORD-2026-001",
+                deliveryMethod,
+                total: orderDataRef.current?.total ?? total,
+                orderTime: new Date().toISOString(),
+                offerId: frozenCartItemsRef.current[0]?.id || 1,
               },
             });
           }}

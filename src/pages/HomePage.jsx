@@ -72,14 +72,18 @@ function CountdownTimer({ pickupTime }) {
 function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
-  // ── NEW: cancelled state ──
   const [isCancelled, setIsCancelled] = useState(false);
+  // ✅ جديد: حفظ حالة الـ review لمنع ظهوره مكرر
+  const [reviewSubmitted, setReviewSubmitted] = useState(() => {
+    const submitted = localStorage.getItem(`review_submitted_${order.orderNumber}`);
+    return submitted === 'true';
+  });
 
   const statusToStep = (status, deliveryMethod) => {
     switch (status?.toLowerCase()) {
       case "pending":      return 1;
       case "processing":   return 2;
-      case "completed":    return deliveryMethod === "delivery" ? 3 : 4;
+      case "completed":    return deliveryMethod === "delivery" ? 4 : 3;
       case "in_transit":   return 3;
       case "delivered":    return 4;
       case "cancelled":    return 1;
@@ -119,19 +123,16 @@ function OrderTrackingStrip({ order, onDismiss }) {
           const status = data.data?.order_status || data.order?.order_status || data.order_status;
           const normalized = status?.toLowerCase();
 
-          // ── NEW: handle cancelled ──
           if (normalized === "cancelled") {
             setIsCancelled(true);
-            sessionStorage.removeItem("zw_active_order");
-            // auto-dismiss after 3 seconds so user can read the message
             setTimeout(() => onDismiss(), 3000);
             return;
           }
 
           setCurrentStep(statusToStep(status, order.deliveryMethod));
-          if (normalized === "delivered" || normalized === "completed") {
+          // ✅ فقط افتح الـ review إذا لم يتم تسجيل review من قبل
+          if (normalized === "completed" && !reviewSubmitted) {
             setShowReview(true);
-            sessionStorage.removeItem("zw_active_order");
           }
         }
       } catch (err) {
@@ -142,7 +143,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
     fetchOrderStatus();
     const interval = setInterval(fetchOrderStatus, 10000);
     return () => clearInterval(interval);
-  }, [order.orderNumber, order.deliveryMethod]);
+  }, [order.orderNumber, order.deliveryMethod, reviewSubmitted]);
 
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -158,25 +159,44 @@ function OrderTrackingStrip({ order, onDismiss }) {
       sessionStorage.getItem("auth_token");
 
     if (!token) { alert("Please sign in to submit a review."); return; }
+    
+    // تحديد الـ offer_id بشكل صحيح
+    let offerId = order.offerId || order.id;
+    if (!offerId && order.items && order.items.length > 0) {
+      offerId = order.items[0].offer_id || order.items[0].id;
+    }
+    
+    if (!offerId) { 
+      console.warn("Missing offer ID. Order:", order);
+      alert("Cannot submit review: missing offer ID."); 
+      return; 
+    }
+
     const formData = new FormData();
-    if (!order.offerId && !order.id) { alert("Cannot submit review: missing offer ID."); return; }
-    formData.append("offer_id", order.offerId ?? order.items?.[0]?.offer_id ?? order.items?.[0]?.id);
+    formData.append("offer_id", offerId);
     formData.append("rating", rating);
     formData.append("comment", reviewText);
     formData.append("order_id", order.orderNumber);
     formData.append("delivery_method", order.deliveryMethod);
+    formData.append("offer_title", order.items?.[0]?.title || order.title || "Food Item");
     if (reviewImage) formData.append("image", reviewImage);
 
     try {
       const headers = { Accept: "application/json" };
       if (token) headers.Authorization = `Bearer ${token}`;
+      
       const response = await fetch(`${BASE_URL}/api/reviews`, { method: "POST", headers, body: formData });
-      if (!response.ok) throw new Error("Failed to submit review");
-      setSubmitted(true);
-      setShowReview(false);
-      removeImage();
+      const responseData = await response.json();
+      
+      if (!response.ok) {
+        console.error("Review submission failed:", responseData);
+        throw new Error(responseData.message || "Failed to submit review");
+      }
+      
+      setTimeout(() => {
+        onDismiss();
+      }, 1500);
     } catch (error) {
-      console.error("Error submitting review:", error);
       alert("Unable to submit your review. Please try again.");
     }
   };
@@ -199,7 +219,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
     setImagePreview(null);
   };
 
-  // ── NEW: cancelled UI ──
   if (isCancelled) {
     return (
       <div className="order-strip" style={{ borderColor: "#fca5a5" }}>
@@ -297,7 +316,9 @@ function OrderTrackingStrip({ order, onDismiss }) {
                 </div>
               )}
             </div>
-            <button className="review-submit-btn" onClick={handleSubmitReview} disabled={rating === 0}>Submit Review</button>
+            <button className="review-submit-btn" onClick={handleSubmitReview} disabled={rating === 0 || submitted}>
+              {submitted ? "✓ Submitted" : "Submit Review"}
+            </button>
           </div>
         </div>
       )}
@@ -306,7 +327,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
 }
 
 // ── Recommended Offer Card ────────────────────────────────────────────────────
-function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn }) {
+function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn, locationName }) {
   const discount = offer.original_price && offer.discount_price
     ? Math.round(((offer.original_price - offer.discount_price) / offer.original_price) * 100)
     : 0;
@@ -370,7 +391,7 @@ function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn }) {
             )}
           </div>
           <button
-            onClick={(e) => { e.stopPropagation(); onAddToCart({ id: offer.id, title: offer.title, image: imageUrl, discountedPrice: offer.discount_price, originalPrice: offer.original_price, discount }, 1, isLoggedIn); }}
+            onClick={(e) => { e.stopPropagation(); onAddToCart({ id: offer.id, title: offer.title, image: imageUrl, discountedPrice: offer.discount_price, originalPrice: offer.original_price, discount }, 1, isLoggedIn, locationName); }}
             style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.3rem 0.7rem", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer" }}>
             + Add
           </button>
@@ -481,8 +502,8 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
 export default function HomePage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToCart, showSignInPopup, setShowSignInPopup } = useCart();
-  const { userLat, userLng } = useLocationContext();
+  const { addToCart, showSignInPopup, setShowSignInPopup, showLocationPopup, setShowLocationPopup } = useCart();
+  const { userLat, userLng, locationName } = useLocationContext();
   const { isLoggedIn } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -493,17 +514,28 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOption, setSortOption] = useState("highest_discount");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [activeOrder, setActiveOrder] = useState(() => {
-    const saved = sessionStorage.getItem("zw_active_order");
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [activeOrder, setActiveOrder] = useState(null);
 
+  // ✅ تصحيح الـ tracking: حفظ في sessionStorage
   useEffect(() => {
+    // 1️⃣ حاول التقط الـ order من location state
     if (location.state?.trackingActive) {
-      const orderData = location.state;
-      setActiveOrder(orderData);
-      sessionStorage.setItem("zw_active_order", JSON.stringify(orderData));
+      setActiveOrder(location.state);
+      // احفظه في sessionStorage عشان لو عمل refresh ما يروح
+      sessionStorage.setItem('zw_active_order', JSON.stringify(location.state));
       window.history.replaceState({}, document.title);
+    } 
+    // 2️⃣ لو ما فيش location state، شوف في sessionStorage
+    else {
+      const savedOrder = sessionStorage.getItem('zw_active_order');
+      if (savedOrder) {
+        try {
+          setActiveOrder(JSON.parse(savedOrder));
+        } catch (err) {
+          console.error('Failed to parse saved order:', err);
+          sessionStorage.removeItem('zw_active_order');
+        }
+      }
     }
   }, [location.state]);
 
@@ -679,7 +711,7 @@ export default function HomePage() {
           </div>
           <div style={{ display: "flex", gap: "16px", overflowX: "auto", paddingBottom: "12px", scrollbarWidth: "thin", scrollbarColor: "#10b981 #f3f4f6" }}>
             {recommendedOffers.map((offer) => (
-              <RecommendedCard key={offer.id} offer={offer} onNavigate={navigate} onAddToCart={addToCart} isLoggedIn={isLoggedIn} />
+              <RecommendedCard key={offer.id} offer={offer} onNavigate={navigate} onAddToCart={addToCart} isLoggedIn={isLoggedIn} locationName={locationName} />
             ))}
           </div>
         </section>
@@ -806,7 +838,7 @@ export default function HomePage() {
                         <span className="discounted-price">EGP {offer.discountedPrice || offer.price}</span>
                         {offer.originalPrice > 0 && <span className="original-price">EGP {offer.originalPrice}</span>}
                       </div>
-                      <button onClick={(e) => { e.stopPropagation(); addToCart(offer, 1, isLoggedIn); }}
+                      <button onClick={(e) => { e.stopPropagation(); addToCart(offer, 1, isLoggedIn, locationName); }}
                         style={{ background: "#10b981", color: "white", border: "none", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, cursor: "pointer" }}>
                         + Add
                       </button>
@@ -819,6 +851,21 @@ export default function HomePage() {
         )}
       </section>
 
+      {showLocationPopup && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowLocationPopup(false)}>
+          <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📍</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Location Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Please set your location first before adding items to your cart.</p>
+            <button onClick={() => setShowLocationPopup(false)}
+              style={{ width: "100%", padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       {showSignInPopup && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setShowSignInPopup(false)}>
