@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package, ShoppingBag } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import './BranchDetail.css';
 
@@ -10,7 +10,6 @@ export default function BranchDetail() {
   const [branch, setBranch] = useState(null);
   const [vendor, setVendor] = useState(null);
   const [branchOffers, setBranchOffers] = useState([]);
-  const [branchOrders, setBranchOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
@@ -28,86 +27,45 @@ export default function BranchDetail() {
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        console.log('🏬 Fetching branch details for branch ID:', id);
-
-        // ✅ الاستدعاء الأول: جلب بيانات الفرع كاملة
-        const branchRes = await fetch(`/api/branches/${id}`, { headers });
+        const branchRes = await fetch(`/api/branches/${id}/details`, { headers });
 
         if (!mounted) return;
 
         if (!branchRes.ok) {
-          console.error('❌ Branch fetch failed:', branchRes.status);
           setError('Failed to load branch details');
           setLoading(false);
           return;
         }
 
         const branchData = await branchRes.json();
-        console.log('✅ Branch data received:', branchData);
-
-        // ======= استخراج البيانات =======
         const branchDetails = branchData.data?.branch_details || branchData.data;
-        const stats = branchData.data?.stats || {};
 
         if (!branchDetails) {
-          console.error('❌ Branch details not found in response');
           setError('Branch details not found');
           setLoading(false);
           return;
         }
 
-        console.log('🏪 Branch name:', branchDetails.branch_name);
-        console.log('📦 Total offers:', stats.total_offers);
-        console.log('🛒 Total orders:', stats.total_orders);
-
-        // ✅ اضبط الـ state بـ branch details
         setBranch(branchDetails);
+        setBranchOffers(branchDetails.offers || []);
 
-        // ✅ استخراج الـ offers من الـ branch details
-        const offers = branchDetails.offers || [];
-        setBranchOffers(offers);
-        console.log('📋 Offers loaded:', offers.length);
-
-        // ✅ استخراج الـ orders من الـ branch details
-        const orders = branchDetails.orders || [];
-        setBranchOrders(orders);
-        console.log('📦 Orders loaded:', orders.length);
-
-        // ======= الاستدعاء الثاني: معلومات الـ vendor =======
-        
-        // ✨ الحل الصحيح: لو vendorId موجود في URL استخدمه، لو لا استخدم من البيانات
         const actualVendorId = vendorId || branchDetails.vendor_id;
-
         if (actualVendorId) {
-          console.log('🏢 Fetching vendor info for vendor ID:', actualVendorId);
-          
           const vendorRes = await fetch(`/api/vendor/${actualVendorId}`, { headers });
-
           if (!mounted) return;
-
           if (vendorRes.ok) {
             const vendorDataResponse = await vendorRes.json();
-            const vendorInfo = vendorDataResponse.data || vendorDataResponse.vendor || vendorDataResponse;
-
-            console.log('✅ Vendor info loaded:', vendorInfo.business_name);
-            setVendor(vendorInfo);
-          } else {
-            console.warn('⚠️ Could not fetch vendor info, continuing without it');
+            setVendor(vendorDataResponse.data || vendorDataResponse.vendor || vendorDataResponse);
           }
-        } else {
-          console.warn('⚠️ No vendor ID found, skipping vendor fetch');
         }
 
       } catch (err) {
         console.error('❌ ERROR:', err);
-        if (mounted) {
-          setError(err.message || 'An error occurred while loading branch details');
-        }
+        if (mounted) setError(err.message || 'An error occurred');
       } finally {
         if (mounted) setLoading(false);
       }
     })();
-
     return () => { mounted = false; };
   }, [id, vendorId]);
 
@@ -141,11 +99,10 @@ export default function BranchDetail() {
   const lat = branch.lat;
   const lng = branch.long || branch.lng;
   const vendorLogo = vendor?.logo || "/images/e.png";
-  const defaultImage = vendorLogo;
 
   return (
     <div className="branch-detail-container">
-      
+
       {/* Header */}
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-btn">
@@ -156,7 +113,7 @@ export default function BranchDetail() {
       {/* Hero Section */}
       <div className="branch-hero">
         <img
-          src={defaultImage}
+          src={vendorLogo}
           alt={branch.branch_name}
           className="branch-hero-image"
           onError={(e) => { e.target.src = "/images/e.png"; }}
@@ -172,7 +129,7 @@ export default function BranchDetail() {
         </div>
       </div>
 
-      {/* Info Strip */}
+      {/* Info Strip - horizontal */}
       <div className="branch-info-strip">
         <div className="branch-info-strip-inner">
           <div className="branch-info-item">
@@ -199,44 +156,13 @@ export default function BranchDetail() {
         </div>
       </div>
 
-      {/* Vendor Info */}
+      {/* Vendor Info - no button */}
       {vendor && (
         <div className="vendor-info-section">
           <h2>About {vendor.business_name}</h2>
           <p className="vendor-description">
             {vendor.vendor_type || "Restaurant"} • Located at {branch.store_address}
           </p>
-          <button
-            className="view-vendor-btn"
-            onClick={() => navigate(`/restaurant/${vendor.id}`)}
-          >
-            View all branches & offers
-          </button>
-        </div>
-      )}
-
-      {/* Location Map */}
-      {lat && lng && (
-        <div className="map-section">
-          <h2>Location</h2>
-          <div className="map-container">
-            <iframe
-              width="100%"
-              height="400"
-              frameBorder="0"
-              style={{ borderRadius: "12px" }}
-              src={`https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3000!2d${lng}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s!2z${lat},${lng}!5e0!3m2!1sen!2seg!4v1234567890`}
-              allowFullScreen=""
-              loading="lazy"
-              referrerPolicy="no-referrer-when-downgrade"
-            />
-          </div>
-          <button
-            className="directions-btn"
-            onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')}
-          >
-            <NavigationIcon size={18} /> Get Directions
-          </button>
         </div>
       )}
 
@@ -302,64 +228,17 @@ export default function BranchDetail() {
         )}
       </div>
 
-      {/* Orders Section */}
-      <div className="branch-orders-section">
-        <h2>Recent Orders ({branchOrders.length})</h2>
-        {branchOrders.length === 0 ? (
-          <p style={{ color: "#9ca3af", textAlign: "center", padding: "2rem" }}>
-            No orders at this branch yet.
-          </p>
-        ) : (
-          <div className="orders-list">
-            {branchOrders.map((order) => (
-              <div key={order.id} className="branch-order-card">
-                <div className="order-header">
-                  <div className="order-id-status">
-                    <span className="order-id">Order #{order.id}</span>
-                    <span className={`order-status order-status-${order.status}`}>
-                      {order.status || "pending"}
-                    </span>
-                  </div>
-                  <span className="order-date">
-                    {new Date(order.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric"
-                    })}
-                  </span>
-                </div>
-
-                {order.customer && (
-                  <div className="order-customer">
-                    <span className="label">Customer:</span>
-                    <span className="value">
-                      {order.customer.user?.name || order.customer.name || "Unknown"}
-                    </span>
-                  </div>
-                )}
-
-                {order.items && order.items.length > 0 && (
-                  <div className="order-items">
-                    <span className="label">Items:</span>
-                    <ul className="items-list">
-                      {order.items.map((item, idx) => (
-                        <li key={idx}>
-                          {item.offer?.title || "Item"} - EGP {item.offer?.discount_price || item.price || "N/A"}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-
-                <div className="order-total">
-                  <span className="label">Total:</span>
-                  <span className="value">EGP {order.total_price || "N/A"}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+      {/* Get Directions button only - no map */}
+      {lat && lng && (
+        <div className="navigation-section">
+          <button
+            className="directions-btn"
+            onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')}
+          >
+            <NavigationIcon size={18} /> Get Directions
+          </button>
+        </div>
+      )}
 
     </div>
   );

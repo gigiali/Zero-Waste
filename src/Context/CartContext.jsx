@@ -11,21 +11,65 @@ export function CartProvider({ children }) {
   const addToCart = (item, quantity = 1, isLoggedIn = false, locationName = null) => {
     if (!isLoggedIn) {
       setShowSignInPopup(true);
-      return;
+      return { success: false, message: "Please sign in first" };
     }
+
     if (!locationName) {
       setShowLocationPopup(true);
-      return;
+      return { success: false, message: "Please set your location" };
     }
+
+    // ✅ تحويل الـ ID لـ string
+    const itemId = String(item.id);
+    
+    if (!itemId || itemId === "undefined") {
+      console.error("❌ Item ID missing");
+      return { success: false, message: "Error: Item ID missing" };
+    }
+
+    // ✅ الكمية المتاحة من الـ API
+    const maxQuantity = item.quantity || 0;
+
+    let result = { success: false, message: "" };
+
     setCartItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      const existing = prev.find((i) => String(i.id) === itemId);
+
       if (existing) {
+        const newQuantity = existing.quantity + quantity;
+        
+        // ✅ لا تضيف إذا تجاوز الكمية المتاحة
+        if (newQuantity > maxQuantity) {
+          result = { 
+            success: false, 
+            message: `❌ Only ${maxQuantity} available! You already have ${existing.quantity} in cart.` 
+          };
+          console.warn(result.message);
+          return prev;
+        }
+
+        result = { success: true, message: "✅ Added to Cart!" };
         return prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + quantity } : i
+          String(i.id) === itemId ? { ...i, quantity: newQuantity } : i
         );
       }
-      return [...prev, { ...item, quantity }];
+
+      // ✅ للمنتج الجديد
+      if (quantity > maxQuantity) {
+        result = { 
+          success: false, 
+          message: `❌ Only ${maxQuantity} item(s) available!` 
+        };
+        console.warn(result.message);
+        return prev;
+      }
+
+      result = { success: true, message: "✅ Added to Cart!" };
+      const newItem = { ...item, id: itemId, quantity };
+      return [...prev, newItem];
     });
+
+    return result;
   };
 
   const updateQuantity = (id, delta) => {
