@@ -17,9 +17,8 @@ export function AuthProvider({ children }) {
 
   // ✅ تعديل الـ login لضمان حفظ التوكن بالاسمين وزيادة الأمان
   const login = (userData, token, remember = false) => {
-    const storage = remember ? localStorage : sessionStorage;
-    storage.setItem("token", token);
-    storage.setItem("auth_token", token);
+    localStorage.setItem("token", token);
+localStorage.setItem("auth_token", token);
     setUser(userData);
   };
 

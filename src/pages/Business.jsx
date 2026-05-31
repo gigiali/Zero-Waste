@@ -869,7 +869,12 @@ export default function Business() {
                     </div>
                     <div className="biz-offer-meta">
                       <span className="biz-price">EGP {offer.discountPrice}</span>
-                      <span className={`biz-badge ${offer.status === "active" || offer.status === "Active" ? "active" : offer.status === "expired" || offer.status === "Expired" ? "expired" : "pending"}`}>{offer.status}</span>
+                      <span className={`biz-badge ${
+  offer.status === "active" || offer.status === "Active" ? "active" :
+  offer.status === "expired" || offer.status === "Expired" ? "expired" :
+  offer.status === "disabled" || offer.status === "Disabled" ? "disabled" :
+  "pending"
+}`}>{offer.status}</span>
                     </div>
                     <div className="biz-offer-actions">
                       <button type="button" className="biz-icon-btn edit" onClick={() => openEdit(offer)} title="Edit" disabled={isSubmitting}>✏️</button>

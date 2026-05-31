@@ -71,6 +71,7 @@ export function LocationProvider({ children }) {
 
     try {
       const token = getToken();
+
       const sessionId = getSessionId();
 
       const params = new URLSearchParams({
@@ -80,10 +81,11 @@ export function LocationProvider({ children }) {
         session_id: sessionId,
       });
 
-      const headers = {
-        Accept: "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      };
+const headers = {
+  Accept: "application/json",
+  "Content-Type": "application/json",
+  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+};
 
       const res = await fetch(`${BASE}/api/branches/nearby?${params.toString()}`, { headers });
       const data = await res.json();
@@ -94,15 +96,22 @@ export function LocationProvider({ children }) {
         return;
       }
 
-      const branches = data.data || data.branches || [];
+      // ✅ الـ response paginated يعني data.data.data هي الـ array الحقيقية
+      const branches = data.data?.data || data.data || [];
       setNearbyBranches(branches);
 
+      // ✅ لو الـ backend بعت delivery_fee جاهزة (لو اتعدل مستقبلاً)
       if (data.delivery_fee !== undefined) {
         setDeliveryFee(data.delivery_fee);
-      } else if (branches[0]?.distance !== undefined) {
-        const distance = branches[0].distance;
-        setDeliveryFee(Math.round(10 + distance * 5));
-      } else {
+      }
+      // ✅ حسب من distance أقرب فرع
+      else if (branches.length > 0 && branches[0]?.distance !== undefined) {
+        const distance = parseFloat(branches[0].distance);
+        const fee = Math.round(10 + distance * 5);
+        setDeliveryFee(fee);
+      }
+      // ✅ fallback لو مفيش فروع قريبة
+      else {
         setDeliveryFee(25);
       }
     } catch {
@@ -323,14 +332,12 @@ export function LocationProvider({ children }) {
   return (
     <LocationContext.Provider
       value={{
-        // Basic location state
         locationName,
         deliveryFee,
         nearbyBranches,
         loadingLocation,
         userLat,
         userLng,
-        // Map state
         mapSearchQuery,
         mapSearchResults,
         showMapSearchResults,
@@ -339,7 +346,6 @@ export function LocationProvider({ children }) {
         mapRef,
         mapInstanceRef,
         markerRef,
-        // Functions
         fetchNearbyAndFee,
         clearLocation,
         handleMapSearchChange,

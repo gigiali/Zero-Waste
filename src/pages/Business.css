@@ -587,6 +587,10 @@
 .biz-badge.active   { background: var(--green-light); color: #065f46; }
 .biz-badge.expired  { background: var(--red-light);   color: #7f1d1d; }
 .biz-badge.pending  { background: #fef3c7;             color: #92400e; }
+.biz-badge.disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
 
 .biz-offer-actions {
   display: flex;

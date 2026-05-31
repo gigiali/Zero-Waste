@@ -167,9 +167,11 @@ export default function Navigation({
     setMapSearchQuery(place.display_name);
     if (!isCairoArea(place)) { setAreaNotAvailable(true); return; }
     setAreaNotAvailable(false);
+    const lat = parseFloat(place.lat);
+    const lng = parseFloat(place.lon);
+    applyLocation(lat, lng, place.display_name);
+    setShowMap(false);
     if (mapInstanceRef.current) {
-      const lat = parseFloat(place.lat);
-      const lng = parseFloat(place.lon);
       mapInstanceRef.current.flyTo([lat, lng], 14, { duration: 1.5 });
       const L = window.L;
       if (L) {

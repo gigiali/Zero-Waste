@@ -601,30 +601,31 @@ export default function HomePage() {
                 imageUrl = raw.startsWith("http") ? raw : `${BASE_URL}/${raw.replace(/^\/+/, "")}`;
               }
               return {
-                id: safeId,
-                hasId: true,
-                title: source.title,
-                description: source.description,
-                image: imageUrl,
-                discount: source.discount_price
-                  ? Math.round(((source.original_price - source.discount_price) / source.original_price) * 100)
-                  : 0,
-                originalPrice: source.original_price || 0,
-                discountedPrice: source.discount_price || 0,
-                quantity: source.quantity_available || 0,
-                pickupTime: source.expiration_time
-                  ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
-                  : "Today",
-                location:
-                  source.branch?.branch_name ||
-                  source.branch?.store_address ||
-                  source.vendor?.business_name ||
-                  "Unknown",
-                branchLat: source.branch?.lat,
-                branchLng: source.branch?.long,
-                rating: source.average_rating ?? source.rating ?? 0,
-                category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
-              };
+  id: safeId,
+  hasId: true,
+  title: source.title,
+  description: source.description,
+  image: imageUrl,
+  discount: source.discount_price
+    ? Math.round(((source.original_price - source.discount_price) / source.original_price) * 100)
+    : 0,
+  originalPrice: source.original_price || 0,
+  discountedPrice: source.discount_price || 0,
+  quantity: source.quantity_available || 0,
+  status: source.status || "active",
+  pickupTime: source.expiration_time
+    ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
+    : "Today",
+  location:
+    source.branch?.branch_name ||
+    source.branch?.store_address ||
+    source.vendor?.business_name ||
+    "Unknown",
+  branchLat: source.branch?.lat,
+  branchLng: source.branch?.long,
+  rating: source.average_rating ?? source.rating ?? 0,
+  category: source.branch?.vendor?.vendor_type || source.vendor?.vendor_type || "Others",
+};
             });
             setOffers(transformedOffers);
           } else {
@@ -647,13 +648,16 @@ export default function HomePage() {
   }, [selectedCategory]);
 
   const filteredOffers = offers
-    .filter((offer) => {
-      const matchesSearch =
-        !searchQuery ||
-        offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesSearch;
-    })
+  .filter((offer) => {
+    const matchesSearch =
+      !searchQuery ||
+      offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    const isAvailable =
+  offer.status !== "disabled" &&
+  offer.status !== "expired";
+return matchesSearch && isAvailable;
+  })
     .map((offer) => ({
       ...offer,
       distance: calculateDistance(userLat, userLng, offer.branchLat, offer.branchLng),
