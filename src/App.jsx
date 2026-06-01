@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LocationProvider } from "./Context/LocationContext";
 import { CartProvider } from "./Context/CartContext";
 import Navigation from "./Components/Navigation";
+import RuntimeTranslator from "./Components/RuntimeTranslator";
+import FAQ from "./pages/FAQ";
 
 // User Pages
 import HomePage from "./pages/HomePage";
@@ -42,6 +44,7 @@ function App() {
     <LocationProvider>
       <CartProvider>
       <BrowserRouter>
+        <RuntimeTranslator />
         <Routes>
 
           {/* Auth */}
@@ -65,7 +68,8 @@ function App() {
           <Route path="/offer/:id"      element={<><Navigation /> <OfferDetail /></>} />
           <Route path="/restaurant/:id" element={<><Navigation /> <RestaurantDetail /></>} />
           <Route path="/branch/:id" element={<><Navigation /> <BranchDetail /></>} />
-<Route path="/branch/:id/:vendorId" element={<><Navigation /> <BranchDetail /></>} />
+          <Route path="/branch/:id/:vendorId" element={<><Navigation /> <BranchDetail /></>} />
+          <Route path="/faq" element={<><Navigation /> <FAQ /></>} />
 
           {/* Business */}
           <Route path="/business-setup"   element={<BusinessSetup />} />

@@ -51,6 +51,31 @@ export default function Navigation({
   useEffect(() => {
     const handler = () => setFavCount(parseInt(localStorage.getItem("zw_favorites_count") || "0"));
     window.addEventListener("zw-favorites-updated", handler);
+
+    const syncFromAPI = async () => {
+      const token =
+        localStorage.getItem("auth_token") ||
+        localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") ||
+        sessionStorage.getItem("token");
+      if (!token) return;
+      try {
+        const lat = localStorage.getItem("userLocationLat") || 30.0444;
+        const lng = localStorage.getItem("userLocationLng") || 31.2357;
+        const res = await fetch(
+          `/api/favorites?customer_lat=${lat}&customer_long=${lng}`,
+          { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } }
+        );
+        const data = await res.json();
+        const raw = data.data || data.favorites || data || [];
+        const list = Array.isArray(raw) ? raw : [];
+        localStorage.setItem("zw_favorites_count", list.length);
+        setFavCount(list.length);
+      } catch {}
+    };
+
+    syncFromAPI();
+
     return () => window.removeEventListener("zw-favorites-updated", handler);
   }, []);
 

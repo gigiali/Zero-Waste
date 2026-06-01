@@ -48,8 +48,7 @@ export function NotificationsProvider({ children }) {
       const mapped = raw.map((n) => ({
         id: n.id,
         type: typeFromData(n),
-        read: !!n.read_at,
-        time: timeAgo(n.created_at),
+read: !!n.read_at || n.is_read === 1 || n.is_read === true,        time: timeAgo(n.created_at),
         title: n.data?.title || n.title || "Notification",
         message: n.data?.message || n.message || "",
       }));
@@ -88,10 +87,11 @@ export function NotificationsProvider({ children }) {
     const token = getToken();
     if (!token) return;
     try {
-      await fetch("/api/notifications/read-all", {
-        method: "POST",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
+     await fetch("/api/notifications/read-all", {
+  method: "POST",
+  headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+});
+await fetchNotifications();
     } catch (err) {
       console.error("Failed to mark all as read:", err);
     }

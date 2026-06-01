@@ -52,11 +52,26 @@ export default function RestaurantDetail() {
           }
         }
 
-        // Check favorites from localStorage
-        if (currentVendorId) {
-          const savedFavs = JSON.parse(localStorage.getItem("favorites") || "[]");
-          setIsFavorite(savedFavs.includes(currentVendorId));
-        }
+        // ✅ تحقق من الـ API مش localStorage
+if (currentVendorId && token) {
+  try {
+    const lat = getLat();
+    const lng = getLng();
+    const favRes = await fetch(
+      `/api/favorites?customer_lat=${lat}&customer_long=${lng}`,
+      { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } }
+    );
+    if (favRes.ok) {
+      const favData = await favRes.json();
+      const favList = favData.data || favData.favorites || favData || [];
+      const ids = Array.isArray(favList) ? favList.map(f => f.id) : [];
+      setIsFavorite(ids.includes(currentVendorId));
+      // ✅ حدّث الـ count كمان
+      localStorage.setItem("zw_favorites_count", ids.length);
+      window.dispatchEvent(new Event("zw-favorites-updated"));
+    }
+  } catch {}
+}
 
         if (currentVendorId) {
           const allRes = await fetch(`/api/offers`, { headers });
@@ -75,50 +90,45 @@ export default function RestaurantDetail() {
     })();
     return () => { mounted = false; };
   }, [id]);
+const handleFavoriteToggle = useCallback(async () => {
+  const token = getToken();
+  if (!token) { navigate('/signin'); return; }
+  if (favLoading || !vendorId) return;
 
-  const handleFavoriteToggle = useCallback(async () => {
-    const token = getToken();
-    if (!token) { navigate('/signin'); return; }
-    if (favLoading || !vendorId) return;
+  const newState = !isFavorite;
+  setIsFavorite(newState);
+  setFavLoading(true);
 
-    const newState = !isFavorite;
-    setIsFavorite(newState);
-    setFavLoading(true);
+  // ✅ تحديث الـ count فوراً في الـ navbar
+  const currentCount = parseInt(localStorage.getItem("zw_favorites_count") || "0");
+  const newCount = newState ? currentCount + 1 : Math.max(0, currentCount - 1);
+  localStorage.setItem("zw_favorites_count", newCount);
+  window.dispatchEvent(new Event("zw-favorites-updated"));
 
-    const savedFavs = JSON.parse(localStorage.getItem("favorites") || "[]");
-    if (newState) {
-      if (!savedFavs.includes(vendorId))
-        localStorage.setItem("favorites", JSON.stringify([...savedFavs, vendorId]));
-    } else {
-      localStorage.setItem("favorites", JSON.stringify(savedFavs.filter(fid => fid !== vendorId)));
-    }
+  try {
+    const res = await fetch(`/api/favorites/toggle`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ vendor_id: vendorId }),
+    });
 
-    try {
-      const res = await fetch(`/api/favorites/toggle`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ vendor_id: vendorId }),
-      });
-
-      if (!res.ok) {
-        setIsFavorite(!newState);
-        const reverted = JSON.parse(localStorage.getItem("favorites") || "[]");
-        if (!newState) {
-          localStorage.setItem("favorites", JSON.stringify([...reverted, vendorId]));
-        } else {
-          localStorage.setItem("favorites", JSON.stringify(reverted.filter(fid => fid !== vendorId)));
-        }
-      }
-    } catch {
+    if (!res.ok) {
       setIsFavorite(!newState);
-    } finally {
-      setFavLoading(false);
+      localStorage.setItem("zw_favorites_count", currentCount);
+      window.dispatchEvent(new Event("zw-favorites-updated"));
     }
-  }, [vendorId, isFavorite, favLoading, navigate]);
+  } catch {
+    setIsFavorite(!newState);
+    localStorage.setItem("zw_favorites_count", currentCount);
+    window.dispatchEvent(new Event("zw-favorites-updated"));
+  } finally {
+    setFavLoading(false);
+  }
+}, [vendorId, isFavorite, favLoading, navigate]);
 
   if (loading) {
     return (

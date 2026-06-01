@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import {
   Bell, User, Globe, GitBranch, Package, ShoppingCart,
-  ChevronRight, Loader, AlertCircle, CheckCircle, BarChart2, Leaf,
+  ChevronRight, Loader, AlertCircle, CheckCircle, BarChart2, Leaf, Loader2,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -69,8 +69,6 @@ const normalizeOrder = (order) => {
   };
 };
 
-// normalize top selling item coming from /vendor/dashboard/top-selling
-// shape: { offer_id, total_sold, offer: { id, title } }
 const normalizeTopSelling = (item) => ({
   offer_id: item.offer_id,
   total_sold: Number(item.total_sold ?? 0),
@@ -83,6 +81,147 @@ const FALLBACK_CHART = [
   { day: "Fri", sales: 0, orders: 0 }, { day: "Sat", sales: 0, orders: 0 },
   { day: "Sun", sales: 0, orders: 0 },
 ];
+
+// ── Sale Details Modal ────────────────────────────────────────────────────────
+function SaleDetailsModal({ saleId, onClose }) {
+  const [details, setDetails] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => setLoadingTimeout(true), 5000);
+    (async () => {
+      try {
+        const token = getToken();
+        const controller = new AbortController();
+        const abort = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch(`/api/vendor/dashboard/sales/${saleId}`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+          signal: controller.signal,
+        });
+        clearTimeout(abort);
+        const data = await res.json();
+        if (!res.ok) { setError(data?.message ?? "Failed to load sale details."); return; }
+        setDetails(data?.data ?? data ?? null);
+      } catch (e) {
+        if (e.name !== "AbortError") setError("Failed to load sale details.");
+      } finally {
+        setLoading(false);
+        setLoadingTimeout(false);
+        clearTimeout(timeoutId);
+      }
+    })();
+    return () => clearTimeout(timeoutId);
+  }, [saleId]);
+
+  const offerTitle    = details?.offer?.title   ?? details?.offer?.name   ?? "—";
+  const offerImage    = details?.offer?.image   ?? details?.offer?.photo  ?? null;
+  const offerDiscount = details?.offer?.discount_price ?? details?.price  ?? "—";
+  const offerOriginal = details?.offer?.original_price ?? "—";
+  const qty           = details?.quantity ?? "—";
+  const totalPrice    = details?.price   ?? "—";
+  const orderStatus   = details?.order?.order_status ?? details?.order?.status ?? "—";
+  const orderDate     = details?.order?.order_date   ?? details?.order?.created_at ?? null;
+  const deliveryType  = details?.order?.delivery_type ?? "—";
+  const customerUser  = details?.order?.customer?.user ?? details?.order?.user ?? details?.order?.customer;
+  const customerName  = customerUser?.name  ?? "—";
+  const customerEmail = customerUser?.email ?? "—";
+  const customerPhone = customerUser?.phone ?? "—";
+
+  const statusColor = {
+    completed:  { bg: "#e8faf0", text: "#28c76f" },
+    cancelled:  { bg: "#ffeaea", text: "#ef4444" },
+    pending:    { bg: "#fff6e0", text: "#ff9f43" },
+    processing: { bg: "#e7e7ff", text: "#696cff" },
+  }[orderStatus?.toLowerCase()] ?? { bg: "#f0f0f5", text: "#8592a3" };
+
+  return (
+    <div
+      className="mb-modal-overlay mb-modal-overlay--large"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="mb-modal-content mb-modal-content--details">
+        <div className="mb-details-header">
+          <div className="mb-details-header__left">
+            {offerImage ? (
+              <img
+                src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production.up.railway.app/${offerImage}`}
+                alt="offer"
+                className="mb-details-logo"
+                style={{ borderRadius: "10px", objectFit: "cover" }}
+              />
+            ) : (
+              <div className="mb-details-avatar">{offerTitle.charAt(0).toUpperCase()}</div>
+            )}
+            <div>
+              <h3 className="mb-details-title">{offerTitle}</h3>
+              <span className="mb-details-category">Sale #{saleId}</span>
+            </div>
+          </div>
+          <button type="button" onClick={onClose} className="mb-details-close">✕</button>
+        </div>
+
+        <div className="mb-details-body">
+          {loading && (
+            <>
+              {loadingTimeout && (
+                <div className="mb-loading-timeout">
+                  <AlertCircle size={18} color="#f59e0b" />
+                  <span>Loading is taking longer than expected...</span>
+                </div>
+              )}
+              <div className="mb-details-loading">
+                <Loader2 size={24} className="mb-spin" />
+              </div>
+            </>
+          )}
+          {error && <div className="mb-details-error">{error}</div>}
+          {details && !loading && (
+            <>
+              <p className="mb-details-section-title">Offer Details</p>
+              <div className="mb-details-grid">
+                {[
+                  { label: "Offer",          value: offerTitle },
+                  { label: "Original Price", value: offerOriginal !== "—" ? `EGP ${offerOriginal}` : "—" },
+                  { label: "Discount Price", value: offerDiscount !== "—" ? `EGP ${offerDiscount}` : "—" },
+                  { label: "Quantity Sold",  value: qty },
+                  { label: "Total Price",    value: totalPrice !== "—" ? `EGP ${totalPrice}` : "—" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="mb-details-field">
+                    <p className="mb-details-label">{label}</p>
+                    <p className="mb-details-value">{value ?? "—"}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mb-details-section-title" style={{ marginTop: "18px" }}>Order Details</p>
+              <div className="mb-details-grid">
+                {[
+                  { label: "Customer",      value: customerName },
+                  { label: "Email",         value: customerEmail },
+                  { label: "Phone",         value: customerPhone },
+                  { label: "Delivery Type", value: deliveryType },
+                  { label: "Order Date",    value: orderDate ? new Date(orderDate).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric" }) : "—" },
+                  { label: "Order Status",  value: (
+                    <span style={{ background: statusColor.bg, color: statusColor.text, borderRadius: "20px", padding: "2px 10px", fontSize: "0.78rem", fontWeight: 600 }}>
+                      {orderStatus}
+                    </span>
+                  )},
+                ].map(({ label, value }) => (
+                  <div key={label} className="mb-details-field">
+                    <p className="mb-details-label">{label}</p>
+                    <p className="mb-details-value">{value ?? "—"}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ── Sustainability Section ────────────────────────────────────────────────────
 function VendorSustainabilitySection() {
@@ -207,10 +346,10 @@ function TopSellingSection() {
 
 // ── Sales History Section ─────────────────────────────────────────────────────
 function SalesHistorySection() {
-  const navigate = useNavigate();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
+  const [selectedSaleId, setSelectedSaleId] = useState(null);
 
   useEffect(() => {
     const fetchSales = async () => {
@@ -236,60 +375,68 @@ function SalesHistorySection() {
   const displayed = showAll ? sales : sales.slice(0, 5);
 
   return (
-    <div className="biz-section" id="sales-section">
-      <div className="biz-section-header">
-        <h2 className="biz-section-title">Sales History</h2>
-        {sales.length > 5 && (
-          <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
-            {showAll ? "Show Less" : `View All (${sales.length})`}
-          </button>
-        )}
-      </div>
-      <div className="biz-table-wrap">
-        <table className="biz-table">
-          <thead>
-            <tr>
-              <th>Sale ID</th>
-              <th>Offer</th>
-              <th>Qty</th>
-              <th>Price</th>
-              <th>Order Status</th>
-              <th>Date</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {displayed.map((sale) => (
-              <tr key={sale.id}>
-                <td className="biz-td-id">#{sale.id}</td>
-                <td>{sale.offer?.title || sale.offer?.name || "—"}</td>
-                <td>{sale.quantity ?? "—"}</td>
-                <td className="biz-td-amount">EGP {sale.price ?? "—"}</td>
-                <td>
-                  <span className={`biz-badge ${sale.order?.order_status === "completed" ? "active" : sale.order?.order_status === "cancelled" ? "expired" : "pending"}`}>
-                    {sale.order?.order_status || "—"}
-                  </span>
-                </td>
-                <td style={{ fontSize: "0.8rem", color: "#6b7280" }}>
-                  {sale.order?.order_date ? new Date(sale.order.order_date).toLocaleDateString("en-EG") : "—"}
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="biz-icon-btn edit"
-                    title="View details"
-                    onClick={() => navigate(`/vendor/dashboard/sales/${sale.id}`)}
-                    style={{ fontSize: "0.75rem", padding: "4px 8px" }}
-                  >
-                    👁️
-                  </button>
-                </td>
+    <>
+      {selectedSaleId && (
+        <SaleDetailsModal
+          saleId={selectedSaleId}
+          onClose={() => setSelectedSaleId(null)}
+        />
+      )}
+      <div className="biz-section" id="sales-section">
+        <div className="biz-section-header">
+          <h2 className="biz-section-title">Sales History</h2>
+          {sales.length > 5 && (
+            <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
+              {showAll ? "Show Less" : `View All (${sales.length})`}
+            </button>
+          )}
+        </div>
+        <div className="biz-table-wrap">
+          <table className="biz-table">
+            <thead>
+              <tr>
+                <th>Sale ID</th>
+                <th>Offer</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Order Status</th>
+                <th>Date</th>
+                <th></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {displayed.map((sale) => (
+                <tr key={sale.id}>
+                  <td className="biz-td-id">#{sale.id}</td>
+                  <td>{sale.offer?.title || sale.offer?.name || "—"}</td>
+                  <td>{sale.quantity ?? "—"}</td>
+                  <td className="biz-td-amount">EGP {sale.price ?? "—"}</td>
+                  <td>
+                    <span className={`biz-badge ${sale.order?.order_status === "completed" ? "active" : sale.order?.order_status === "cancelled" ? "expired" : "pending"}`}>
+                      {sale.order?.order_status || "—"}
+                    </span>
+                  </td>
+                  <td style={{ fontSize: "0.8rem", color: "#6b7280" }}>
+                    {sale.order?.order_date ? new Date(sale.order.order_date).toLocaleDateString("en-EG") : "—"}
+                  </td>
+                  <td>
+                    <button
+                      type="button"
+                      className="biz-icon-btn edit"
+                      title="View details"
+                      onClick={() => setSelectedSaleId(sale.id)}
+                      style={{ fontSize: "0.75rem", padding: "4px 8px" }}
+                    >
+                      👁️
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -416,9 +563,15 @@ export default function Business() {
             const chartData = data.data.map((item) => ({
               day: item.month,
               sales: item.net_sales || 0,
-              orders: 0,
+              orders: item.total_orders || item.orders_count || item.orders || 0,
             }));
-            setSalesData(chartData);
+            setSalesData((prev) => {
+              if (!prev || prev.length === 0) return chartData;
+              return chartData.map((item) => {
+                const existing = prev.find((p) => p.day === item.day);
+                return { ...item, orders: existing?.orders || 0 };
+              });
+            });
           } else {
             setSalesData(FALLBACK_CHART);
           }
@@ -464,7 +617,22 @@ export default function Business() {
         });
         if (res.ok) {
           const data = await readJson(res);
-          setOrders(extractList(data, ["orders"]).map(normalizeOrder));
+          const orderList = extractList(data, ["orders"]).map(normalizeOrder);
+          setOrders(orderList);
+          setSalesData((prev) => {
+            if (!prev || prev.length === 0) return prev;
+            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const countByMonth = {};
+            orderList.forEach((order) => {
+              if (!order.created_at) return;
+              const month = months[new Date(order.created_at).getMonth()];
+              countByMonth[month] = (countByMonth[month] || 0) + 1;
+            });
+            return prev.map((item) => ({
+              ...item,
+              orders: countByMonth[item.day] || item.orders || 0,
+            }));
+          });
         }
       } catch (err) { console.error("Orders fetch error:", err); }
     };
@@ -731,7 +899,7 @@ export default function Business() {
               </div>
             </div>
 
-            {/* ── KPI Cards (4 cards: active offers, total orders, units sold, net revenue) ── */}
+            {/* ── KPI Cards ── */}
             <div className="biz-kpis">
               {[
                 { label: "Active Offers",  value: kpiData.activeOffers,  icon: "📦" },
@@ -799,7 +967,7 @@ export default function Business() {
               <VendorSustainabilitySection />
             </div>
 
-            {/* ── Top Selling (/api/vendor/dashboard/top-selling) ── */}
+            {/* ── Top Selling ── */}
             <TopSellingSection />
 
             {/* ── Offers ── */}
@@ -909,10 +1077,10 @@ export default function Business() {
                           <td>{order.customer}</td>
                           <td className="biz-td-amount">{order.amount}</td>
                           <td>
-                            <select 
-                              value={order.status} 
-                              onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)} 
-                              disabled={updatingOrderId === order.id} 
+                            <select
+                              value={order.status}
+                              onChange={(e) => handleOrderStatusUpdate(order.id, e.target.value)}
+                              disabled={updatingOrderId === order.id}
                               className={`biz-status-select status-${order.status?.toLowerCase()}`}
                             >
                               <option value="pending">Pending</option>
@@ -930,7 +1098,7 @@ export default function Business() {
               </div>
             </div>
 
-            {/* ── Sales History (/api/vendor/dashboard/sales) ── */}
+            {/* ── Sales History ── */}
             <SalesHistorySection />
           </>
         )}

@@ -1,0 +1,420 @@
+/* ============================================
+   FOOTER VARIABLES & GLOBAL STYLES
+   ============================================ */
+
+:root {
+  --color-primary: #10b981;
+  --color-primary-dark: #059669;
+  --color-text-dark: #1f2937;
+  --color-text-light: #6b7280;
+  --color-text-lighter: #9ca3af;
+  --color-bg-light: #f9fafb;
+  --color-border: #e5e7eb;
+  --color-white: #fff;
+  --color-heart: #ef4444;
+  --spacing-sm: 8px;
+  --spacing-md: 12px;
+  --spacing-lg: 20px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 40px;
+  --spacing-3xl: 48px;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   FOOTER CONTAINER
+   ============================================ */
+
+.footer {
+  background: var(--color-bg-light);
+  border-top: 1px solid var(--color-border);
+  padding: var(--spacing-2xl) var(--spacing-md) var(--spacing-md);
+  margin-top: var(--spacing-3xl);
+}
+
+.footer-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+/* ============================================
+   FOOTER TOP SECTION (Main Content)
+   ============================================ */
+
+.footer-top {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+}
+
+.footer-section {
+  min-width: 140px;
+  flex: 1;
+  min-width: 160px;
+}
+
+/* ============================================
+   BRAND SECTION
+   ============================================ */
+
+.footer-brand {
+  min-width: 200px;
+}
+
+.footer-logo-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: var(--spacing-md);
+}
+
+.footer-logo {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  border-radius: 8px;
+  display: block;
+}
+
+.footer-brand-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-primary);
+  letter-spacing: -0.5px;
+}
+
+.footer-brand-description {
+  font-size: 0.85rem;
+  color: var(--color-text-light);
+  line-height: 1.6;
+  max-width: 220px;
+  margin: 0;
+  font-weight: 500;
+}
+
+/* ============================================
+   SECTION TITLE
+   ============================================ */
+
+.footer-section-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: var(--color-text-lighter);
+  margin: 0 0 var(--spacing-md) 0;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-decoration-color: var(--color-primary);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 6px;
+  opacity: 0.9;
+}
+
+/* ============================================
+   QUICK LINKS SECTION
+   ============================================ */
+
+.footer-nav {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.footer-link {
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--color-text-dark);
+  padding: 0;
+  font-weight: 500;
+  transition: var(--transition);
+  position: relative;
+  padding-left: 0;
+  padding-bottom: 2px;
+}
+
+.footer-link::before {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transition: var(--transition);
+}
+
+.footer-link:hover {
+  color: var(--color-primary);
+}
+
+.footer-link:hover::before {
+  width: 100%;
+}
+
+/* ============================================
+   CONTACT SECTION
+   ============================================ */
+
+.footer-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.footer-contact-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--color-text-dark);
+  text-decoration: none;
+  transition: var(--transition);
+  font-weight: 500;
+}
+
+.footer-contact-item:hover {
+  color: var(--color-primary);
+  transform: translateX(2px);
+}
+
+.footer-contact-icon {
+  font-size: 1.1rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.footer-contact-email .footer-contact-icon {
+  filter: drop-shadow(0 2px 4px rgba(59, 130, 246, 0.3));
+}
+
+.footer-contact-phone .footer-contact-icon {
+  filter: drop-shadow(0 2px 4px rgba(236, 72, 153, 0.3));
+}
+
+.footer-contact-location .footer-contact-icon {
+  filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
+}
+
+/* ============================================
+   FOOTER DIVIDER
+   ============================================ */
+
+.footer-divider {
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================
+   FOOTER BOTTOM SECTION
+   ============================================ */
+
+.footer-bottom {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.footer-copyright {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--color-text-lighter);
+  font-weight: 500;
+}
+
+.footer-tagline {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--color-text-lighter);
+  font-weight: 500;
+}
+
+.footer-heart {
+  color: var(--color-heart);
+  font-size: 1rem;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+  .footer {
+    padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
+  }
+
+  .footer-top {
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .footer-section {
+    min-width: 140px;
+    flex: 1 1 calc(50% - var(--spacing-lg) / 2);
+  }
+
+  .footer-brand {
+    flex: 1 1 100%;
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .footer {
+    padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
+    margin-top: var(--spacing-2xl);
+  }
+
+  .footer-top {
+    flex-direction: column;
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .footer-section {
+    flex: 1 1 100%;
+    min-width: unset;
+  }
+
+  .footer-brand-description {
+    max-width: 100%;
+  }
+
+  .footer-nav {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .footer-contact-list {
+    gap: var(--spacing-md);
+  }
+
+  .footer-divider {
+    padding-top: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .footer-bottom {
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .footer-tagline {
+    flex-wrap: wrap;
+  }
+
+  .footer-copyright {
+    font-size: 0.75rem;
+  }
+
+  .footer-tagline {
+    font-size: 0.75rem;
+  }
+}
+
+/* ============================================
+   DARK MODE SUPPORT (Optional)
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg-light: #111827;
+    --color-text-dark: #f3f4f6;
+    --color-text-light: #d1d5db;
+    --color-text-lighter: #9ca3af;
+    --color-border: #374151;
+    --color-white: #1f2937;
+  }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+  .footer {
+    display: none;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+.footer-link:focus,
+.footer-contact-item:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: more) {
+  .footer-link {
+    font-weight: 600;
+  }
+
+  .footer-section-title {
+    font-weight: 800;
+  }
+
+  .footer-contact-item {
+    font-weight: 600;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .footer-link,
+  .footer-contact-item,
+  .footer-heart {
+    transition: none;
+    animation: none;
+  }
+
+  .footer-contact-item:hover {
+    transform: none;
+  }
+}

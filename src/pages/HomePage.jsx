@@ -222,6 +222,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
         throw new Error(responseData.message || "Failed to submit review");
       }
 
+      setSubmitted(true);
       setTimeout(() => {
         onDismiss();
       }, 1500);
@@ -582,27 +583,20 @@ function RecommendedCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              
+
               if (!offer.id) {
+                console.error("❌ ERROR: offer.id is missing!");
                 return;
               }
-              
-              // ✅ تحويل الـ ID لـ string
+
+              const offerWithStringId = { ...offer, id: String(offer.id) };
               const result = onAddToCart(
-                {
-                  id: String(offer.id),
-                  title: offer.title,
-                  image: imageUrl,
-                  discountedPrice: offer.discount_price,
-                  originalPrice: offer.original_price,
-                  discount,
-                },
+                offerWithStringId,
                 1,
                 isLoggedIn,
                 locationName,
               );
-              
-              // ✅ عرّض الـ message
+
               if (result && showAlert) {
                 showAlert(result.message, result.success ? "success" : "error");
               }
@@ -914,9 +908,16 @@ export default function HomePage() {
     "Others",
   ];
 
-  // ✅ MAIN FETCH OFFERS WITH DEBUG LOGS
+  // ── Fetch Offers with Debug Logs ──
   useEffect(() => {
     const fetchOffers = async () => {
+      if (selectedCategory === "Others") {
+        setOffers([]);
+        setError(null);
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       setError(null);
       try {
@@ -935,22 +936,14 @@ export default function HomePage() {
         const response = await fetch(endpoint, { method: "GET", headers });
         const data = await response.json();
 
-        // 🔴 DEBUG LOGS START
         console.log("=== FETCH OFFERS DEBUG ===");
         console.log("Endpoint:", endpoint);
         console.log("HTTP Status:", response.status);
-        console.log("Full Response Object:", data);
-        console.log("data.data:", data.data);
-        console.log("data.offers:", data.offers);
+        console.log("Full Response:", data);
         console.log("=== END DEBUG ===");
 
         if (response.ok && (data.data || data.offers)) {
           const offersData = data.data || data.offers;
-
-          console.log("Number of Offers:", offersData.length);
-          if (offersData.length > 0) {
-            console.log("First Offer Object:", offersData[0]);
-          }
 
           if (offersData.length > 0) {
             const transformedOffers = offersData.map((offer, idx) => {
@@ -1001,15 +994,11 @@ export default function HomePage() {
               };
             });
 
-            console.log("Transformed Offers Count:", transformedOffers.length);
-            console.log("Transformed Offers:", transformedOffers);
             setOffers(transformedOffers);
           } else {
-            console.warn("No offers in data");
             setError("No offers available right now");
           }
         } else {
-          console.error("Response not ok or no data property");
           setError("No offers available right now");
         }
       } catch (err) {
@@ -1031,8 +1020,7 @@ export default function HomePage() {
         !searchQuery ||
         offer.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         offer.location?.toLowerCase().includes(searchQuery.toLowerCase());
-      const isAvailable = true;
-      return matchesSearch && isAvailable;
+      return matchesSearch;
     })
     .map((offer) => ({
       ...offer,
@@ -1390,19 +1378,25 @@ export default function HomePage() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          
+
                           if (!offer.id) {
                             console.error("❌ ERROR: offer.id is missing!");
                             return;
                           }
-                          
-                          // ✅ تحويل الـ ID لـ string
+
                           const offerWithStringId = { ...offer, id: String(offer.id) };
-                          const result = addToCart(offerWithStringId, 1, isLoggedIn, locationName);
-                          
-                          // ✅ عرّض الـ message
+                          const result = addToCart(
+                            offerWithStringId,
+                            1,
+                            isLoggedIn,
+                            locationName,
+                          );
+
                           if (result) {
-                            showAlert(result.message, result.success ? "success" : "error");
+                            showAlert(
+                              result.message,
+                              result.success ? "success" : "error",
+                            );
                           }
                         }}
                         style={{
@@ -1485,6 +1479,7 @@ export default function HomePage() {
           </div>
         </div>
       )}
+
       {showSignInPopup && (
         <div
           style={{
