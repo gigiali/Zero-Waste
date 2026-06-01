@@ -118,10 +118,15 @@ export default function Navigation({
   const isCairoArea = (input) => {
     const raw = JSON.stringify(input).toLowerCase();
     return (
-      raw.includes("cairo governorate") || raw.includes("governorate of cairo") ||
-      raw.includes('"'+'state'+'":"'+'cairo'+'"') ||
-      raw.includes("giza governorate") || raw.includes("governorate of giza") ||
-      raw.includes("qalyubia governorate") || raw.includes("qalyubiyya governorate")
+      raw.includes("cairo") ||
+      raw.includes("giza") ||
+      raw.includes("qalyubia") ||
+      raw.includes("qalyubiyya") ||
+      raw.includes("heliopolis") ||
+      raw.includes("maadi") ||
+      raw.includes("nasr city") ||
+      raw.includes("6th of october") ||
+      raw.includes("new cairo")
     );
   };
 
@@ -170,9 +175,8 @@ export default function Navigation({
     const lat = parseFloat(place.lat);
     const lng = parseFloat(place.lon);
     applyLocation(lat, lng, place.display_name);
-    setShowMap(false);
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.flyTo([lat, lng], 14, { duration: 1.5 });
+      mapInstanceRef.current.flyTo([lat, lng], 15, { duration: 1.5 });
       const L = window.L;
       if (L) {
         if (mapInstanceRef.current.tempMarker) mapInstanceRef.current.removeLayer(mapInstanceRef.current.tempMarker);

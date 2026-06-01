@@ -4,7 +4,7 @@ const LocationContext = createContext();
 
 const BASE = "https://zero-waste-production.up.railway.app";
 
-const CAIRO_BOUNDS = { north: 30.25, south: 29.85, east: 31.65, west: 31.05 };
+const CAIRO_BOUNDS = { north: 30.35, south: 29.75, east: 31.90, west: 30.80 };
 const CAIRO_CENTER = { lat: 30.0444, lng: 31.2357 };
 
 function isWithinCairo(lat, lng) {
@@ -59,68 +59,45 @@ export function LocationProvider({ children }) {
   const mapInstanceRef = useRef(null);
   const markerRef = useRef(null);
 
-  const fetchNearbyAndFee = async (lat, lng, name) => {
+  const fetchNearbyAndFee = (lat, lng, name) => {
     setLocationName(name);
     setUserLat(lat);
     setUserLng(lng);
-    setLoadingLocation(true);
+    setNearbyBranches([]);
+    setDeliveryFee(null);
 
     localStorage.setItem("userLocationLat", String(lat));
     localStorage.setItem("userLocationLng", String(lng));
     localStorage.setItem("userLocationName", name);
+  };
 
+  const calculateDeliveryFee = async (offerId) => {
+    const lat = userLat ?? parseFloat(localStorage.getItem("userLocationLat"));
+    const lng = userLng ?? parseFloat(localStorage.getItem("userLocationLng"));
+
+    if (!lat || !lng || !offerId) return;
+
+    setLoadingLocation(true);
     try {
       const token = getToken();
-
-      const sessionId = getSessionId();
-
-      const params = new URLSearchParams({
-        lat: String(lat),
-        long: String(lng),
-        radius: "10",
-        session_id: sessionId,
+      const res = await fetch(`${BASE}/api/orders/calculate-fee`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ customer_lat: lat, customer_long: lng, offer_id: offerId }),
       });
-
-const headers = {
-  Accept: "application/json",
-  "Content-Type": "application/json",
-  ...(token ? { Authorization: `Bearer ${token}` } : {}),
-};
-
-      const res = await fetch(`${BASE}/api/branches/nearby?${params.toString()}`, { headers });
       const data = await res.json();
-
-      if (!res.ok) {
-        setNearbyBranches([]);
-        setDeliveryFee(25);
-        return;
-      }
-
-      // ✅ الـ response paginated يعني data.data.data هي الـ array الحقيقية
-      const branches = data.data?.data || data.data || [];
-      setNearbyBranches(branches);
-
-      // ✅ لو الـ backend بعت delivery_fee جاهزة (لو اتعدل مستقبلاً)
-      if (data.delivery_fee !== undefined) {
-        setDeliveryFee(data.delivery_fee);
-      }
-      // ✅ حسب من distance أقرب فرع
-      else if (branches.length > 0 && branches[0]?.distance !== undefined) {
-        const distance = parseFloat(branches[0].distance);
-        const fee = Math.round(10 + distance * 5);
-        setDeliveryFee(fee);
-      }
-      // ✅ fallback لو مفيش فروع قريبة
-      else {
-        setDeliveryFee(25);
-      }
+      if (res.ok) setDeliveryFee(data.delivery_fee);
     } catch {
-      setDeliveryFee(25);
+      setDeliveryFee(null);
     } finally {
       setLoadingLocation(false);
     }
   };
-
+  
   const clearLocation = () => {
     setLocationName(null);
     setDeliveryFee(null);
@@ -347,6 +324,7 @@ const headers = {
         mapInstanceRef,
         markerRef,
         fetchNearbyAndFee,
+        calculateDeliveryFee,
         clearLocation,
         handleMapSearchChange,
         handleSelectMapSuggestion,

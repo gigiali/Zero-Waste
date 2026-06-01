@@ -1,13 +1,103 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import {
   CreditCard, Banknote, ArrowLeft, Package, MapPin,
   Clock, CheckCircle, X, ChevronRight, Truck, ShoppingBag, Phone
 } from "lucide-react";
 import "./PaymentMethod.css";
 import { useCart } from "../Context/CartContext";
+import { useLocationContext } from "../Context/LocationContext";
 
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, frozenTotal, frozenCartTotal, frozenCommission, frozenDeliveryFee }) {
+// 🔑 Initialize Stripe
+const stripePromise = loadStripe("pk_test_51TNOJp6iphBSh3uRkoU7koyZS3lQo7iDuplR8SEeghZesr5A2MGhWp2oh0Nm1vBSmEQwvh33fxSRb1bu4kxZohbS00rs5joZTi");
+
+function CardPaymentForm({ onSubmit, isSubmitting, total }) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [error, setError] = useState(null);
+
+  const handleCardPayment = async (e) => {
+    e.preventDefault();
+
+    if (!stripe || !elements) {
+      return;
+    }
+
+    // 🎯 شحن البيانات لـ Stripe مباشرة
+    const { error, paymentMethod } = await stripe.createPaymentMethod({
+      type: "card",
+      card: elements.getElement(CardElement),
+    });
+
+    if (error) {
+      setError(error.message);
+      return;
+    }
+
+    // ✅ استقبل paymentMethodId من Stripe
+    const paymentMethodId = paymentMethod.id;
+
+    // 🚀 بعت paymentMethodId + order data للـ Backend
+    await onSubmit(paymentMethodId);
+  };
+
+  return (
+    <form onSubmit={handleCardPayment} style={{ marginTop: "1.5rem" }}>
+      <div style={{
+        padding: "1rem",
+        border: "1px solid #e5e7eb",
+        borderRadius: "8px",
+        marginBottom: "1rem",
+        backgroundColor: "#f9fafb"
+      }}>
+        <CardElement
+          options={{
+            style: {
+              base: {
+                fontSize: "16px",
+                color: "#424770",
+                "::placeholder": {
+                  color: "#aab7c4",
+                },
+              },
+              invalid: {
+                color: "#fa755a",
+              },
+            },
+          }}
+        />
+      </div>
+
+      {error && (
+        <div style={{ color: "#ef4444", marginBottom: "1rem", fontSize: "0.9rem" }}>
+          {error}
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={!stripe || isSubmitting}
+        style={{
+          width: "100%",
+          padding: "0.75rem",
+          backgroundColor: isSubmitting ? "#d1d5db" : "#3b82f6",
+          color: "white",
+          border: "none",
+          borderRadius: "8px",
+          fontSize: "1rem",
+          fontWeight: "600",
+          cursor: isSubmitting ? "not-allowed" : "pointer",
+        }}
+      >
+        {isSubmitting ? "Processing..." : `Pay EGP ${total.toFixed(2)}`}
+      </button>
+    </form>
+  );
+}
+
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, selectedMethod }) {
   const [phase, setPhase] = useState(1);
   const [progress, setProgress] = useState(0);
   const [confirmed, setConfirmed] = useState(false);
@@ -131,12 +221,17 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
             <div className="orm-confirm-icon"><CheckCircle size={40} /></div>
             <h3 className="orm-confirm-title">Everything looks good?</h3>
             <p className="orm-confirm-subtitle">Total: <strong>EGP {total.toFixed(2)}</strong> · {deliveryMethod === "delivery" ? "Home Delivery" : "Pickup"}</p>
-            <div className="orm-actions">
-              <button className="orm-cancel-btn" onClick={onCancel} disabled={isSubmitting}><X size={16} /> Cancel</button>
-              <button className="orm-confirm-btn" onClick={handleConfirm} disabled={isSubmitting}>
-                {isSubmitting ? <><span className="orm-spinner" /> Placing Order...</> : <><CheckCircle size={16} /> Confirm Order</>}
-              </button>
-            </div>
+            
+            {selectedMethod === "card" ? (
+              <CardPaymentForm onSubmit={onConfirm} isSubmitting={isSubmitting} total={total} />
+            ) : (
+              <div className="orm-actions">
+                <button className="orm-cancel-btn" onClick={onCancel} disabled={isSubmitting}><X size={16} /> Cancel</button>
+                <button className="orm-confirm-btn" onClick={handleConfirm} disabled={isSubmitting}>
+                  {isSubmitting ? <><span className="orm-spinner" /> Placing Order...</> : <><CheckCircle size={16} /> Confirm Order</>}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -150,7 +245,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
               <div className="orm-success-row"><span>Service Fee (6%)</span><strong>EGP {commission.toFixed(2)}</strong></div>
               {deliveryFee > 0 && <div className="orm-success-row"><span>Delivery Fee</span><strong>EGP {deliveryFee.toFixed(2)}</strong></div>}
               <div className="orm-success-row"><span>Total</span><strong>EGP {total.toFixed(2)}</strong></div>
-              <div className="orm-success-row"><span>Payment</span><strong>Cash on {deliveryMethod === "delivery" ? "Delivery" : "Pickup"}</strong></div>
+              <div className="orm-success-row"><span>Payment</span><strong>Card</strong></div>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <button className="orm-track-btn" onClick={onTrackOrder}><MapPin size={18} /> Track Order</button>
@@ -169,38 +264,13 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
   );
 }
 
-const saveUserOrder = ({ orderId, cartItems, deliveryMethod, selectedMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone }) => {
-  const orderNumber = String(orderId || `ORD-${Date.now()}`);
-  return {
-    id: orderNumber,
-    orderNumber,
-    status: "pending",
-    createdAt: new Date().toISOString(),
-    deliveryMethod,
-    paymentMethod: selectedMethod === "card" ? "Card Payment" : "Cash",
-    businessName: businessName || cartItems[0]?.location || "The Restaurant",
-    businessPhone: businessPhone || cartItems[0]?.phone || cartItems[0]?.vendor_phone || "",
-    subtotal: cartTotal,
-    deliveryFee,
-    commission,
-    total,
-    items: cartItems.map((item) => ({
-      id: item.id,
-      offer_id: item.id,
-      title: item.title,
-      quantity: item.quantity,
-      unitPrice: item.discountedPrice || item.discountPrice || 0,
-      price: Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0),
-      location: item.location,
-      category: item.category,
-    })),
-  };
-};
+const handleConfirm = () => { setConfirmed(true); onConfirm(); };
 
 export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { cartItems, clearCart } = useCart();
+  const { userLat, userLng } = useLocationContext();
   const [selectedMethod, setSelectedMethod] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -212,12 +282,12 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
   const deliveryMethod = searchParams.get("method") || "pickup";
   const subtotal = cartItems.reduce((sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0);
-  const deliveryFee = deliveryMethod === "delivery" ? 25 : 0;
+  const deliveryFee = deliveryMethod === "delivery"
+    ? (parseFloat(searchParams.get("fee")) || 0)
+    : 0;
   const cartTotal = propCartTotal || subtotal;
-  const commission = parseFloat((cartTotal * 0.06).toFixed(2));  // ✅ 6% service fee
-  const total = cartTotal + deliveryFee + commission;             // ✅ total شامل الـ commission
-
-  const [cardDetails, setCardDetails] = useState({ cardNumber: "", cardName: "", expiry: "", cvv: "" });
+  const commission = parseFloat((cartTotal * 0.06).toFixed(2));
+  const total = cartTotal + deliveryFee + commission;
 
   const paymentMethods = deliveryMethod === "delivery"
     ? [
@@ -229,21 +299,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
         { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Pickup", desc: "Pay with cash when you collect your order" },
       ];
 
-  const handleCardInput = (e) => {
-    const { name, value } = e.target;
-    let formatted = value;
-    if (name === "cardNumber") formatted = value.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
-    if (name === "expiry") {
-      formatted = value.replace(/\D/g, "").slice(0, 4);
-      if (formatted.length >= 2) formatted = formatted.slice(0, 2) + "/" + formatted.slice(2);
-    }
-    if (name === "cvv") formatted = value.replace(/\D/g, "").slice(0, 3);
-    setCardDetails((prev) => ({ ...prev, [name]: formatted }));
-  };
-
-  const canContinue =
-    selectedMethod === "cash" ||
-    (selectedMethod === "card" && cardDetails.cardNumber.length === 19 && cardDetails.cardName && cardDetails.expiry.length === 5 && cardDetails.cvv.length === 3);
+  const canContinue = selectedMethod !== null;
 
   const handleConfirmClick = () => {
     if (!selectedMethod) { setSubmitError("Please select a payment method"); return; }
@@ -252,7 +308,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     setShowReviewModal(true);
   };
 
-  const handleFinalConfirm = async () => {
+  const handleCardSubmit = async (paymentMethodId) => {
     setIsSubmitting(true);
     setSubmitError("");
 
@@ -265,48 +321,31 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
-      const customerLat  = localStorage.getItem("userLocationLat");
-      const customerLong = localStorage.getItem("userLocationLng");
+      const customerLat  = userLat;
+const customerLong = userLng;
 
-      const items = cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity }));
+const submitBody = {
+  items: cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity })),
+  payment_method: "card",
+  payment_method_id: paymentMethodId,
+  delivery_type: deliveryMethod,
+  ...(deliveryMethod === "delivery" && { customer_lat: customerLat, customer_long: customerLong }),
+};
 
-      const submitData = new FormData();
-      items.forEach((item, index) => {
-       submitData.append(`items[${index}][offer_id]`, item.offer_id);
-       submitData.append(`items[${index}][quantity]`, item.quantity);
-      });    
-       submitData.append("payment_method", selectedMethod);
-       console.log("delivery_type:", deliveryMethod);
-console.log("customer_lat:", localStorage.getItem("userLocationLat"));
-       submitData.append("delivery_type", deliveryMethod);
-       
-
-      if (deliveryMethod === "delivery") {
-        if (!customerLat || !customerLong) { setSubmitError("Please set your location first"); setIsSubmitting(false); return; }
-        submitData.append("customer_lat", customerLat);
-        submitData.append("customer_long", customerLong);
-      }
-
-      const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
-        method: "POST",
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        body: submitData,
-      });
+const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
+  method: "POST",
+  headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  body: JSON.stringify(submitBody),
+});
 
       const data = await response.json();
 
       if (response.ok) {
+        // ✅ Payment successful
         serverOrderRef.current = data.order;
         const firstItem   = cartItems[0];
         const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
         const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
-
-        const savedOrder = saveUserOrder({
-          orderId: data.order?.id || `ORD-${Date.now()}`,
-          cartItems, deliveryMethod, selectedMethod,
-          cartTotal, deliveryFee, commission, total,
-          businessName, businessPhone,
-        });
 
         orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone };
         frozenCartItemsRef.current = [...cartItems];
@@ -322,20 +361,65 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
           setSubmitError(data.message + " | " + (data.error_debug || "") + " line: " + (data.line || ""));
         }
         setIsSubmitting(false);
-        setShowReviewModal(false);
       }
     } catch (error) {
       console.error("Order submission error:", error);
       setSubmitError("Network error. Please check your connection and try again.");
       setIsSubmitting(false);
-      setShowReviewModal(false);
+    }
+  };
+
+  const handleCashSubmit = async () => {
+    setIsSubmitting(true);
+    setSubmitError("");
+
+    try {
+      const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+      if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
+
+      const submitBody = {
+        items: cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity })),
+        payment_method: "cash",
+        delivery_type: deliveryMethod,
+        ...(deliveryMethod === "delivery" && {
+          customer_lat: userLat,
+          customer_long: userLng,
+        }),
+      };
+
+const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
+  method: "POST",
+  headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+  body: JSON.stringify(submitBody),
+});
+      const data = await response.json();
+
+      if (response.ok) {
+        serverOrderRef.current = data.order;
+        const firstItem   = cartItems[0];
+        const businessName = firstItem?.location || firstItem?.businessName || firstItem?.vendor_name || "The Restaurant";
+        const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
+
+        orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessName, businessPhone };
+        frozenCartItemsRef.current = [...cartItems];
+        clearCart();
+        setOrderSuccess(true);
+        window.dispatchEvent(new Event("order-placed"));
+      } else {
+        setSubmitError(data.message || "Error creating order");
+        setIsSubmitting(false);
+      }
+    } catch (error) {
+      console.error("Order submission error:", error);
+      setSubmitError("Network error. Please check your connection and try again.");
+      setIsSubmitting(false);
     }
   };
 
   const handleModalCancel = () => { if (!orderSuccess) setShowReviewModal(false); };
 
   return (
-    <>
+    <Elements stripe={stripePromise}>
       <div className="payment-container">
         <div className="payment-header">
           <div className="payment-header-inner">
@@ -363,29 +447,6 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
                 </div>
               ))}
             </div>
-
-            {selectedMethod === "card" && (
-              <div className="card-form">
-                <div className="form-group">
-                  <label>Card Number</label>
-                  <input type="text" name="cardNumber" placeholder="1234 5678 9012 3456" value={cardDetails.cardNumber} onChange={handleCardInput} />
-                </div>
-                <div className="form-group">
-                  <label>Cardholder Name</label>
-                  <input type="text" name="cardName" placeholder="John Doe" value={cardDetails.cardName} onChange={handleCardInput} />
-                </div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label>Expiry Date</label>
-                    <input type="text" name="expiry" placeholder="MM/YY" value={cardDetails.expiry} onChange={handleCardInput} />
-                  </div>
-                  <div className="form-group">
-                    <label>CVV</label>
-                    <input type="text" name="cvv" placeholder="123" value={cardDetails.cvv} onChange={handleCardInput} />
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="order-summary-box">
@@ -412,9 +473,10 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
           deliveryFee={orderDataRef.current?.deliveryFee ?? deliveryFee}
           commission={orderDataRef.current?.commission ?? commission}
           total={orderDataRef.current?.total ?? total}
-          onConfirm={handleFinalConfirm}
+          onConfirm={selectedMethod === "card" ? handleCardSubmit : handleCashSubmit}
           onCancel={handleModalCancel}
           orderSuccess={orderSuccess}
+          selectedMethod={selectedMethod}
           onTrackOrder={() => {
             setShowReviewModal(false);
             navigate("/home", {
@@ -432,6 +494,6 @@ console.log("customer_lat:", localStorage.getItem("userLocationLat"));
           businessPhone={cartItems[0]?.phone || "01234567890"}
         />
       )}
-    </>
+    </Elements>
   );
 }

@@ -10,10 +10,10 @@ export default function CartPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity } = useCart();
-  const { locationName, deliveryFee: ctxFee, loadingLocation } = useLocationContext();
+  const { locationName, deliveryFee: ctxFee, loadingLocation, userLat, userLng, calculateDeliveryFee } = useLocationContext();
   const [selectedDelivery, setSelectedDelivery] = useState(null);
 
-  const deliveryFee = selectedDelivery === "delivery" ? (ctxFee ?? 25) : 0;
+  const deliveryFee = selectedDelivery === "delivery" ? (ctxFee ?? 0) : 0;
 
   const subtotal = cartItems.reduce(
     (sum, item) =>
@@ -26,6 +26,9 @@ export default function CartPage() {
 
   const handleDeliverySelect = (method) => {
     setSelectedDelivery(method);
+    if (method === "delivery" && cartItems.length > 0) {
+      calculateDeliveryFee(cartItems[0].id);
+    }
   };
 
   return (
@@ -131,11 +134,7 @@ export default function CartPage() {
                   <span className="delivery-desc">{t("cart.deliveryDescription")}</span>
                 </div>
                 <span className="delivery-fee">
-                  {loadingLocation
-                    ? "..."
-                    : ctxFee !== null
-                    ? `+${ctxFee} EGP`
-                    : "+? EGP"}
+                  {loadingLocation ? "..." : ctxFee !== null ? `+${ctxFee} EGP` : "+? EGP"}
                 </span>
                 {selectedDelivery === "delivery" && <span className="selected-indicator">✓</span>}
               </button>
@@ -169,7 +168,7 @@ export default function CartPage() {
           </div>
 
           <button className="continue-btn" onClick={() => navigate("/home")}>
-            {t("cart.continueShopping")}Continue Shopping
+            {t("cart.continueShopping")}
           </button>
         </div>
       </div>
