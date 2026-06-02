@@ -526,8 +526,6 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
 
 
-  // ── Helper: extract order ID from backend response ──
-
   const extractOrderId = (data) =>
 
     data?.order?.id
@@ -542,107 +540,138 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
 
 
-  const handleCardSubmit = async (paymentMethodId) => {
-
-    setIsSubmitting(true);
-
-    setSubmitError("");
-
-    try {
-
-      const token =
-
-        localStorage.getItem("auth_token") || localStorage.getItem("token") ||
-
-        sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
-
-      if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
-
-
-
-      const submitBody = {
-
-        items: cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity })),
-
-        payment_method: "card",
-
-        payment_method_id: paymentMethodId,
-
-        delivery_type: deliveryMethod,
-
-        ...(deliveryMethod === "delivery" && { customer_lat: userLat, customer_long: userLng }),
-
-      };
-
-
-
-      const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
-
-        method: "POST",
-
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-
-        body: JSON.stringify(submitBody),
-
-      });
-
-
-
-      const data = await response.json();
-
-      console.log("Card order response:", data);
-
-
-
-      if (response.ok) {
-
-        serverOrderRef.current = data.order ?? data;
-
-        const firstItem = cartItems[0];
-
-        const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
-
-        orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
-
-        frozenCartItemsRef.current = [...cartItems];
-
-        clearCart();
-
-        setOrderSuccess(true);
-
-        window.dispatchEvent(new Event("order-placed"));
-
-      } else {
-
-        if (response.status === 422 && data.errors) {
-
-          setSubmitError(Object.values(data.errors).flat().join("\n") || "Please fix the errors below");
-
-        } else if (response.status === 401) {
-
-          setSubmitError("Please login to continue");
-
-        } else {
-
-          setSubmitError(data.message || "Failed to create order");
-
-        }
-
-        setIsSubmitting(false);
-
-      }
-
-    } catch (error) {
-
-      console.error("Order submission error:", error);
-
-      setSubmitError("Network error. Please check your connection and try again.");
-
-      setIsSubmitting(false);
-
+  // ✅ تصليح: التحقق من البيانات قبل الإرسال
+  const validateAndPrepareItems = () => {
+    if (!cartItems || cartItems.length === 0) {
+      setSubmitError("Cart is empty");
+      return null;
     }
 
+    const items = cartItems.map((item) => {
+      // ✅ تأكد من استخدام الـ ID الصحيح (سواء id أو offer_id)
+      const offerId = item.id || item.offer_id;
+      
+      if (!offerId || !item.quantity || item.quantity <= 0) {
+        throw new Error("Invalid cart item");
+      }
+
+      return {
+        offer_id: offerId,
+        quantity: item.quantity,
+      };
+    });
+
+    return items;
   };
+
+
+
+const handleCardSubmit = async (paymentMethodId) => {
+  setIsSubmitting(true);
+  setSubmitError("");
+
+  try {
+    // ✅ تصليح: التحقق من البيانات أولاً
+    let items;
+    try {
+      items = validateAndPrepareItems();
+      if (!items) return;
+    } catch (err) {
+      setSubmitError(err.message || "Invalid cart items");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const token =
+      localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+
+    if (!token) { 
+      setSubmitError("Please login to continue"); 
+      setIsSubmitting(false); 
+      return; 
+    }
+
+    // Fetch user address for delivery orders
+    let userAddress = "";
+    if (deliveryMethod === "delivery") {
+      try {
+        const profileRes = await fetch("https://zero-waste-production.up.railway.app/api/myprofile", {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const profileData = await profileRes.json();
+        userAddress = profileData.user?.address || profileData.data?.address || "";
+        console.log("✅ User address fetched:", userAddress);
+      } catch (err) {
+        console.log("⚠️ Could not fetch user address:", err);
+      }
+    }
+
+    // ✅ تصليح: استخدام البيانات المتحقق منها
+    const submitBody = {
+      items: items, // ✅ البيانات المتحقق منها
+      payment_method: "card",
+      payment_method_id: paymentMethodId,
+      delivery_type: deliveryMethod,
+      delivery_address: userAddress || null,
+      ...(deliveryMethod === "delivery" && { customer_lat: userLat, customer_long: userLng }),
+    };
+
+    console.log("📤 Sending order body:", JSON.stringify(submitBody, null, 2));
+
+    const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
+      method: "POST",
+      headers: { 
+        Accept: "application/json", 
+        Authorization: `Bearer ${token}`, 
+        "Content-Type": "application/json" 
+      },
+      body: JSON.stringify(submitBody),
+    });
+
+    const data = await response.json();
+
+    console.log("📥 Response status:", response.status);
+    console.log("📥 Response data:", JSON.stringify(data, null, 2));
+
+    if (response.ok) {
+      console.log("✅ Order created successfully!");
+      serverOrderRef.current = data.order ?? data;
+      const firstItem = cartItems[0];
+      const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
+      orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
+      frozenCartItemsRef.current = [...cartItems];
+      clearCart();
+      setOrderSuccess(true);
+      window.dispatchEvent(new Event("order-placed"));
+    } else {
+      console.error("❌ Order creation failed!");
+      
+      // ✅ تصليح: معالجة أفضل للـ errors
+      let errorMsg = "Failed to create order";
+      
+      if (response.status === 422 && data.errors) {
+        errorMsg = Object.entries(data.errors)
+          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
+          .join("\n");
+        console.error("📋 Validation errors:", errorMsg);
+      } else if (response.status === 401) {
+        errorMsg = "Authentication failed - Please login again";
+      } else if (response.status === 404) {
+        errorMsg = "Offer or vendor not found";
+      } else {
+        errorMsg = data.message || data.error_debug || "Failed to create order";
+      }
+      
+      setSubmitError(errorMsg);
+      setIsSubmitting(false);
+    }
+  } catch (error) {
+    console.error("🔴 Network error:", error);
+    setSubmitError("Network error: " + error.message);
+    setIsSubmitting(false);
+  }
+};
 
 
 
@@ -654,19 +683,59 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
     try {
 
+      // ✅ تصليح: التحقق من البيانات أولاً
+      let items;
+      try {
+        items = validateAndPrepareItems();
+        if (!items) return;
+      } catch (err) {
+        setSubmitError(err.message || "Invalid cart items");
+        setIsSubmitting(false);
+        return;
+      }
+
       const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
 
+      // Fetch user address for delivery orders
+      let userAddress = "";
 
+      if (deliveryMethod === "delivery") {
+
+        try {
+
+          const profileRes = await fetch("https://zero-waste-production.up.railway.app/api/myprofile", {
+
+            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+
+          });
+
+          const profileData = await profileRes.json();
+
+          userAddress = profileData.user?.address || profileData.data?.address || "";
+
+        } catch (err) {
+
+          console.log("Could not fetch user address");
+
+        }
+
+      }
+
+
+
+      // ✅ تصليح: استخدام البيانات المتحقق منها
       const submitBody = {
 
-        items: cartItems.map((item) => ({ offer_id: item.id, quantity: item.quantity })),
+        items: items, // ✅ البيانات المتحقق منها
 
         payment_method: "cash",
 
         delivery_type: deliveryMethod,
+
+        delivery_address: userAddress || null,
 
         ...(deliveryMethod === "delivery" && { customer_lat: userLat, customer_long: userLng }),
 
@@ -712,7 +781,22 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
       } else {
 
-        setSubmitError(data.message || "Error creating order");
+        // ✅ تصليح: معالجة أفضل للـ errors
+        let errorMsg = "Failed to create order";
+        
+        if (response.status === 422 && data.errors) {
+          errorMsg = Object.entries(data.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
+            .join("\n");
+        } else if (response.status === 401) {
+          errorMsg = "Authentication failed - Please login again";
+        } else if (response.status === 404) {
+          errorMsg = "Offer or vendor not found";
+        } else {
+          errorMsg = data.message || data.error_debug || "Failed to create order";
+        }
+
+        setSubmitError(errorMsg);
 
         setIsSubmitting(false);
 
@@ -774,7 +858,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
           {submitError && (
 
-            <div style={{ color: "#ef4444", marginBottom: "16px", padding: "12px", background: "#fef2f2", borderRadius: "8px", fontSize: "0.9rem" }}>
+            <div style={{ color: "#ef4444", marginBottom: "16px", padding: "12px", background: "#fef2f2", borderRadius: "8px", fontSize: "0.9rem", whiteSpace: "pre-line" }}>
 
               {submitError}
 
@@ -870,8 +954,6 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
             setShowReviewModal(false);
 
-            // ── ياخد الـ ID من الـ backend مش hardcoded ──
-
             const orderId = extractOrderId(serverOrderRef.current);
 
             navigate("/home", {
@@ -910,4 +992,4 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
   );
 
-} 
+}
