@@ -79,11 +79,6 @@ export default function CartPage() {
                       EGP {Number(item.originalPrice ?? item.original_price ?? 0).toFixed(2)}
                     </span>
                   </div>
-                  {item.pickupTime && (
-                    <p className="cart-item-expiry">
-                      {t("cart.pickupPrefix")}: {item.pickupTime}
-                    </p>
-                  )}
                 </div>
                 <button
                   className="cart-item-delete"

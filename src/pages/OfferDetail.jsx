@@ -48,8 +48,14 @@ const normalizeOffer = (payload) => {
     : "Today";
 
   return {
-    id: source.id,
-    title: source.title || "Untitled Offer",
+  id: source.id,
+  title: source.title || "Untitled Offer",
+  vendor_id: branch.vendor_id || vendor.id || null,
+  branch_id: branch.id || null,
+  vendor_name: vendor.business_name || branch.branch_name || "Restaurant",
+  stock: Number(source.quantity_available ?? source.quantity ?? 99),
+  quantity_available: Number(source.quantity_available ?? source.quantity ?? 99),
+  
     description: source.description || "No description available",
     image: source.image_url || (source.image
   ? `https://zero-waste-production.up.railway.app/storage/${source.image}`
