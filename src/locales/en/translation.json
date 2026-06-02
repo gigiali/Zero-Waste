@@ -114,7 +114,8 @@
     "continueShopping": "Continue Shopping",
     "pickupPrefix": "Pickup"
   },
-  "notifications": {
+  "notifications": "Notifications",
+"notificationSettings": {
     "title": "Notification Settings",
     "subtitle": "Manage how you receive notifications",
     "channelsTitle": "Notification Channels",

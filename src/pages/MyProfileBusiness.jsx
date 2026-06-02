@@ -258,16 +258,6 @@ export default function MyProfileBusiness() {
     address: user?.address || "",
   });
 
-  useEffect(() => {
-    console.log("user object:", user);
-    setEditOwner({
-      name: user?.name || "",
-      email: user?.email || "",
-      phone: user?.phone || "",
-      address: user?.address || "",
-    });
-  }, [user]);
-
   const [logoFile, setLogoFile] = useState(null);
   const [logoPreview, setLogoPreview] = useState("");
   const [commercialFile, setCommercialFile] = useState(null);
@@ -285,13 +275,13 @@ export default function MyProfileBusiness() {
       const data = await res.json();
       if (res.ok) {
         const v = data.data?.vendor || data.vendor || data.data || data;
-       // لـ
-const toUrl = (path) => {
-  if (!path) return "";
-  if (path.startsWith("http")) return path;
-  const clean = path.replace(/^\/+/, "");
-  return `https://zero-waste-production.up.railway.app/${clean}`;
-};
+        
+        const toUrl = (path) => {
+          if (!path) return "";
+          if (path.startsWith("http")) return path;
+          const clean = path.replace(/^\/+/, "");
+          return `https://zero-waste-production.up.railway.app/${clean}`;
+        };
 
         const d = {
           business_name: v.business_name || "",
@@ -299,8 +289,24 @@ const toUrl = (path) => {
           vendor_type: v.vendor_type || "",
           status: v.status || "",
         };
+        
         setVendorData(d);
         setEditData(d);
+        
+        // Set owner information from API response
+        setOwnerInfo({
+          name: v.name || "",
+          email: v.email || "",
+          phone: v.phone || "",
+          address: v.address || "",
+        });
+        setEditOwner({
+          name: v.name || "",
+          email: v.email || "",
+          phone: v.phone || "",
+          address: v.address || "",
+        });
+        
         setLogoPreview(toUrl(v.logo));
         setCommercialPreview(toUrl(v.commercial_register));
         setTaxCardPreview(toUrl(v.tax_card));

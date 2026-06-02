@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Bell, User, Globe, GitBranch, Package, ShoppingCart,
   ChevronRight, Loader, AlertCircle, CheckCircle, BarChart2, Leaf, Loader2,
+  History,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -55,11 +56,23 @@ const normalizeOffer = (offer) => ({
 const normalizeOrder = (order) => {
   const firstItem = order.items?.[0] || order.order_items?.[0] || order.orderItems?.[0];
   const offer = order.offer || firstItem?.offer;
-  const customer = order.user || order.customer;
+  const customer = order.user || order.customer || firstItem?.user || firstItem?.customer;
+  
+  const customerName = 
+    customer?.user?.name ||
+    customer?.user?.full_name ||
+    customer?.name || 
+    customer?.full_name || 
+    order.customer_name || 
+    order.user?.name || 
+    order.buyer?.name || 
+    order.user_name || 
+    "N/A";
+
   return {
     id: order.id,
     offer: offer?.title || offer?.name || order.offer_title || "N/A",
-    customer: customer?.name || customer?.full_name || order.customer_name || order.user?.name || order.buyer?.name || "N/A",
+    customer: customerName,
     amount: `EGP ${order.total_amount ?? order.total ?? order.amount ?? 0}`,
     status: order.order_status || order.status || "pending",
     delivery_type: order.delivery_type || "pickup",
@@ -84,10 +97,12 @@ const FALLBACK_CHART = [
 
 // ── Sale Details Modal ────────────────────────────────────────────────────────
 function SaleDetailsModal({ saleId, onClose }) {
+  const { t } = useTranslation();
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [error, setError] = useState(null);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => setLoadingTimeout(true), 5000);
@@ -102,10 +117,10 @@ function SaleDetailsModal({ saleId, onClose }) {
         });
         clearTimeout(abort);
         const data = await res.json();
-        if (!res.ok) { setError(data?.message ?? "Failed to load sale details."); return; }
+        if (!res.ok) { setError(data?.message ?? t("failedLoadSaleDetails")); return; }
         setDetails(data?.data ?? data ?? null);
       } catch (e) {
-        if (e.name !== "AbortError") setError("Failed to load sale details.");
+        if (e.name !== "AbortError") setError(t("failedLoadSaleDetails"));
       } finally {
         setLoading(false);
         setLoadingTimeout(false);
@@ -113,7 +128,7 @@ function SaleDetailsModal({ saleId, onClose }) {
       }
     })();
     return () => clearTimeout(timeoutId);
-  }, [saleId]);
+  }, [saleId, t]);
 
   const offerTitle    = details?.offer?.title   ?? details?.offer?.name   ?? "—";
   const offerImage    = details?.offer?.image   ?? details?.offer?.photo  ?? null;
@@ -136,6 +151,12 @@ function SaleDetailsModal({ saleId, onClose }) {
     processing: { bg: "#e7e7ff", text: "#696cff" },
   }[orderStatus?.toLowerCase()] ?? { bg: "#f0f0f5", text: "#8592a3" };
 
+  const getImageUrl = (imagePath) => {
+    if (!imagePath) return null;
+    if (imagePath.startsWith("http")) return imagePath;
+    return `https://zero-waste-production.up.railway.app/storage/${imagePath}`;
+  };
+
   return (
     <div
       className="mb-modal-overlay mb-modal-overlay--large"
@@ -144,11 +165,12 @@ function SaleDetailsModal({ saleId, onClose }) {
       <div className="mb-modal-content mb-modal-content--details">
         <div className="mb-details-header">
           <div className="mb-details-header__left">
-            {offerImage ? (
+            {offerImage && !imageError ? (
               <img
-src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production.up.railway.app/storage/${offerImage}`}
+                src={getImageUrl(offerImage)}
                 alt="offer"
                 className="mb-details-logo"
+                onError={() => setImageError(true)}
                 style={{ borderRadius: "10px", objectFit: "cover" }}
               />
             ) : (
@@ -156,7 +178,7 @@ src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production
             )}
             <div>
               <h3 className="mb-details-title">{offerTitle}</h3>
-              <span className="mb-details-category">Sale #{saleId}</span>
+              <span className="mb-details-category">{t("sale")} #{saleId}</span>
             </div>
           </div>
           <button type="button" onClick={onClose} className="mb-details-close">✕</button>
@@ -168,7 +190,7 @@ src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production
               {loadingTimeout && (
                 <div className="mb-loading-timeout">
                   <AlertCircle size={18} color="#f59e0b" />
-                  <span>Loading is taking longer than expected...</span>
+                  <span>{t("loadingTakingLonger")}</span>
                 </div>
               )}
               <div className="mb-details-loading">
@@ -179,14 +201,14 @@ src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production
           {error && <div className="mb-details-error">{error}</div>}
           {details && !loading && (
             <>
-              <p className="mb-details-section-title">Offer Details</p>
+              <p className="mb-details-section-title">{t("offerDetails")}</p>
               <div className="mb-details-grid">
                 {[
-                  { label: "Offer",          value: offerTitle },
-                  { label: "Original Price", value: offerOriginal !== "—" ? `EGP ${offerOriginal}` : "—" },
-                  { label: "Discount Price", value: offerDiscount !== "—" ? `EGP ${offerDiscount}` : "—" },
-                  { label: "Quantity Sold",  value: qty },
-                  { label: "Total Price",    value: totalPrice !== "—" ? `EGP ${totalPrice}` : "—" },
+                  { label: t("offer"),          value: offerTitle },
+                  { label: t("originalPrice"), value: offerOriginal !== "—" ? `EGP ${offerOriginal}` : "—" },
+                  { label: t("discountPrice"), value: offerDiscount !== "—" ? `EGP ${offerDiscount}` : "—" },
+                  { label: t("quantitySold"),  value: qty },
+                  { label: t("totalPrice"),    value: totalPrice !== "—" ? `EGP ${totalPrice}` : "—" },
                 ].map(({ label, value }) => (
                   <div key={label} className="mb-details-field">
                     <p className="mb-details-label">{label}</p>
@@ -195,15 +217,15 @@ src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production
                 ))}
               </div>
 
-              <p className="mb-details-section-title" style={{ marginTop: "18px" }}>Order Details</p>
+              <p className="mb-details-section-title" style={{ marginTop: "18px" }}>{t("orderDetails")}</p>
               <div className="mb-details-grid">
                 {[
-                  { label: "Customer",      value: customerName },
-                  { label: "Email",         value: customerEmail },
-                  { label: "Phone",         value: customerPhone },
-                  { label: "Delivery Type", value: deliveryType },
-                  { label: "Order Date",    value: orderDate ? new Date(orderDate).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric" }) : "—" },
-                  { label: "Order Status",  value: (
+                  { label: t("customer"),      value: customerName },
+                  { label: t("email"),         value: customerEmail },
+                  { label: t("phone"),         value: customerPhone },
+                  { label: t("deliveryType"), value: deliveryType },
+                  { label: t("orderDate"),    value: orderDate ? new Date(orderDate).toLocaleDateString("en-EG", { year: "numeric", month: "short", day: "numeric" }) : "—" },
+                  { label: t("orderStatus"),  value: (
                     <span style={{ background: statusColor.bg, color: statusColor.text, borderRadius: "20px", padding: "2px 10px", fontSize: "0.78rem", fontWeight: 600 }}>
                       {orderStatus}
                     </span>
@@ -224,7 +246,8 @@ src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production
 }
 
 // ── Sustainability Section ────────────────────────────────────────────────────
-function VendorSustainabilitySection() {
+function VendorSustainabilitySection({ branchId }) {
+  const { t } = useTranslation();
   const [metrics, setMetrics] = useState(null);
 
   useEffect(() => {
@@ -232,7 +255,10 @@ function VendorSustainabilitySection() {
       try {
         const token = getToken();
         if (!token) return;
-        const res = await fetch("/api/vendor/sustainability/metrics", {
+        const url = new URL("/api/vendor/sustainability/metrics", window.location.origin);
+        if (branchId !== null) url.searchParams.set("branch_id", branchId);
+        
+        const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
@@ -240,14 +266,14 @@ function VendorSustainabilitySection() {
       } catch (err) { console.error("Sustainability fetch error:", err); }
     };
     fetch_();
-  }, []);
+  }, [branchId]);
 
   if (!metrics) return null;
 
   const cards = [
-    { icon: "🍽️", value: metrics.meals_saved ?? 0,                    label: "Meals Saved",       color: "#10b981", bg: "#f0fdf4" },
-    { icon: "🌍", value: `${metrics.co2_prevented_kg ?? 0} kg`,        label: "CO₂ Prevented",     color: "#3b82f6", bg: "#eff6ff" },
-    { icon: "💰", value: `EGP ${Number(metrics.recovered_revenue ?? 0).toLocaleString()}`, label: "Revenue Recovered", color: "#f59e0b", bg: "#fffbeb" },
+    { icon: "🍽️", value: metrics.meals_saved ?? 0,                    label: t("mealsSaved"),       color: "#10b981", bg: "#f0fdf4" },
+    { icon: "🌍", value: `${metrics.co2_prevented_kg ?? 0} kg`,        label: t("co2Prevented"),     color: "#3b82f6", bg: "#eff6ff" },
+    { icon: "💰", value: `EGP ${Number(metrics.recovered_revenue ?? 0).toLocaleString()}`, label: t("revenueRecovered"), color: "#f59e0b", bg: "#fffbeb" },
   ];
 
   return (
@@ -259,8 +285,8 @@ function VendorSustainabilitySection() {
               <span style={{ fontSize: "1.1rem" }}>🌱</span>
             </div>
             <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#065f46" }}>Your Sustainability Impact</h2>
-              <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>Your contribution to reducing food waste</p>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#065f46" }}>{t("sustainabilityImpact")}</h2>
+              <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>{t("contributionToReducing")}</p>
             </div>
           </div>
           {metrics.green_badge && (
@@ -285,16 +311,21 @@ function VendorSustainabilitySection() {
 }
 
 // ── Top Selling Section ───────────────────────────────────────────────────────
-function TopSellingSection() {
+function TopSellingSection({ branchId }) {
+  const { t } = useTranslation();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTop = async () => {
+      setLoading(true);
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        const res = await fetch("/api/vendor/dashboard/top-selling", {
+        const url = new URL("/api/vendor/dashboard/top-selling", window.location.origin);
+        if (branchId) url.searchParams.set("branch_id", branchId);
+
+        const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -306,12 +337,13 @@ function TopSellingSection() {
       finally { setLoading(false); }
     };
     fetchTop();
-  }, []);
+  }, [branchId]);
 
   if (loading) return null;
   if (items.length === 0) return null;
 
   const maxSold = Math.max(...items.map((i) => i.total_sold), 1);
+  const medals = ["🥇", "🥈", "🥉"];
 
   return (
     <div className="biz-section">
@@ -321,21 +353,21 @@ function TopSellingSection() {
             <span style={{ fontSize: "1.1rem" }}>🏆</span>
           </div>
           <div>
-            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111827" }}>Top Selling Offers</h2>
-            <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>Your best performing offers by units sold</p>
+            <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: 700, color: "#111827" }}>{t("topSellingOffers")}</h2>
+            <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>{t("bestPerforming")}</p>
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           {items.map((item, idx) => (
             <div key={item.offer_id} style={{ display: "flex", alignItems: "center", gap: "12px" }}>
               <span style={{ fontSize: "0.85rem", fontWeight: 700, color: idx === 0 ? "#f59e0b" : idx === 1 ? "#9ca3af" : idx === 2 ? "#b45309" : "#6b7280", minWidth: "20px" }}>
-                {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`}
+                {medals[idx] || `#${idx + 1}`}
               </span>
               <span style={{ flex: 1, fontSize: "0.9rem", fontWeight: 500, color: "#374151", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{item.title}</span>
               <div style={{ flex: 2, background: "#f3f4f6", borderRadius: "20px", height: "8px", overflow: "hidden" }}>
                 <div style={{ width: `${(item.total_sold / maxSold) * 100}%`, height: "100%", background: "linear-gradient(90deg, #10b981, #059669)", borderRadius: "20px", transition: "width 0.6s ease" }} />
               </div>
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#10b981", minWidth: "50px", textAlign: "right" }}>{item.total_sold} sold</span>
+              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#10b981", minWidth: "50px", textAlign: "right" }}>{item.total_sold} {t("sold")}</span>
             </div>
           ))}
         </div>
@@ -345,7 +377,8 @@ function TopSellingSection() {
 }
 
 // ── Sales History Section ─────────────────────────────────────────────────────
-function SalesHistorySection() {
+function SalesHistorySection({ branchId }) {
+  const { t } = useTranslation();
   const [sales, setSales] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
@@ -353,10 +386,15 @@ function SalesHistorySection() {
 
   useEffect(() => {
     const fetchSales = async () => {
+      setLoading(true);
+      setShowAll(false);
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        const res = await fetch("/api/vendor/dashboard/sales", {
+        const url = new URL("/api/vendor/dashboard/sales", window.location.origin);
+        if (branchId) url.searchParams.set("branch_id", branchId);
+
+        const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -367,7 +405,7 @@ function SalesHistorySection() {
       finally { setLoading(false); }
     };
     fetchSales();
-  }, []);
+  }, [branchId]);
 
   if (loading) return null;
   if (sales.length === 0) return null;
@@ -384,10 +422,10 @@ function SalesHistorySection() {
       )}
       <div className="biz-section" id="sales-section">
         <div className="biz-section-header">
-          <h2 className="biz-section-title">Sales History</h2>
+          <h2 className="biz-section-title">{t("salesHistory")}</h2>
           {sales.length > 5 && (
             <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
-              {showAll ? "Show Less" : `View All (${sales.length})`}
+              {showAll ? t("showLess") : `${t("viewAll")} (${sales.length})`}
             </button>
           )}
         </div>
@@ -395,12 +433,12 @@ function SalesHistorySection() {
           <table className="biz-table">
             <thead>
               <tr>
-                <th>Sale ID</th>
-                <th>Offer</th>
-                <th>Qty</th>
-                <th>Price</th>
-                <th>Order Status</th>
-                <th>Date</th>
+                <th>{t("saleID")}</th>
+                <th>{t("offer")}</th>
+                <th>{t("qty")}</th>
+                <th>{t("price")}</th>
+                <th>{t("orderStatus")}</th>
+                <th>{t("date")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -423,7 +461,7 @@ function SalesHistorySection() {
                     <button
                       type="button"
                       className="biz-icon-btn edit"
-                      title="View details"
+                      title={t("viewDetails")}
                       onClick={() => setSelectedSaleId(sale.id)}
                       style={{ fontSize: "0.75rem", padding: "4px 8px" }}
                     >
@@ -442,11 +480,11 @@ function SalesHistorySection() {
 
 // ── Main Business Component ───────────────────────────────────────────────────
 export default function Business() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { unreadCount } = useNotifications();
 
-  const [language, setLanguage] = useState("en");
+  const [language, setLanguage] = useState(i18n.language || "en");
   const [showBranches, setShowBranches] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -460,11 +498,14 @@ export default function Business() {
   const [submitSuccess, setSubmitSuccess] = useState("");
 
   const [selectedBranch, setSelectedBranch] = useState(null);
+  const [dashboardBranchId, setDashboardBranchId] = useState(null);
+
   const [branches, setBranches] = useState([]);
   const [businessName, setBusinessName] = useState("");
   const [offers, setOffers] = useState([]);
   const [orders, setOrders] = useState([]);
-  const [salesData, setSalesData] = useState([]);
+  const [salesData, setSalesData] = useState(FALLBACK_CHART);
+  const [ordersChartData, setOrdersChartData] = useState([]);
   const [kpiData, setKpiData] = useState({ activeOffers: 0, totalOrders: 0, revenue: "EGP 0", unitsSold: 0, grossRevenue: 0 });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -477,7 +518,21 @@ export default function Business() {
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
 
+  // Handle language change
+  const handleLanguageChange = (lang) => {
+    setLanguage(lang);
+    i18n.changeLanguage(lang);
+    document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = lang;
+    localStorage.setItem("language", lang);
+  };
+
   // ── Initial data load ──────────────────────────────────────────────────────
+  useEffect(() => {
+    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
+    document.documentElement.lang = language;
+  }, [language]);
+
   useEffect(() => {
     const fetchData = async () => {
       const token = getToken();
@@ -505,11 +560,11 @@ export default function Business() {
           setSelectedBranch(branchList[0]);
         } else {
           const errData = await readJson(branchRes);
-          setApiError(errData.message || "Failed to load branches.");
+          setApiError(errData.message || t("failedLoadBranches"));
         }
       } catch (err) {
         console.error("Fetch error:", err);
-        setApiError("Network error. Please check your connection.");
+        setApiError(t("networkError"));
       } finally {
         setIsLoading(false);
         clearTimeout(slowTimer);
@@ -523,9 +578,12 @@ export default function Business() {
   useEffect(() => {
     const fetchOverviewStats = async () => {
       const token = getToken();
-      if (!token || !selectedBranch) return;
+      if (!token) return;
       try {
-        const res = await fetch("/api/vendor/dashboard/overview", {
+        const url = new URL("/api/vendor/dashboard/overview", window.location.origin);
+        if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
+
+        const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -545,16 +603,19 @@ export default function Business() {
         }
       } catch (err) { console.error("Overview stats error:", err); }
     };
-    if (selectedBranch) fetchOverviewStats();
-  }, [selectedBranch]);
+    fetchOverviewStats();
+  }, [dashboardBranchId]);
 
   // ── Fetch Monthly Chart (/api/vendor/dashboard/monthly-chart) ─────────────
   useEffect(() => {
     const fetchMonthlyChart = async () => {
       const token = getToken();
-      if (!token || !selectedBranch) return;
+      if (!token) return;
       try {
-        const res = await fetch("/api/vendor/dashboard/monthly-chart", {
+        const url = new URL("/api/vendor/dashboard/monthly-chart", window.location.origin);
+        if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
+
+        const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -565,13 +626,7 @@ export default function Business() {
               sales: item.net_sales || 0,
               orders: item.total_orders || item.orders_count || item.orders || 0,
             }));
-            setSalesData((prev) => {
-              if (!prev || prev.length === 0) return chartData;
-              return chartData.map((item) => {
-                const existing = prev.find((p) => p.day === item.day);
-                return { ...item, orders: existing?.orders || 0 };
-              });
-            });
+            setSalesData(chartData);
           } else {
             setSalesData(FALLBACK_CHART);
           }
@@ -583,9 +638,32 @@ export default function Business() {
         setSalesData(FALLBACK_CHART);
       }
     };
-    if (selectedBranch) fetchMonthlyChart();
-  }, [selectedBranch]);
-
+    fetchMonthlyChart();
+  }, [dashboardBranchId]);
+useEffect(() => {
+  const fetchOrdersChart = async () => {
+    const token = getToken();
+    if (!token) return;
+    try {
+      const url = new URL("/api/vendor/dashboard/orders-chart", window.location.origin);
+      if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
+      const res = await fetch(url.toString(), {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await readJson(res);
+        console.log("orders-chart response:", data);
+        if (Array.isArray(data.data) && data.data.length > 0) {
+          setOrdersChartData(data.data.map((item) => ({
+            day: new Date(item.date).toLocaleDateString("en-EG", { month: "short", day: "numeric" }),
+            orders: item.total_orders || 0,
+          })));
+        }
+      }
+    } catch (err) { console.error("Orders chart error:", err); }
+  };
+  fetchOrdersChart();
+}, [dashboardBranchId]);
   // ── Fetch Offers ───────────────────────────────────────────────────────────
   const fetchOffers = React.useCallback(async () => {
     if (isFetchingOffersRef.current) return;
@@ -619,20 +697,6 @@ export default function Business() {
           const data = await readJson(res);
           const orderList = extractList(data, ["orders"]).map(normalizeOrder);
           setOrders(orderList);
-          setSalesData((prev) => {
-            if (!prev || prev.length === 0) return prev;
-            const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-            const countByMonth = {};
-            orderList.forEach((order) => {
-              if (!order.created_at) return;
-              const month = months[new Date(order.created_at).getMonth()];
-              countByMonth[month] = (countByMonth[month] || 0) + 1;
-            });
-            return prev.map((item) => ({
-              ...item,
-              orders: countByMonth[item.day] || item.orders || 0,
-            }));
-          });
         }
       } catch (err) { console.error("Orders fetch error:", err); }
     };
@@ -694,9 +758,9 @@ export default function Business() {
 
   const handleSave = async () => {
     if (isSubmitting) return;
-    if (!form.title.trim() || !form.description.trim()) { setSubmitError("Please fill in title and description"); return; }
-    if (!selectedBranch && !editingId) { setSubmitError("Please select a branch first"); return; }
-    if (parseFloat(form.discountPrice) >= parseFloat(form.originalPrice)) { setSubmitError("Discount price must be less than original price"); return; }
+    if (!form.title.trim() || !form.description.trim()) { setSubmitError(t("fillRequired")); return; }
+    if (!selectedBranch && !editingId) { setSubmitError(t("selectBranch")); return; }
+    if (parseFloat(form.discountPrice) >= parseFloat(form.originalPrice)) { setSubmitError(t("discountError")); return; }
 
     isSavingRef.current = true;
     setIsSubmitting(true); setSubmitError(""); setSubmitSuccess("");
@@ -725,11 +789,11 @@ export default function Business() {
         body: fd,
       });
       const responseData = await readJson(res);
-      if (res.ok) { setSubmitSuccess(editingId ? "Offer updated!" : "Offer created!"); fetchOffers(); closeDrawer(); }
-      else setSubmitError(responseData.message || responseData.error || "Failed to save offer");
+      if (res.ok) { setSubmitSuccess(editingId ? t("offerUpdated") : t("offerCreated")); fetchOffers(); closeDrawer(); }
+      else setSubmitError(responseData.message || responseData.error || t("failedSaveOffer"));
     } catch (err) {
       console.error("Save offer error:", err);
-      setSubmitError("Network error. Please try again.");
+      setSubmitError(t("networkError"));
     } finally { setIsSubmitting(false); isSavingRef.current = false; }
   };
 
@@ -746,8 +810,8 @@ export default function Business() {
         setBranches((prev) => prev.map((b) => (b.id === editingBranch.id ? editingBranch : b)));
         if (selectedBranch?.id === editingBranch.id) setSelectedBranch(editingBranch);
         setEditingBranch(null);
-      } else alert("Failed to update branch");
-    } catch { alert("Network error"); }
+      } else alert(t("failedUpdateBranch"));
+    } catch { alert(t("networkError")); }
   };
 
   const confirmDeleteBranch = async () => {
@@ -761,8 +825,9 @@ export default function Business() {
       if (res.ok) {
         setBranches((prev) => prev.filter((b) => b.id !== id));
         if (selectedBranch?.id === id) setSelectedBranch(branches.find((b) => b.id !== id) || null);
-      } else alert("Failed to delete branch");
-    } catch { alert("Network error"); }
+        if (dashboardBranchId === id) setDashboardBranchId(null);
+      } else alert(t("failedDeleteBranch"));
+    } catch { alert(t("networkError")); }
     finally { setDeleteBranchId(null); }
   };
 
@@ -775,13 +840,13 @@ export default function Business() {
       });
       if (res.ok) {
         setOffers((prev) => prev.filter((o) => o.id !== id));
-        setSubmitSuccess("Offer deleted!");
+        setSubmitSuccess(t("offerDeleted"));
         setTimeout(() => setSubmitSuccess(""), 2000);
       } else {
         const data = await readJson(res);
-        setSubmitError(data.message || "Failed to delete offer");
+        setSubmitError(data.message || t("failedDeleteOffer"));
       }
-    } catch (err) { console.error("Delete error:", err); setSubmitError("Network error."); }
+    } catch (err) { console.error("Delete error:", err); setSubmitError(t("networkError")); }
     finally { setDeleteConfirmId(null); }
   };
 
@@ -795,27 +860,28 @@ export default function Business() {
         body: JSON.stringify({ status: newStatus }),
       });
       if (res.ok) setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-      else { const data = await readJson(res); alert(data.message || "Failed to update status"); }
-    } catch (err) { console.error("Order status error:", err); alert("Network error."); }
+      else { const data = await readJson(res); alert(data.message || t("failedUpdateStatus")); }
+    } catch (err) { console.error("Order status error:", err); alert(t("networkError")); }
     finally { setUpdatingOrderId(null); }
   };
 
   const navItems = [
-    { id: "charts", icon: BarChart2, label: "Sales Charts", onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "sustainability", icon: Leaf, label: "Sustainability Impact", onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "offers", icon: Package, label: "My Offers", onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "orders", icon: ShoppingCart, label: "Recent Orders", onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "notifications", icon: Bell, label: "Notifications", badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
-    { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => setLanguage((l) => (l === "en" ? "ar" : "en")) },
-    { id: "branches", icon: GitBranch, label: "Branches", expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
+    { id: "charts", icon: BarChart2, label: t("salesCharts"), onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "sustainability", icon: Leaf, label: t("sustainabilityImpact"), onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "offers", icon: Package, label: t("myOffers"), onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "orders", icon: ShoppingCart, label: t("recentOrders"), onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "sales", icon: History, label: t("salesHistory"), onClick: () => document.getElementById("sales-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "notifications", icon: Bell, label: t("notifications"), badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
+    { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => handleLanguageChange(language === "en" ? "ar" : "en") },
+    { id: "branches", icon: GitBranch, label: t("branches"), expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
   ];
 
   return (
     <div className="biz-root">
       <aside className="biz-sidebar">
         <div className="biz-logo" onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
-          <img src="/images/e.png" alt="ZeroWaste" className="biz-logo-img" />
-          <span className="biz-logo-text">ZeroWaste</span>
+          <img src="/images/zerowaste-logo.png" alt="ZeroWaste" className="biz-logo-img" />
+          <span className="biz-logo-text"></span>
         </div>
         <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "4px 16px 8px" }} />
         <nav className="biz-nav">
@@ -833,14 +899,28 @@ export default function Business() {
                   </button>
                   {item.expanded && (
                     <div className="biz-branches">
+                      <button
+                        type="button"
+                        className={`biz-branch-btn biz-branch-all ${dashboardBranchId === null ? "active" : ""}`}
+                        onClick={() => { setDashboardBranchId(null); setSelectedBranch(null); }}
+                      >
+                        🌿 {t("allBranches")}
+                      </button>
                       {item.children.map((b) => (
                         <div key={b.id} style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-                          <button type="button" className={`biz-branch-btn ${selectedBranch?.id === b.id ? "active" : ""}`} style={{ flex: 1 }} onClick={() => setSelectedBranch(b)}>{branchName(b)}</button>
+                          <button
+                            type="button"
+                            className={`biz-branch-btn ${selectedBranch?.id === b.id && dashboardBranchId === b.id ? "active" : ""}`}
+                            style={{ flex: 1 }}
+                            onClick={() => { setSelectedBranch(b); setDashboardBranchId(b.id); }}
+                          >
+                            {branchName(b)}
+                          </button>
                           <button type="button" onClick={() => setDeleteBranchId(b.id)} style={{ background: "rgba(239,68,68,0.15)", border: "none", borderRadius: "6px", color: "#ef4444", cursor: "pointer", padding: "4px 7px", fontSize: "0.75rem" }}>🗑️</button>
                           <button type="button" onClick={() => setEditingBranch(b)} style={{ background: "rgba(59,130,246,0.15)", border: "none", borderRadius: "6px", color: "#3b82f6", cursor: "pointer", padding: "4px 7px", fontSize: "0.75rem" }}>✏️</button>
                         </div>
                       ))}
-                      {item.hasAddBranch && <button type="button" className="biz-branch-btn biz-branch-add" onClick={() => navigate("/add-branch")}>+ Add Branch</button>}
+                      {item.hasAddBranch && <button type="button" className="biz-branch-btn biz-branch-add" onClick={() => navigate("/add-branch")}>+ {t("addBranch")}</button>}
                     </div>
                   )}
                 </div>
@@ -857,11 +937,11 @@ export default function Business() {
             );
           })}
         </nav>
-        <div className="biz-sidebar-profile" onClick={() => navigate("/business/profile")} title="Go to profile">
+        <div className="biz-sidebar-profile" onClick={() => navigate("/business/profile")} title={t("goToProfile")}>
           <div className="biz-sidebar-avatar"><User size={16} color="white" /></div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{businessName || "Your Business"}</p>
-            <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>Vendor Account</p>
+            <p style={{ margin: 0, fontSize: "0.82rem", fontWeight: 600, color: "white", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{businessName || t("yourBusiness")}</p>
+            <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.5)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{t("businessAccount")}</p>
           </div>
           <ChevronRight size={14} style={{ color: "rgba(255,255,255,0.4)", flexShrink: 0 }} />
         </div>
@@ -879,7 +959,7 @@ export default function Business() {
             <div className="biz-skeleton-section">
               <div className="biz-skeleton-line long" /><div className="biz-skeleton-line short" /><div className="biz-skeleton-line medium" />
             </div>
-            {isSlowLoading && <p className="biz-slow-msg">⏳ Taking longer than usual...</p>}
+            {isSlowLoading && <p className="biz-slow-msg">⏳ {t("takingLonger")}</p>}
           </div>
         )}
 
@@ -890,22 +970,22 @@ export default function Business() {
             {/* ── Welcome ── */}
             <div className="biz-welcome">
               <div>
-                <h1 className="biz-welcome-title">Welcome back, {businessName || "Your Business"} 👋</h1>
-                <p className="biz-welcome-sub">Manage your offers and orders</p>
+                <h1 className="biz-welcome-title">{t("welcomeBack")} {businessName || t("yourBusiness")} 👋</h1>
+                <p className="biz-welcome-sub">{t("manageOffers")}</p>
               </div>
               <div className="biz-impact">
-                <p className="biz-impact-label">Impact</p>
-                <p className="biz-impact-value">{filteredOrders.length} orders</p>
+                <p className="biz-impact-label">{t("impact")}</p>
+                <p className="biz-impact-value">{filteredOrders.length} {t("orders")}</p>
               </div>
             </div>
 
             {/* ── KPI Cards ── */}
             <div className="biz-kpis">
               {[
-                { label: "Active Offers",  value: kpiData.activeOffers,  icon: "📦" },
-                { label: "Total Orders",   value: kpiData.totalOrders,   icon: "🛒" },
-                { label: "Units Sold",     value: kpiData.unitsSold,     icon: "📊" },
-                { label: "Net Revenue",    value: kpiData.revenue,       icon: "💰" },
+                { label: t("activeOffers"),  value: kpiData.activeOffers,  icon: "📦" },
+                { label: t("totalOrders"),   value: kpiData.totalOrders,   icon: "🛒" },
+                { label: t("unitsSold"),     value: kpiData.unitsSold,     icon: "📊" },
+                { label: t("netRevenue"),    value: kpiData.revenue,       icon: "💰" },
               ].map((kpi) => (
                 <div key={kpi.label} className="biz-kpi-card">
                   <p className="biz-kpi-label">{kpi.label}</p>
@@ -918,16 +998,16 @@ export default function Business() {
             {/* ── Platform deduction note ── */}
             {kpiData.platformCut > 0 && (
               <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", padding: "10px 16px", fontSize: "0.82rem", color: "#92400e", marginBottom: "8px" }}>
-                ℹ️ Platform deduction (12%): <strong>EGP {Number(kpiData.platformCut).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong> — Gross revenue was <strong>EGP {Number(kpiData.grossRevenue).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong>
+                ℹ️ {t("platformDeduction")} (12%): <strong>EGP {Number(kpiData.platformCut).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong> — {t("grossRevenueWas")} <strong>EGP {Number(kpiData.grossRevenue).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong>
               </div>
             )}
 
             {/* ── Charts ── */}
             <div id="charts-section" className="biz-charts" style={{ display: "flex", flexDirection: "row", gap: "16px", width: "100%" }}>
               <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
-                <h3 className="biz-chart-title">Net Revenue by Month (EGP)</h3>
+                <h3 className="biz-chart-title">{t("netRevenueMonth")} (EGP)</h3>
                 <ResponsiveContainer width="100%" height={260}>
-                  <AreaChart data={salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                  <AreaChart data={salesData && salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                     <defs>
                       <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="#10b981" stopOpacity={0.8} />
@@ -937,24 +1017,24 @@ export default function Business() {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} tickFormatter={(v) => `EGP ${v}`} />
-                    <Tooltip formatter={(value) => [`EGP ${value.toLocaleString()}`, "Net Revenue"]} />
+                    <Tooltip formatter={(value) => [`EGP ${value.toLocaleString()}`, t("netRevenue")]} />
                     <Legend />
-                    <Area type="monotone" dataKey="sales" name="Net Revenue (EGP)" stroke="#10b981" strokeWidth={2} fill="url(#revenueGrad)" />
+                    <Area type="monotone" dataKey="sales" name={t("netRevenue")} stroke="#10b981" strokeWidth={2} fill="url(#revenueGrad)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
               <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
-                <h3 className="biz-chart-title">Orders Overview</h3>
+                <h3 className="biz-chart-title">{t("ordersOverview")}</h3>
                 <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={salesData.length > 0 ? salesData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
+                  <BarChart data={ordersChartData.length > 0 ? ordersChartData : FALLBACK_CHART} margin={{ top: 10, right: 20, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip formatter={(value) => [value, "Orders"]} />
+                    <Tooltip formatter={(value) => [value, t("orders")]} />
                     <Legend />
-                    <Bar dataKey="orders" name="Orders" radius={[4, 4, 0, 0]}>
-                      {(salesData.length > 0 ? salesData : FALLBACK_CHART).map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={`hsl(${220 + index * 10}, 70%, ${35 + (entry.orders / Math.max(...(salesData.map(d => d.orders)), 1)) * 30}%)`} />
+                    <Bar dataKey="orders" name={t("orders")} radius={[4, 4, 0, 0]}>
+                      {(salesData && salesData.length > 0 ? salesData : FALLBACK_CHART).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={`hsl(${220 + index * 10}, 70%, ${35 + (entry.orders / Math.max(...(salesData && salesData.length > 0 ? salesData.map(d => d.orders) : [1]), 1)) * 30}%)`} />
                       ))}
                     </Bar>
                   </BarChart>
@@ -964,89 +1044,89 @@ export default function Business() {
 
             {/* ── Sustainability Impact ── */}
             <div id="sustainability-section">
-              <VendorSustainabilitySection />
+              <VendorSustainabilitySection branchId={dashboardBranchId} />
             </div>
 
             {/* ── Top Selling ── */}
-            <TopSellingSection />
+            <TopSellingSection branchId={dashboardBranchId} />
 
             {/* ── Offers ── */}
             <div className="biz-section" id="offers-section">
               <div className="biz-section-header">
-                <h2 className="biz-section-title">My Offers</h2>
+                <h2 className="biz-section-title">{t("myOffers")}</h2>
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                   {filteredOffers.length > 2 && (
                     <button type="button" className="biz-link-btn" onClick={() => setShowAllOffers((v) => !v)}>
-                      {showAllOffers ? "Show Less" : `View All (${filteredOffers.length})`}
+                      {showAllOffers ? t("showLess") : `${t("viewAll")} (${filteredOffers.length})`}
                     </button>
                   )}
-                  <button type="button" className="biz-add-btn" onClick={openAdd}>+ Add Offer</button>
+                  <button type="button" className="biz-add-btn" onClick={openAdd}>+ {t("addOffer")}</button>
                 </div>
               </div>
 
               {drawerOpen && (
                 <div className="biz-drawer">
                   <div className="biz-drawer-header">
-                    <h3 className="biz-drawer-title">{editingId ? "Edit Offer" : "New Offer"}</h3>
+                    <h3 className="biz-drawer-title">{editingId ? t("editOffer") : t("newOffer")}</h3>
                     <button type="button" className="biz-drawer-close" onClick={closeDrawer} disabled={isSubmitting}>✕</button>
                   </div>
                   <div className="biz-drawer-body">
                     {submitSuccess && <div className="biz-alert-success"><CheckCircle size={16} />{submitSuccess}</div>}
                     {submitError && <div className="biz-alert-error"><AlertCircle size={16} />{submitError}</div>}
-                    <div className="biz-field"><label>Title</label><input name="title" value={form.title} onChange={handleChange} placeholder="e.g., Fresh Pasta" disabled={isSubmitting} /></div>
-                    <div className="biz-field"><label>Description</label><textarea name="description" value={form.description} onChange={handleChange} rows={3} disabled={isSubmitting} /></div>
-                    <div className="biz-field"><label>Photo</label><input type="file" accept="image/*" onChange={handleImage} disabled={isSubmitting} />{form.image && <p style={{ fontSize: "12px", color: "#10b981", margin: "4px 0 0" }}>✓ {form.image.name}</p>}</div>
+                    <div className="biz-field"><label>{t("title")}</label><input name="title" value={form.title} onChange={handleChange} placeholder={t("freshPasta")} disabled={isSubmitting} /></div>
+                    <div className="biz-field"><label>{t("description")}</label><textarea name="description" value={form.description} onChange={handleChange} rows={3} disabled={isSubmitting} /></div>
+                    <div className="biz-field"><label>{t("photo")}</label><input type="file" accept="image/*" onChange={handleImage} disabled={isSubmitting} />{form.image && <p style={{ fontSize: "12px", color: "#10b981", margin: "4px 0 0" }}>✓ {form.image.name}</p>}</div>
                     <div className="biz-field-row">
-                      <div className="biz-field"><label>Original Price</label><div className="biz-prefix-input"><span>EGP</span><input name="originalPrice" type="number" step="0.01" value={form.originalPrice} onChange={handleChange} disabled={isSubmitting} /></div></div>
-                      <div className="biz-field"><label>Discount Price</label><div className="biz-prefix-input"><span>EGP</span><input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} disabled={isSubmitting} /></div></div>
+                      <div className="biz-field"><label>{t("originalPrice")}</label><div className="biz-prefix-input"><span>EGP</span><input name="originalPrice" type="number" step="0.01" value={form.originalPrice} onChange={handleChange} disabled={isSubmitting} /></div></div>
+                      <div className="biz-field"><label>{t("discountPrice")}</label><div className="biz-prefix-input"><span>EGP</span><input name="discountPrice" type="number" step="0.01" value={form.discountPrice} onChange={handleChange} disabled={isSubmitting} /></div></div>
                     </div>
                     <div className="biz-field-row">
-                      <div className="biz-field"><label>Quantity Available</label><input name="quantityAvailable" type="number" value={form.quantityAvailable} onChange={handleChange} disabled={isSubmitting} /></div>
-                      {!editingId && <div className="biz-field"><label>Expires In (hours)</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder="e.g., 24" disabled={isSubmitting} /></div>}
+                      <div className="biz-field"><label>{t("quantityAvailable")}</label><input name="quantityAvailable" type="number" value={form.quantityAvailable} onChange={handleChange} disabled={isSubmitting} /></div>
+                      {!editingId && <div className="biz-field"><label>{t("expiresInHours")}</label><input name="expiresIn" type="number" value={form.expiresIn} onChange={handleChange} placeholder="24" disabled={isSubmitting} /></div>}
                     </div>
                     {editingId && (
                       <div className="biz-field-row">
-                        <div className="biz-field"><label>Expiration Date</label><input name="expirationDate" type="datetime-local" value={form.expirationDate} onChange={handleChange} disabled={isSubmitting} /></div>
-                        <div className="biz-field"><label>Status</label>
+                        <div className="biz-field"><label>{t("expirationDate")}</label><input name="expirationDate" type="datetime-local" value={form.expirationDate} onChange={handleChange} disabled={isSubmitting} /></div>
+                        <div className="biz-field"><label>{t("status")}</label>
                           <select name="status" value={form.status} onChange={handleChange} disabled={isSubmitting}>
-                            <option value="active">Active</option>
-                            <option value="expired">Expired</option>
-                            <option value="disabled">Disabled</option>
+                            <option value="active">{t("active")}</option>
+                            <option value="expired">{t("expired")}</option>
+                            <option value="disabled">{t("disabled")}</option>
                           </select>
                         </div>
                       </div>
                     )}
                   </div>
                   <div className="biz-drawer-footer">
-                    <button type="button" className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>Cancel</button>
+                    <button type="button" className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>{t("cancel")}</button>
                     <button type="button" className="biz-btn-save" onClick={handleSave} disabled={isSubmitting}>
-                      {isSubmitting ? <><Loader size={14} style={{ display: "inline", marginRight: "6px" }} />Saving...</> : editingId ? "Save Changes" : "Create Offer"}
+                      {isSubmitting ? <><Loader size={14} style={{ display: "inline", marginRight: "6px" }} />{t("saving")}...</> : editingId ? t("saveChanges") : t("createOffer")}
                     </button>
                   </div>
                 </div>
               )}
 
               <div className="biz-offers-list">
-                {filteredOffers.length === 0 && <p className="biz-empty">No offers yet. Create one to get started!</p>}
+                {filteredOffers.length === 0 && <p className="biz-empty">{t("noOffers")}</p>}
                 {(showAllOffers ? filteredOffers : filteredOffers.slice(0, 2)).map((offer) => (
                   <div key={offer.id} className="biz-offer-row">
                     <div className="biz-offer-info">
                       <p className="biz-offer-title">{offer.title}</p>
                       <p className="biz-offer-desc">{offer.description}</p>
-                      <p className="biz-offer-meta-detail">Stock: {offer.quantity} | Expires: {offer.expiresIn}</p>
+                      <p className="biz-offer-meta-detail">{t("stock")}: {offer.quantity} | {t("expires")}: {offer.expiresIn}</p>
                     </div>
                     <div className="biz-offer-meta">
                       <span className="biz-price">EGP {offer.discountPrice}</span>
                       <span className={`biz-badge ${
-  offer.status === "active" || offer.status === "Active" ? "active" :
-  offer.status === "expired" || offer.status === "Expired" ? "expired" :
-  offer.status === "disabled" || offer.status === "Disabled" ? "disabled" :
-  "pending"
-}`}>{offer.status}</span>
+                        offer.status === "active"   || offer.status === "Active"   ? "active"   :
+                        offer.status === "expired"  || offer.status === "Expired"  ? "expired"  :
+                        offer.status === "disabled" || offer.status === "Disabled" ? "disabled" :
+                        "pending"
+                      }`}>{offer.status}</span>
                     </div>
                     <div className="biz-offer-actions">
-                      <button type="button" className="biz-icon-btn edit" onClick={() => openEdit(offer)} title="Edit" disabled={isSubmitting}>✏️</button>
-                      <button type="button" className="biz-icon-btn delete" onClick={() => setDeleteConfirmId(offer.id)} title="Delete" disabled={isSubmitting}>🗑️</button>
+                      <button type="button" className="biz-icon-btn edit" onClick={() => openEdit(offer)} title={t("edit")} disabled={isSubmitting}>✏️</button>
+                      <button type="button" className="biz-icon-btn delete" onClick={() => setDeleteConfirmId(offer.id)} title={t("delete")} disabled={isSubmitting}>🗑️</button>
                     </div>
                   </div>
                 ))}
@@ -1056,19 +1136,19 @@ export default function Business() {
             {/* ── Orders ── */}
             <div className="biz-section" id="orders-section">
               <div className="biz-section-header">
-                <h2 className="biz-section-title">Recent Orders</h2>
+                <h2 className="biz-section-title">{t("recentOrders")}</h2>
                 {filteredOrders.length > 2 && (
                   <button type="button" className="biz-link-btn" onClick={() => setShowAllOrders((v) => !v)}>
-                    {showAllOrders ? "Show Less" : `View All (${filteredOrders.length})`}
+                    {showAllOrders ? t("showLess") : `${t("viewAll")} (${filteredOrders.length})`}
                   </button>
                 )}
               </div>
               <div className="biz-table-wrap">
                 <table className="biz-table">
-                  <thead><tr><th>Order ID</th><th>Offer</th><th>Customer</th><th>Amount</th><th>Status</th></tr></thead>
+                  <thead><tr><th>{t("orderID")}</th><th>{t("offer")}</th><th>{t("customer")}</th><th>{t("amount")}</th><th>{t("status")}</th></tr></thead>
                   <tbody>
                     {filteredOrders.length === 0 ? (
-                      <tr><td colSpan="5" style={{ textAlign: "center", color: "#9ca3af" }}>No orders yet</td></tr>
+                      <tr><td colSpan="5" style={{ textAlign: "center", color: "#9ca3af" }}>{t("noOrders")}</td></tr>
                     ) : (
                       (showAllOrders ? filteredOrders : filteredOrders.slice(0, 2)).map((order) => (
                         <tr key={order.id}>
@@ -1083,11 +1163,11 @@ export default function Business() {
                               disabled={updatingOrderId === order.id}
                               className={`biz-status-select status-${order.status?.toLowerCase()}`}
                             >
-                              <option value="pending">Pending</option>
-                              <option value="processing">Processing</option>
-                              <option value="completed">Completed</option>
-                              <option value="cancelled">Cancelled</option>
-                              {order.delivery_type === "delivery" && <option value="delivered">Delivered</option>}
+                              <option value="pending">{t("pending")}</option>
+                              <option value="processing">{t("processing")}</option>
+                              <option value="completed">{t("completed")}</option>
+                              <option value="cancelled">{t("cancelled")}</option>
+                              {order.delivery_type === "delivery" && <option value="delivered">{t("delivered")}</option>}
                             </select>
                           </td>
                         </tr>
@@ -1099,7 +1179,7 @@ export default function Business() {
             </div>
 
             {/* ── Sales History ── */}
-            <SalesHistorySection />
+            <SalesHistorySection branchId={dashboardBranchId} />
           </>
         )}
       </main>
@@ -1108,11 +1188,11 @@ export default function Business() {
       {editingBranch && (
         <div className="biz-modal-overlay">
           <div className="biz-modal">
-            <h3 className="biz-modal-title">Edit Branch</h3>
+            <h3 className="biz-modal-title">{t("editBranch")}</h3>
             <input className="biz-modal-input" value={editingBranch.branch_name || ""} onChange={(e) => setEditingBranch((prev) => ({ ...prev, branch_name: e.target.value }))} />
             <div className="biz-modal-actions">
-              <button className="biz-modal-btn-cancel" onClick={() => setEditingBranch(null)}>Cancel</button>
-              <button className="biz-modal-btn-save" onClick={handleEditBranch}>Save</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setEditingBranch(null)}>{t("cancel")}</button>
+              <button className="biz-modal-btn-save" onClick={handleEditBranch}>{t("save")}</button>
             </div>
           </div>
         </div>
@@ -1122,11 +1202,11 @@ export default function Business() {
         <div className="biz-modal-overlay">
           <div className="biz-modal biz-modal-center">
             <div className="biz-modal-icon">🗑️</div>
-            <h3 className="biz-modal-title">Delete Offer</h3>
-            <p className="biz-modal-body">Are you sure? This cannot be undone.</p>
+            <h3 className="biz-modal-title">{t("deleteOffer")}</h3>
+            <p className="biz-modal-body">{t("confirmDelete")}</p>
             <div className="biz-modal-actions-center">
-              <button className="biz-modal-btn-cancel" onClick={() => setDeleteConfirmId(null)}>Cancel</button>
-              <button className="biz-modal-btn-danger" onClick={() => handleDelete(deleteConfirmId)}>Delete</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setDeleteConfirmId(null)}>{t("cancel")}</button>
+              <button className="biz-modal-btn-danger" onClick={() => handleDelete(deleteConfirmId)}>{t("delete")}</button>
             </div>
           </div>
         </div>
@@ -1136,11 +1216,11 @@ export default function Business() {
         <div className="biz-modal-overlay">
           <div className="biz-modal biz-modal-center">
             <div className="biz-modal-icon">🗑️</div>
-            <h3 className="biz-modal-title">Delete Branch</h3>
-            <p className="biz-modal-body">Are you sure? This cannot be undone.</p>
+            <h3 className="biz-modal-title">{t("deleteBranch")}</h3>
+            <p className="biz-modal-body">{t("confirmDelete")}</p>
             <div className="biz-modal-actions-center">
-              <button className="biz-modal-btn-cancel" onClick={() => setDeleteBranchId(null)}>Cancel</button>
-              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>Delete</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setDeleteBranchId(null)}>{t("cancel")}</button>
+              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>{t("delete")}</button>
             </div>
           </div>
         </div>

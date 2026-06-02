@@ -401,7 +401,7 @@ export default function Navigation({
       e.currentTarget.src = "/images/e.png";
     }}
     style={{
-      width: "140px",
+      width: "160px",
       height: "140px",
       objectFit: "contain",
       marginTop: "-60px",
