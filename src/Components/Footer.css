@@ -72,11 +72,12 @@
 }
 
 .footer-logo {
-  width: 36px;
-  height: 36px;
+  width: 140px !important;
+  height: 140px !important;
   object-fit: contain;
-  border-radius: 8px;
   display: block;
+  filter: drop-shadow(0 2px 6px rgba(16,185,129,0.1));
+  border-radius: 0;
 }
 
 .footer-brand-name {

@@ -20,11 +20,14 @@ export default function Footer() {
           <div className="footer-section footer-brand">
             <div className="footer-logo-group">
               <img 
-                src="/images/e.png" 
-                alt="ZeroWaste Logo" 
-                className="footer-logo"
-              />
-              <span className="footer-brand-name">ZeroWaste</span>
+  src="/images/zerowaste-logo.png"    
+  alt="ZeroWaste Logo" 
+  className="footer-logo"
+  style={{
+    width: "140px",
+    height: "140px",
+  }}
+/>
             </div>
             <p className="footer-brand-description">
               Reducing food waste, one meal at a time. Save food, save money, save the planet.
