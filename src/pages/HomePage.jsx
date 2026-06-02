@@ -79,47 +79,51 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
-  const [reviewSubmitted, setReviewSubmitted] = useState(() => {
-    const submitted = localStorage.getItem(
-      `review_submitted_${order.orderNumber}`,
-    );
-    return submitted === "true";
+  const [reviewDismissed, setReviewDismissed] = useState(() => {
+    return localStorage.getItem(`review_dismissed_${order.orderNumber}`) === "true";
   });
+  const [reviewSubmitted, setReviewSubmitted] = useState(() => {
+    return localStorage.getItem(`review_submitted_${order.orderNumber}`) === "true";
+  });
+
+  const [rating, setRating] = useState(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewImage, setReviewImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [submitted, setSubmitted] = useState(false);
+
+  const dismissReview = () => {
+    setShowReview(false);
+    setReviewDismissed(true);
+    localStorage.setItem(`review_dismissed_${order.orderNumber}`, "true");
+  };
 
   const statusToStep = (status, deliveryMethod) => {
     switch (status?.toLowerCase()) {
-      case "pending":
-        return 1;
-      case "processing":
-        return 2;
-      case "completed":
-        return deliveryMethod === "delivery" ? 4 : 3;
-      case "in_transit":
-        return 3;
-      case "delivered":
-        return 4;
-      case "cancelled":
-        return 1;
-      default:
-        return 1;
+      case "pending":    return 1;
+      case "processing": return 2;
+      case "completed":  return deliveryMethod === "delivery" ? 4 : 3;
+      case "in_transit": return 3;
+      case "delivered":  return 4;
+      case "cancelled":  return 1;
+      default:           return 1;
     }
   };
 
   const pickupSteps = [
-    { id: 1, label: "Pending", icon: <Clock size={14} /> },
+    { id: 1, label: "Pending",    icon: <Clock size={14} /> },
     { id: 2, label: "Processing", icon: <Package size={14} /> },
-    { id: 3, label: "Completed", icon: <CheckCircle size={14} /> },
+    { id: 3, label: "Completed",  icon: <CheckCircle size={14} /> },
   ];
 
   const deliverySteps = [
-    { id: 1, label: "Pending", icon: <Clock size={14} /> },
+    { id: 1, label: "Pending",    icon: <Clock size={14} /> },
     { id: 2, label: "Processing", icon: <Package size={14} /> },
     { id: 3, label: "On the Way", icon: <Truck size={14} /> },
-    { id: 4, label: "Delivered", icon: <CheckCircle size={14} /> },
+    { id: 4, label: "Delivered",  icon: <CheckCircle size={14} /> },
   ];
 
-  const steps =
-    order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
+  const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
   useEffect(() => {
     const fetchOrderStatus = async () => {
@@ -151,7 +155,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
           }
 
           setCurrentStep(statusToStep(status, order.deliveryMethod));
-          if (normalized === "completed" && !reviewSubmitted) {
+          if (normalized === "completed" && !reviewSubmitted && !reviewDismissed) {
             setShowReview(true);
           }
         }
@@ -163,13 +167,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
     fetchOrderStatus();
     const interval = setInterval(fetchOrderStatus, 10000);
     return () => clearInterval(interval);
-  }, [order.orderNumber, order.deliveryMethod, reviewSubmitted]);
-
-  const [rating, setRating] = useState(0);
-  const [reviewText, setReviewText] = useState("");
-  const [reviewImage, setReviewImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
+  }, [order.orderNumber, order.deliveryMethod, reviewSubmitted, reviewDismissed]);
 
   const handleSubmitReview = async () => {
     const token =
@@ -189,7 +187,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
     }
 
     if (!offerId) {
-      console.warn("Missing offer ID. Order:", order);
       alert("Cannot submit review: missing offer ID.");
       return;
     }
@@ -218,20 +215,19 @@ function OrderTrackingStrip({ order, onDismiss }) {
       const responseData = await response.json();
 
       if (!response.ok) {
-        console.error("Review submission failed:", responseData);
         throw new Error(responseData.message || "Failed to submit review");
       }
 
       setSubmitted(true);
-      setTimeout(() => {
-        onDismiss();
-      }, 1500);
+      setReviewDismissed(true);
+      setReviewSubmitted(true);
+      localStorage.setItem(`review_dismissed_${order.orderNumber}`, "true");
+      localStorage.setItem(`review_submitted_${order.orderNumber}`, "true");
+      setTimeout(() => onDismiss(), 1500);
     } catch (error) {
       alert("Unable to submit your review. Please try again.");
     }
   };
-
-  const handleStarClick = (star) => setRating(star);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -288,14 +284,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
             </button>
           </div>
         </div>
-        <p
-          style={{
-            fontSize: "13px",
-            color: "#ef4444",
-            margin: "6px 0 4px",
-            padding: "0 4px",
-          }}
-        >
+        <p style={{ fontSize: "13px", color: "#ef4444", margin: "6px 0 4px", padding: "0 4px" }}>
           This order was cancelled by the vendor.
         </p>
       </div>
@@ -352,12 +341,9 @@ function OrderTrackingStrip({ order, onDismiss }) {
       </div>
 
       {showReview && (
-        <div className="review-overlay" onClick={() => setShowReview(false)}>
+        <div className="review-overlay" onClick={dismissReview}>
           <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="review-close"
-              onClick={() => setShowReview(false)}
-            >
+            <button className="review-close" onClick={dismissReview}>
               <X size={18} />
             </button>
             <div className="review-header">
@@ -370,7 +356,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
                 <button
                   key={star}
                   className={`review-star ${star <= rating ? "filled" : ""}`}
-                  onClick={() => handleStarClick(star)}
+                  onClick={() => setRating(star)}
                 >
                   <Star size={18} fill={star <= rating ? "#fbbf24" : "none"} />
                 </button>
@@ -419,20 +405,11 @@ function OrderTrackingStrip({ order, onDismiss }) {
   );
 }
 
-function RecommendedCard({
-  offer,
-  onNavigate,
-  onAddToCart,
-  isLoggedIn,
-  locationName,
-  showAlert,
-}) {
+function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn, locationName, showAlert }) {
   const discount =
     offer.original_price && offer.discount_price
       ? Math.round(
-          ((offer.original_price - offer.discount_price) /
-            offer.original_price) *
-            100,
+          ((offer.original_price - offer.discount_price) / offer.original_price) * 100,
         )
       : 0;
 
@@ -475,9 +452,7 @@ function RecommendedCard({
         e.currentTarget.style.boxShadow = "0 4px 16px rgba(16,185,129,0.12)";
       }}
     >
-      <div
-        style={{ position: "relative", height: "140px", background: "#f3f4f6" }}
-      >
+      <div style={{ position: "relative", height: "140px", background: "#f3f4f6" }}>
         {imageUrl ? (
           <img
             src={imageUrl}
@@ -538,33 +513,16 @@ function RecommendedCard({
           {offer.title}
         </h4>
         {offer.average_rating > 0 && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "3px",
-              marginBottom: "6px",
-            }}
-          >
+          <div style={{ display: "flex", alignItems: "center", gap: "3px", marginBottom: "6px" }}>
             <Star size={12} fill="#f59e0b" color="#f59e0b" />
-            <span
-              style={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400e" }}
-            >
+            <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "#92400e" }}>
               {Number(offer.average_rating).toFixed(1)}
             </span>
           </div>
         )}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div>
-            <span
-              style={{ fontSize: "0.95rem", fontWeight: 700, color: "#10b981" }}
-            >
+            <span style={{ fontSize: "0.95rem", fontWeight: 700, color: "#10b981" }}>
               EGP {offer.discount_price}
             </span>
             {offer.original_price && (
@@ -583,20 +541,9 @@ function RecommendedCard({
           <button
             onClick={(e) => {
               e.stopPropagation();
-
-              if (!offer.id) {
-                console.error("❌ ERROR: offer.id is missing!");
-                return;
-              }
-
+              if (!offer.id) return;
               const offerWithStringId = { ...offer, id: String(offer.id) };
-              const result = onAddToCart(
-                offerWithStringId,
-                1,
-                isLoggedIn,
-                locationName,
-              );
-
+              const result = onAddToCart(offerWithStringId, 1, isLoggedIn, locationName);
               if (result && showAlert) {
                 showAlert(result.message, result.success ? "success" : "error");
               }
@@ -633,15 +580,12 @@ function SustainabilitySection() {
           sessionStorage.getItem("auth_token") ||
           sessionStorage.getItem("token");
         if (!token) return;
-        const res = await fetch(
-          `${BASE_URL}/api/customer/sustainability/metrics`,
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
+        const res = await fetch(`${BASE_URL}/api/customer/sustainability/metrics`, {
+          headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
         const data = await res.json();
         if (res.ok && data.metrics) setMetrics(data.metrics);
       } catch (err) {
@@ -656,33 +600,13 @@ function SustainabilitySection() {
   if (loading || !metrics) return null;
 
   const cards = [
-    {
-      icon: "🍽️",
-      value: metrics.meals_saved ?? 0,
-      label: "Meals Rescued",
-      color: "#10b981",
-      bg: "#f0fdf4",
-    },
-    {
-      icon: "🌍",
-      value: `${metrics.co2_prevented_kg ?? 0} kg`,
-      label: "CO₂ Prevented",
-      color: "#3b82f6",
-      bg: "#eff6ff",
-    },
-    {
-      icon: "💰",
-      value: `EGP ${Number(metrics.total_money_saved ?? 0).toFixed(0)}`,
-      label: "Money Saved",
-      color: "#f59e0b",
-      bg: "#fffbeb",
-    },
+    { icon: "🍽️", value: metrics.meals_saved ?? 0,             label: "Meals Rescued", color: "#10b981", bg: "#f0fdf4" },
+    { icon: "🌍", value: `${metrics.co2_prevented_kg ?? 0} kg`, label: "CO₂ Prevented", color: "#3b82f6", bg: "#eff6ff" },
+    { icon: "💰", value: `EGP ${Number(metrics.total_money_saved ?? 0).toFixed(0)}`, label: "Money Saved", color: "#f59e0b", bg: "#fffbeb" },
   ];
 
   return (
-    <section
-      style={{ padding: "32px 24px", maxWidth: "1200px", margin: "0 auto" }}
-    >
+    <section style={{ padding: "32px 24px", maxWidth: "1200px", margin: "0 auto" }}>
       <div
         style={{
           background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)",
@@ -691,14 +615,7 @@ function SustainabilitySection() {
           border: "1px solid #d1fae5",
         }}
       >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "10px",
-            marginBottom: "20px",
-          }}
-        >
+        <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
           <div
             style={{
               background: "linear-gradient(135deg, #10b981, #059669)",
@@ -710,14 +627,7 @@ function SustainabilitySection() {
             <span style={{ fontSize: "1.1rem" }}>🌱</span>
           </div>
           <div>
-            <h2
-              style={{
-                margin: 0,
-                fontSize: "1.15rem",
-                fontWeight: 700,
-                color: "#065f46",
-              }}
-            >
+            <h2 style={{ margin: 0, fontSize: "1.15rem", fontWeight: 700, color: "#065f46" }}>
               Your Sustainability Impact
             </h2>
             <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>
@@ -744,26 +654,11 @@ function SustainabilitySection() {
                 textAlign: "center",
               }}
             >
-              <div style={{ fontSize: "2rem", marginBottom: "8px" }}>
-                {card.icon}
-              </div>
-              <div
-                style={{
-                  fontSize: "1.4rem",
-                  fontWeight: 800,
-                  color: card.color,
-                  marginBottom: "4px",
-                }}
-              >
+              <div style={{ fontSize: "2rem", marginBottom: "8px" }}>{card.icon}</div>
+              <div style={{ fontSize: "1.4rem", fontWeight: 800, color: card.color, marginBottom: "4px" }}>
                 {card.value}
               </div>
-              <div
-                style={{
-                  fontSize: "0.82rem",
-                  color: "#6b7280",
-                  fontWeight: 500,
-                }}
-              >
+              <div style={{ fontSize: "0.82rem", color: "#6b7280", fontWeight: 500 }}>
                 {card.label}
               </div>
             </div>
@@ -800,8 +695,8 @@ const categoryIcons = {
 
 const sortOptions = [
   { label: "Highest Discount", value: "highest_discount" },
-  { label: "Distance", value: "nearest" },
-  { label: "Rating", value: "rating" },
+  { label: "Distance",         value: "nearest" },
+  { label: "Rating",           value: "rating" },
 ];
 
 function calculateDistance(lat1, lng1, lat2, lng2) {
@@ -815,9 +710,7 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
       Math.cos((lat2 * Math.PI) / 180) *
       Math.sin(dLng / 2) *
       Math.sin(dLng / 2);
-  return parseFloat(
-    (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1),
-  );
+  return parseFloat((R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1));
 }
 
 export default function HomePage() {
@@ -837,6 +730,8 @@ export default function HomePage() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [offers, setOffers] = useState([]);
   const [recommendedOffers, setRecommendedOffers] = useState([]);
+  // ── NEW: tracks whether the user has at least one past order ──
+  const [hasOrders, setHasOrders] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -871,6 +766,7 @@ export default function HomePage() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isDropdownOpen]);
 
+  // ── Fetch recommended offers + check if user has orders ──
   useEffect(() => {
     const fetchRecommended = async () => {
       const token =
@@ -878,37 +774,42 @@ export default function HomePage() {
         localStorage.getItem("token") ||
         sessionStorage.getItem("auth_token") ||
         sessionStorage.getItem("token");
+
+      // Not logged in → nothing to show
       if (!token) return;
+
       try {
-        const res = await fetch(
-          `${BASE_URL}/api/offers/smart-recommendations`,
-          {
-            headers: {
-              Accept: "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          },
-        );
+        // 1️⃣ Check if the user has any past orders
+        const ordersRes = await fetch(`${BASE_URL}/api/my-orders`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        const ordersData = await ordersRes.json();
+        const orders =
+          ordersData?.data ??
+          ordersData?.orders ??
+          (Array.isArray(ordersData) ? ordersData : []);
+
+        // No orders → keep hasOrders false, skip recommendations
+        if (!orders || orders.length === 0) return;
+
+        setHasOrders(true);
+
+        // 2️⃣ Fetch smart recommendations only when there are orders
+        const res = await fetch(`${BASE_URL}/api/offers/smart-recommendations`, {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
         const data = await res.json();
         if (res.ok && Array.isArray(data.data)) setRecommendedOffers(data.data);
       } catch (err) {
         console.error("Failed to fetch recommendations:", err);
       }
     };
+
     fetchRecommended();
-  }, []);
+  }, [isLoggedIn]); // re-run when auth state changes
 
-  const categories = [
-    "All",
-    "Restaurant",
-    "Bakery",
-    "Cafe",
-    "Supermarket",
-    "Hotel",
-    "Others",
-  ];
+  const categories = ["All", "Restaurant", "Bakery", "Cafe", "Supermarket", "Hotel", "Others"];
 
-  // ── Fetch Offers with Debug Logs ──
   useEffect(() => {
     const fetchOffers = async () => {
       if (selectedCategory === "Others") {
@@ -974,10 +875,11 @@ export default function HomePage() {
                 quantity: source.quantity_available || 0,
                 status: source.status || "active",
                 pickupTime: source.expiration_time
-                  ? new Date(source.expiration_time).toLocaleTimeString(
-                      "en-US",
-                      { hour: "2-digit", minute: "2-digit", hour12: true },
-                    )
+                  ? new Date(source.expiration_time).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })
                   : "Today",
                 location:
                   source.branch?.branch_name ||
@@ -1024,31 +926,26 @@ export default function HomePage() {
     })
     .map((offer) => ({
       ...offer,
-      distance: calculateDistance(
-        userLat,
-        userLng,
-        offer.branchLat,
-        offer.branchLng,
-      ),
+      distance: calculateDistance(userLat, userLng, offer.branchLat, offer.branchLng),
     }))
     .sort((a, b) => {
       switch (sortOption) {
-        case "highest_discount":
-          return b.discount - a.discount;
+        case "highest_discount": return b.discount - a.discount;
         case "nearest":
           if (a.distance === null && b.distance === null) return 0;
           if (a.distance === null) return 1;
           if (b.distance === null) return -1;
           return a.distance - b.distance;
-        case "rating":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return 0;
+        case "rating": return (b.rating || 0) - (a.rating || 0);
+        default: return 0;
       }
     });
 
   const currentSortLabel =
     sortOptions.find((o) => o.value === sortOption)?.label || "Sort";
+
+  // ── Guard: only show Recommended & Sustainability when logged in + has orders ──
+  const showPersonalisedSections = isLoggedIn && hasOrders;
 
   return (
     <div className="homepage-container">
@@ -1066,8 +963,7 @@ export default function HomePage() {
             <span className="hero-title-accent">Save Money</span>
           </h1>
           <p className="hero-subtitle">
-            Discover amazing food deals from local restaurants and reduce food
-            waste
+            Discover amazing food deals from local restaurants and reduce food waste
           </p>
           <div className="search-wrapper">
             <div className="search-icon-left">
@@ -1094,22 +990,10 @@ export default function HomePage() {
         </div>
       </section>
 
-      {recommendedOffers.length > 0 && (
-        <section
-          style={{
-            padding: "32px 24px 0",
-            maxWidth: "1200px",
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "10px",
-              marginBottom: "16px",
-            }}
-          >
+      {/* ── Recommended: only when logged in + has orders + API returned results ── */}
+      {showPersonalisedSections && recommendedOffers.length > 0 && (
+        <section style={{ padding: "32px 24px 0", maxWidth: "1200px", margin: "0 auto" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "16px" }}>
             <div
               style={{
                 background: "linear-gradient(135deg, #10b981, #059669)",
@@ -1121,14 +1005,7 @@ export default function HomePage() {
               <Star size={18} color="white" fill="white" />
             </div>
             <div>
-              <h2
-                style={{
-                  margin: 0,
-                  fontSize: "1.2rem",
-                  fontWeight: 700,
-                  color: "#111827",
-                }}
-              >
+              <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "#111827" }}>
                 Recommended For You ✨
               </h2>
               <p style={{ margin: 0, fontSize: "0.82rem", color: "#6b7280" }}>
@@ -1232,13 +1109,9 @@ export default function HomePage() {
       <section className="offers-section">
         <div className="offers-header">
           <h2 className="offers-title">
-            {selectedCategory === "All"
-              ? "All Offers"
-              : selectedCategory + " Offers"}
+            {selectedCategory === "All" ? "All Offers" : selectedCategory + " Offers"}
           </h2>
-          <span className="offers-count">
-            {filteredOffers.length} available
-          </span>
+          <span className="offers-count">{filteredOffers.length} available</span>
         </div>
 
         {loading && offers.length === 0 && (
@@ -1253,10 +1126,7 @@ export default function HomePage() {
             <AlertCircle size={48} className="error-icon" />
             <h3 className="error-title">Error Loading Offers</h3>
             <p className="error-message">{error}</p>
-            <button
-              className="retry-button"
-              onClick={() => window.location.reload()}
-            >
+            <button className="retry-button" onClick={() => window.location.reload()}>
               Retry
             </button>
           </div>
@@ -1269,6 +1139,10 @@ export default function HomePage() {
             <p className="empty-message">
               {searchQuery
                 ? "Try a different search term."
+                : selectedCategory === "Others"
+                ? "No other type offers available right now."
+                : selectedCategory !== "All"
+                ? `No ${selectedCategory} offers available right now.`
                 : "No offers available right now."}
             </p>
           </div>
@@ -1313,19 +1187,14 @@ export default function HomePage() {
                     </div>
                   </div>
                   <div className="offer-content">
-                    <h3 className="offer-title">
-                      {offer.title || "Untitled Offer"}
-                    </h3>
+                    <h3 className="offer-title">{offer.title || "Untitled Offer"}</h3>
                     {offer.location && (
                       <div className="offer-location">
                         <MapPin size={13} />
                         <span>{offer.location}</span>
-                        {offer.distance !== null &&
-                          offer.distance !== undefined && (
-                            <span className="offer-distance">
-                              · {offer.distance} km
-                            </span>
-                          )}
+                        {offer.distance !== null && offer.distance !== undefined && (
+                          <span className="offer-distance">· {offer.distance} km</span>
+                        )}
                       </div>
                     )}
                     <div
@@ -1342,12 +1211,8 @@ export default function HomePage() {
                           <Star
                             key={star}
                             size={14}
-                            fill={
-                              star <= currentRating ? "currentColor" : "none"
-                            }
-                            stroke={
-                              star <= currentRating ? "currentColor" : "#d1d5db"
-                            }
+                            fill={star <= currentRating ? "currentColor" : "none"}
+                            stroke={star <= currentRating ? "currentColor" : "#d1d5db"}
                           />
                         ))}
                       </div>
@@ -1370,33 +1235,17 @@ export default function HomePage() {
                           EGP {offer.discountedPrice || offer.price}
                         </span>
                         {offer.originalPrice > 0 && (
-                          <span className="original-price">
-                            EGP {offer.originalPrice}
-                          </span>
+                          <span className="original-price">EGP {offer.originalPrice}</span>
                         )}
                       </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-
-                          if (!offer.id) {
-                            console.error("❌ ERROR: offer.id is missing!");
-                            return;
-                          }
-
+                          if (!offer.id) return;
                           const offerWithStringId = { ...offer, id: String(offer.id) };
-                          const result = addToCart(
-                            offerWithStringId,
-                            1,
-                            isLoggedIn,
-                            locationName,
-                          );
-
+                          const result = addToCart(offerWithStringId, 1, isLoggedIn, locationName);
                           if (result) {
-                            showAlert(
-                              result.message,
-                              result.success ? "success" : "error",
-                            );
+                            showAlert(result.message, result.success ? "success" : "error");
                           }
                         }}
                         style={{
@@ -1446,19 +1295,9 @@ export default function HomePage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
-              📍
-            </div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>
-              Location Required
-            </h3>
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: "0.9rem",
-                margin: "0 0 1.5rem",
-              }}
-            >
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📍</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Location Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
               Please set your location first before adding items to your cart.
             </p>
             <button
@@ -1505,19 +1344,9 @@ export default function HomePage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>
-              🛒
-            </div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>
-              Sign In Required
-            </h3>
-            <p
-              style={{
-                color: "#6b7280",
-                fontSize: "0.9rem",
-                margin: "0 0 1.5rem",
-              }}
-            >
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>
               You need to sign in first to add items to your cart.
             </p>
             <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -1559,7 +1388,9 @@ export default function HomePage() {
         </div>
       )}
 
-      {isLoggedIn && <SustainabilitySection />}
+      {/* ── Sustainability: only when logged in + has orders ── */}
+      {showPersonalisedSections && <SustainabilitySection />}
+
       <AlertContainer alerts={alerts} removeAlert={removeAlert} />
       <Footer />
     </div>
