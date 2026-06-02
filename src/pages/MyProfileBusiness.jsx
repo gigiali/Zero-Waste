@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Edit2, LogOut, Trash2, ChevronRight, KeyRound,
   Building2, Hash, Image, FileText, Upload, X,
@@ -55,6 +56,7 @@ function TimeoutMessage({ message, type, onClose }) {
 }
 
 function ChangePassword({ onCancel }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -64,8 +66,11 @@ function ChangePassword({ onCancel }) {
   const handleChange = async () => {
     const e = {};
     if (!form.current) e.current_password = "Current password is required";
-    if (!form.next) e.new_password = "New password is required";
-    else if (form.next.length < 6) e.new_password = "At least 6 characters";
+    if (!form.next) {
+  e.new_password = "New password is required";
+} else if (form.next.length < 8) {
+  e.new_password = "Password must be at least 8 characters";
+}
     if (!form.confirm) e.new_password_confirmation = "Please confirm password";
     else if (form.next !== form.confirm) e.new_password_confirmation = "Passwords do not match";
     setErrors(e);
@@ -73,19 +78,19 @@ function ChangePassword({ onCancel }) {
 
     setIsLoading(true);
     try {
-      const res = await fetch(`${BASE_URL}/vendor/change-password`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          Authorization: `Bearer ${getToken()}`,
-        },
-        body: JSON.stringify({
-          current_password: form.current,
-          password: form.next,
-          password_confirmation: form.confirm,
-        }),
-      });
+const res = await fetch(`${BASE_URL}/vendor/change-password`, {
+  method: "PUT",
+  headers: {
+    "Content-Type": "application/json",
+    Accept: "application/json",
+    Authorization: `Bearer ${getToken()}`,
+  },
+  body: JSON.stringify({
+    current_password: form.current,
+    password: form.next,
+    password_confirmation: form.confirm,
+  }),
+});
       const data = await res.json();
       if (res.ok) {
         setSuccess("✓ Password changed successfully!");
@@ -113,22 +118,42 @@ function ChangePassword({ onCancel }) {
         <div className="biz-hero-inner">
           <div className="biz-hero-left">
             <div>
-              <h1 className="biz-hero-title">Change Password</h1>
-              <p className="biz-hero-sub">Update your business account password</p>
+              <h1 className="biz-hero-title">
+  {t("auth.changePasswordTitle")}
+</h1>
+              <p className="biz-hero-sub">
+  {t("auth.changePasswordSubtitle")}
+</p>
             </div>
           </div>
-          <button className="biz-hero-btn" onClick={onCancel}>← Back</button>
+          <button className="biz-hero-btn" onClick={onCancel}>
+  ← {t("auth.goBack")}
+</button>
         </div>
       </div>
       <div className="biz-body">
         {timeoutMsg && <TimeoutMessage message={timeoutMsg} type="error" onClose={() => setTimeoutMsg("")} />}
         <div className="biz-card">
-          <h2 className="biz-card-title">Set New Password</h2>
+          <h2 className="biz-card-title">
+  {t("auth.changePassword")}
+</h2>
           <div className="biz-pw-group">
             {[
-              ["current", "current_password", "Current password"],
-              ["next", "new_password", "New password"],
-              ["confirm", "new_password_confirmation", "Confirm new password"],
+              [
+  "current",
+  "current_password",
+  t("auth.currentPassword")
+],
+              [
+  "next",
+  "new_password",
+  t("auth.newPassword")
+],
+              [
+  "confirm",
+  "new_password_confirmation",
+  t("auth.confirmNewPassword")
+],
             ].map(([fk, ek, ph]) => (
               <div key={fk} className="biz-pw-wrap">
                 <input
@@ -148,7 +173,9 @@ function ChangePassword({ onCancel }) {
               disabled={isLoading}
               className="biz-btn-save biz-btn-fullwidth"
             >
-              {isLoading ? "Saving…" : "Save Password"}
+              {isLoading
+  ? t("saving")
+  : t("auth.updatePassword")}
             </button>
           </div>
         </div>
@@ -224,6 +251,7 @@ function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel
 }
 
 export default function MyProfileBusiness() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout, user } = useAuth();
 
@@ -273,16 +301,16 @@ export default function MyProfileBusiness() {
         headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
       });
       const data = await res.json();
-      if (res.ok) {
-        const v = data.data?.vendor || data.vendor || data.data || data;
-        
-        const toUrl = (path) => {
-          if (!path) return "";
-          if (path.startsWith("http")) return path;
-          const clean = path.replace(/^\/+/, "");
-          return `https://zero-waste-production.up.railway.app/${clean}`;
-        };
 
+if (res.ok) {
+  const v = data.data?.vendor || data.vendor || data.data || data;
+
+  const toUrl = (path) => {
+    if (!path) return "";
+    if (path.startsWith("http")) return path;
+    const clean = path.replace(/^\/+/, "");
+    return `https://zero-waste-production.up.railway.app/${clean}`;
+  };
         const d = {
           business_name: v.business_name || "",
           tax_number: v.tax_number || "",
@@ -295,17 +323,18 @@ export default function MyProfileBusiness() {
         
         // Set owner information from API response
         setOwnerInfo({
-          name: v.name || "",
-          email: v.email || "",
-          phone: v.phone || "",
-          address: v.address || "",
-        });
-        setEditOwner({
-          name: v.name || "",
-          email: v.email || "",
-          phone: v.phone || "",
-          address: v.address || "",
-        });
+  name: data.data?.name || "",
+  email: data.data?.email || "",
+  phone: data.data?.phone || "",
+  address: data.data?.address || "",
+});
+
+setEditOwner({
+  name: data.data?.name || "",
+  email: data.data?.email || "",
+  phone: data.data?.phone || "",
+  address: data.data?.address || "",
+});
         
         setLogoPreview(toUrl(v.logo));
         setCommercialPreview(toUrl(v.commercial_register));
@@ -366,7 +395,6 @@ export default function MyProfileBusiness() {
         body: formData,
       });
       const data = await res.json();
-
       if (res.ok) {
         setLogoFile(null);
         setCommercialFile(null);
@@ -552,13 +580,15 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
           ) : (
             <>
               <div className="biz-card">
-                <h2 className="biz-card-title">Owner Information</h2>
+                <h2 className="biz-card-title">
+  {t("profile.ownerInformation")}
+</h2>
                 <div className="biz-info-list">
                   {[
-                    ["Owner Name", "name"],
-                    ["Email", "email"],
-                    ["Phone", "phone"],
-                    ["Address", "address"],
+                    [t("profile.ownerName"), "name"],
+                    [t("profile.email"), "email"],
+                    [t("profile.phone"), "phone"],
+                    [t("profile.address"), "address"],
                   ].map(([label, field]) => (
                     <div className="biz-info-row" key={field}>
                       <span className="biz-info-icon"><Building2 size={17} /></span>
@@ -582,12 +612,16 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
               </div>
 
               <div className="biz-card">
-                <h2 className="biz-card-title">Business Information</h2>
+                <h2 className="biz-card-title">
+  {t("profile.businessInformation")}
+</h2>
                 <div className="biz-info-list">
                   <div className="biz-info-row">
                     <span className="biz-info-icon"><Building2 size={17} /></span>
                     <div className="biz-info-text">
-                      <span className="biz-info-label">Business Name</span>
+                      <span className="biz-info-label">
+  {t("profile.businessName")}
+</span>
                       {isEditing ? (
                         <>
                           <input
@@ -610,7 +644,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                   <div className="biz-info-row">
                     <span className="biz-info-icon"><Building2 size={17} /></span>
                     <div className="biz-info-text">
-                      <span className="biz-info-label">Business Type</span>
+                      <span className="biz-info-label">
+  {t("profile.businessType")}
+</span>
                       {isEditing ? (
                         <select
                           className="biz-input"
@@ -635,7 +671,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                   <div className="biz-info-row">
                     <span className="biz-info-icon"><Hash size={17} /></span>
                     <div className="biz-info-text">
-                      <span className="biz-info-label">Tax Number</span>
+                      <span className="biz-info-label">
+  {t("profile.taxNumber")}
+</span>
                       {isEditing ? (
                         <>
                           <input

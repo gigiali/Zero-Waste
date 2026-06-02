@@ -438,8 +438,8 @@
 }
 
 .biz-btn-save {
-  background: var(--accent);
-  color: #fff;
+  background: #22c55e;
+  color: white;
   border: none;
   border-radius: 9px;
   padding: 10px 28px;
@@ -447,10 +447,18 @@
   font-weight: 700;
   cursor: pointer;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  transition: background 0.15s, box-shadow 0.15s;
+  transition: all 0.3s ease;
 }
 
-.biz-btn-save:hover { background: var(--accent-dark); box-shadow: 0 4px 12px rgba(6,78,43,0.25); }
+.biz-btn-save:hover {
+  background: #16a34a;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+}
+
+.biz-btn-save:disabled {
+  background: #86efac;
+  cursor: not-allowed;
+}
 .biz-btn-save:disabled { background: #94a3b8; cursor: not-allowed; }
 
 .biz-btn-fullwidth {

@@ -643,3 +643,12 @@
   .usr-tabs { flex-wrap: wrap; }
   .usr-tab { flex: unset; min-width: unset; flex-grow: 1; }
 }
+.usr-btn-save {
+  background: #22c55e; /* green */
+  transition: all 0.2s ease;
+}
+
+.usr-btn-save:hover {
+  background: #16a34a; /* darker green */
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);
+}

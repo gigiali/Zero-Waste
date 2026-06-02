@@ -29,17 +29,25 @@ function ChangePassword({ onCancel, role }) {
 
   const handleChange = async () => {
     const e = {};
-    if (!form.current) e.current_password = "Current password is required";
-    if (!form.next) e.new_password = "New password is required";
-    else if (form.next.length < 6)
-      e.new_password = "Password must be at least 6 characters";
-    if (!form.confirm)
-      e.new_password_confirmation = "Please confirm your password";
-    else if (form.next !== form.confirm)
-      e.new_password_confirmation = "Passwords do not match";
 
-    setErrors(e);
-    if (Object.keys(e).length > 0) return;
+if (!form.next) {
+  e.password = "New password is required";
+}
+
+if (!form.next) {
+  e.password = "New password is required";
+} else if (form.next.length < 8) {
+  e.password = "Password must be at least 8 characters";
+}
+
+if (!form.confirm) {
+  e.password_confirmation = "Please confirm your password";
+} else if (form.next !== form.confirm) {
+  e.password_confirmation = "Passwords do not match";
+}
+
+setErrors(e);
+if (Object.keys(e).length > 0) return;
 
     setIsLoading(true);
     try {
@@ -107,10 +115,10 @@ function ChangePassword({ onCancel, role }) {
           <h2 className="card-title">Set New Password</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {[
-              ["current", "current_password", "Current password"],
-              ["next", "new_password", "New password"],
-              ["confirm", "new_password_confirmation", "Confirm new password"],
-            ].map(([formKey, errorKey, ph]) => (
+  ["current", "current_password", "Current password"],
+["next", "password", "New password"],
+["confirm", "password_confirmation", "Confirm new password"],
+].map(([formKey, errorKey, ph]) => (
               <div key={formKey} className="pw-input-wrap">
                 <input
                   type="password"
@@ -209,7 +217,7 @@ export default function UserProfile() {
       });
       const data = await response.json();
 
-      const user = data?.user ?? data?.data?.user ?? data?.data ?? data;
+      const user = data?.data || data;
 
       if (response.ok && user?.name) {
         const u = {

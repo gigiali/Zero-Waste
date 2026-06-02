@@ -10,13 +10,15 @@ import { useAuth } from "../Context/AuthContext";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 
-const getToken = () =>
-  localStorage.getItem("auth_token") ||
-  localStorage.getItem("token") ||
-  sessionStorage.getItem("auth_token") ||
-  sessionStorage.getItem("token") ||
-  "";
-
+const getToken = () => {
+  return (
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token") ||
+    ""
+  );
+};
 /* ─────────────────────────────────────────────
    Change Password Drawer
 ───────────────────────────────────────────── */
@@ -28,32 +30,44 @@ function ChangePasswordDrawer({ onClose }) {
 
   const handleChange = async () => {
     const e = {};
-    if (!form.current) e.current_password = "Current password is required";
-    if (!form.next) e.new_password = "New password is required";
-    else if (form.next.length < 6) e.new_password = "At least 6 characters";
-    if (!form.confirm) e.new_password_confirmation = "Please confirm password";
-    else if (form.next !== form.confirm) e.new_password_confirmation = "Passwords do not match";
+
+    if (!form.current) e.current = "Current password is required";
+    if (!form.next) e.next = "New password is required";
+    else if (form.next.length < 8) e.next = "At least 8 characters";
+
+    if (!form.confirm) e.confirm = "Please confirm password";
+    else if (form.next !== form.confirm) e.confirm = "Passwords do not match";
+
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
     setIsLoading(true);
+    setSuccess("");
+    
     try {
+      const token = getToken();
+      console.log("TOKEN:", token);
+      
       const res = await fetch(`${BASE_URL}/profile/change-password`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${getToken()}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           current_password: form.current,
           password: form.next,
           password_confirmation: form.confirm,
-        }),
+        })
       });
+      
       const data = await res.json();
+      console.log("Response:", data);
+      
       if (res.ok) {
         setSuccess("✅ Password changed successfully!");
+        setForm({ current: "", next: "", confirm: "" });
         setTimeout(() => onClose(), 1500);
       } else if (data.errors) {
         const newErrors = {};
@@ -64,7 +78,8 @@ function ChangePasswordDrawer({ onClose }) {
       } else {
         setErrors({ general: data.message || "Failed to change password." });
       }
-    } catch {
+    } catch (err) {
+      console.error("Error:", err);
       setErrors({ general: "Network error. Please check your connection." });
     } finally {
       setIsLoading(false);
@@ -82,21 +97,26 @@ function ChangePasswordDrawer({ onClose }) {
         </div>
 
         {[
-          ["current", "current_password", "Current password"],
-          ["next", "new_password", "New password"],
-          ["confirm", "new_password_confirmation", "Confirm new password"],
-        ].map(([fk, ek, ph]) => (
-          <div key={fk} className="usr-pw-wrap">
-            <input
-              type="password"
-              placeholder={ph}
-              value={form[fk]}
-              className={errors[ek] ? "has-error" : ""}
-              onChange={(e) => setForm((p) => ({ ...p, [fk]: e.target.value }))}
-            />
-            {errors[ek] && <span className="usr-pw-error">{errors[ek]}</span>}
-          </div>
-        ))}
+  ["current", "Current password"],
+  ["next", "New password"],
+  ["confirm", "Confirm new password"],
+].map(([fk, label]) => (
+  <div key={fk} className="usr-pw-wrap">
+    <input
+      type="password"
+      placeholder={label}
+      value={form[fk]}
+      className={errors[fk] ? "has-error" : ""}
+      onChange={(e) =>
+        setForm((p) => ({ ...p, [fk]: e.target.value }))
+      }
+    />
+
+    {errors[fk] && (
+      <span className="usr-pw-error">{errors[fk]}</span>
+    )}
+  </div>
+))}
 
         {errors.general && <span className="usr-pw-error">{errors.general}</span>}
         {success && <span className="usr-pw-success">{success}</span>}
