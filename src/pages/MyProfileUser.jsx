@@ -219,7 +219,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
       }
 
       const data = await res.json();
-      // pass back the new review so it shows instantly under the order
+      
       onSubmitted(order.id, data.review || data.data || { rating, comment, id: Date.now() });
       onClose();
     } catch (err) {
@@ -329,12 +329,12 @@ function ReviewModal({ order, onClose, onSubmitted }) {
 ───────────────────────────────────────────── */
 function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
   const [reviewingOrderId, setReviewingOrderId] = useState(null);
-  // local map of orderId -> review (populated after submit)
+
   const [localReviews, setLocalReviews] = useState({});
 
   const handleReviewSubmitted = (orderId, review) => {
     setLocalReviews((prev) => ({ ...prev, [orderId]: review }));
-    onReviewSubmitted(); // trigger refresh of Reviews tab
+    onReviewSubmitted(); 
   };
 
   const reviewingOrder = orders.find((o) => o.id === reviewingOrderId);
@@ -664,8 +664,6 @@ export default function MyProfileUser() {
     else if (tabId === "reviews") fetchReviews();
   };
 
-  // ── NEW: called after a review is submitted from OrdersTab ──
-  // refreshes the Reviews tab data so it's ready when the user navigates there
   const handleReviewSubmitted = () => {
     fetchReviews();
   };

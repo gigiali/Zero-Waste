@@ -90,7 +90,7 @@ function CardPaymentForm({ onSubmit, isSubmitting, total }) {
 
 
 
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, selectedMethod }) {
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, selectedMethod, orderId, userAddress }) {
 
   const [phase, setPhase] = useState(1);
 
@@ -116,9 +116,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
       setProgress(phaseProgress);
 
-      if (elapsed === 10000) { setPhase(2); setProgress(0); }
-
-      else if (elapsed === 20000) { setPhase(3); setProgress(100); clearInterval(interval); }
+      if (elapsed === 10000) { setPhase(3); setProgress(100); clearInterval(interval); }
 
     }, 100);
 
@@ -150,9 +148,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
               <button className="orm-skip-btn" onClick={() => {
 
-                if (phase === 1) { setPhase(2); setProgress(0); }
-
-                else { setPhase(3); setProgress(100); }
+                setPhase(3); setProgress(100);
 
               }}>
 
@@ -202,7 +198,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
         <div className="orm-steps">
 
-          {["Order Details", "Order Summary", "Confirm"].map((label, idx) => {
+          {["Order Details", "Confirm"].map((label, idx) => {
 
             const stepNum = idx + 1;
 
@@ -272,7 +268,7 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
                 <span className="orm-detail-label">{deliveryMethod === "delivery" ? "Delivery Address" : "Pickup Location"}</span>
 
-                <span className="orm-detail-value">{deliveryMethod === "delivery" ? "Your saved address" : "Restaurant address shown in app"}</span>
+                <span className="orm-detail-value">{deliveryMethod === "delivery" ? (userAddress || "No address selected") : "Restaurant address shown in app"}</span>
 
               </div>
 
@@ -289,54 +285,6 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
                 <span className="orm-detail-value">{cartItems.reduce((sum, i) => sum + i.quantity, 0)} item(s)</span>
 
               </div>
-
-            </div>
-
-          </div>
-
-        )}
-
-
-
-        {phase === 2 && (
-
-          <div className="orm-body orm-fade-in">
-
-            <h3 className="orm-section-title">Order Summary</h3>
-
-            <div className="orm-items-list">
-
-              {cartItems.map((item, idx) => (
-
-                <div key={idx} className="orm-item-row">
-
-                  <div className="orm-item-left">
-
-                    <span className="orm-item-qty">{item.quantity}x</span>
-
-                    <span className="orm-item-name">{item.title}</span>
-
-                  </div>
-
-                  <span className="orm-item-price">EGP {(Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0)).toFixed(2)}</span>
-
-                </div>
-
-              ))}
-
-            </div>
-
-            <div className="orm-totals">
-
-              <div className="orm-total-row"><span>Subtotal</span><span>EGP {cartTotal.toFixed(2)}</span></div>
-
-              {deliveryFee > 0 && <div className="orm-total-row"><span>Delivery Fee</span><span>EGP {deliveryFee.toFixed(2)}</span></div>}
-
-              <div className="orm-total-row"><span>Service Fee (6%)</span><span>EGP {commission.toFixed(2)}</span></div>
-
-              <div className="orm-total-divider" />
-
-              <div className="orm-total-row orm-total-final"><span>Total</span><span>EGP {total.toFixed(2)}</span></div>
 
             </div>
 
@@ -386,10 +334,20 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
           <div className="orm-body orm-fade-in">
 
-            <div className="orm-confirm-icon orm-success"><CheckCircle size={48} /></div>
-
-            <h3 className="orm-confirm-title">Order Confirmed!</h3>
-
+ <div className="orm-confirm-icon orm-success" style={{ position: "relative", width: 80, height: 80 }}>
+  <CheckCircle size={44} />
+  {orderId && (
+    <div style={{ position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)", background: "#059669", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap" }}>
+      #{orderId}
+    </div>
+  )}
+</div>
+<h3 className="orm-confirm-title" style={{ marginTop: "1.2rem" }}>Order Confirmed!</h3>
+            {orderId && (
+              <p style={{ textAlign: "center", color: "#6b7280", fontSize: "0.85rem", margin: "0.25rem 0" }}>
+                Order ID: <strong style={{ color: "#111827" }}>#{orderId}</strong>
+              </p>
+            )}
             <p className="orm-confirm-subtitle">Your order has been placed successfully</p>
 
             <div className="orm-success-details">
@@ -450,7 +408,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
   const { cartItems, clearCart } = useCart();
 
-  const { userLat, userLng } = useLocationContext();
+  const { userLat, userLng, locationName } = useLocationContext();
 
 
 
@@ -637,6 +595,7 @@ const handleCardSubmit = async (paymentMethodId) => {
     if (response.ok) {
       console.log("✅ Order created successfully!");
       serverOrderRef.current = data.order ?? data;
+console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
       const firstItem = cartItems[0];
       const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
       orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
@@ -764,6 +723,7 @@ const handleCardSubmit = async (paymentMethodId) => {
       if (response.ok) {
 
         serverOrderRef.current = data.order ?? data;
+console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
 
         const firstItem = cartItems[0];
 
@@ -933,6 +893,7 @@ const handleCardSubmit = async (paymentMethodId) => {
           cartItems={orderSuccess ? frozenCartItemsRef.current : cartItems}
 
           deliveryMethod={deliveryMethod}
+userAddress={locationName}
 
           cartTotal={orderDataRef.current?.cartTotal ?? cartTotal}
 
@@ -981,7 +942,7 @@ const handleCardSubmit = async (paymentMethodId) => {
           }}
 
           isSubmitting={isSubmitting}
-
+          orderId={extractOrderId(serverOrderRef.current) || null}
           businessPhone={orderDataRef.current?.businessPhone || cartItems[0]?.phone || ""}
 
         />

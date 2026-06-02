@@ -576,15 +576,12 @@ const Admin = () => {
   return (
     <div className="admin-shell">
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
-        <div className="sidebar-logo">
-          <div className="sidebar-logo__icon">
-            <img src="/src/assets/images/e.png" alt="logo" style={{ width: 28, height: 28, objectFit: "contain" }} />
-          </div>
+        <div className="biz-logo">
+          <img src="public/images/zerowaste-logo.png" alt="ZeroWaste Logo" className="biz-logo-img" />
           {sidebarOpen && (
-            <div className="sidebar-logo__text">
-              <span className="sidebar-logo__name">ZeroWaste</span>
-              <span className="sidebar-logo__role">{ROLE_LABEL[role] ?? role}</span>
-            </div>
+            <span className="biz-logo__role">
+              {ROLE_LABEL[role] ?? role}
+            </span>
           )}
         </div>
 

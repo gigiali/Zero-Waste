@@ -70,6 +70,8 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [reviewImage, setReviewImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitted, setSubmitted] = useState(false);
+const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+const [isCancelling, setIsCancelling] = useState(false);
 
   const dismissReview = () => {
     setShowReview(false);
@@ -188,6 +190,29 @@ function OrderTrackingStrip({ order, onDismiss }) {
     setImagePreview(null);
   };
 
+  const handleCancelOrder = async () => {
+    const token =
+      localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+    if (!token || !order.orderNumber) return;
+    setIsCancelling(true);
+    try {
+      const res = await fetch(BASE_URL + "/api/orders/" + order.orderNumber + "/cancel", {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: "Bearer " + token },
+      });
+      if (res.ok) {
+        setIsCancelled(true);
+        setShowCancelConfirm(false);
+        setTimeout(() => onDismiss(), 3000);
+      }
+    } catch (err) {
+      console.error("Cancel failed:", err);
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   if (isCancelled) {
     return (
       <div className="order-strip" style={{ borderColor: "#fca5a5" }}>
@@ -200,7 +225,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
           </div>
           <div className="order-strip-right">
             <span className="order-strip-total">EGP {Number(order.total || 0).toFixed(2)}</span>
-            <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss"><X size={12} /></button>
+            <button className="order-strip-dismiss" onClick={() => setShowCancelConfirm(true)} title="Cancel Order"><X size={12} /></button>
           </div>
         </div>
         <p style={{ fontSize: "13px", color: "#ef4444", margin: "6px 0 4px", padding: "0 4px" }}>
@@ -241,42 +266,24 @@ function OrderTrackingStrip({ order, onDismiss }) {
           );
         })}
       </div>
-      {showReview && (
-        <div className="review-overlay" onClick={dismissReview}>
-          <div className="review-modal" onClick={(e) => e.stopPropagation()}>
-            <button className="review-close" onClick={dismissReview}><X size={18} /></button>
-            <div className="review-header">
-              <div className="review-icon">🎉</div>
-              <h3>Order Delivered!</h3>
-              <p>How was your experience?</p>
+      {showCancelConfirm && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999999, display: "flex", alignItems: "center", justifyContent: "center" }}
+          onClick={() => setShowCancelConfirm(false)}>
+          <div style={{ background: "white", borderRadius: "16px", padding: "1.75rem", maxWidth: "320px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
+            onClick={(e) => e.stopPropagation()}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>⚠️</div>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.1rem" }}>Cancel Order?</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.88rem", margin: "0 0 1.5rem" }}>Are you sure you want to cancel this order? This action cannot be undone.</p>
+            <div style={{ display: "flex", gap: "0.75rem" }}>
+              <button onClick={() => setShowCancelConfirm(false)}
+                style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "10px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}>
+                Keep Order
+              </button>
+              <button onClick={handleCancelOrder} disabled={isCancelling}
+                style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "10px", background: "#ef4444", color: "white", fontWeight: 600, cursor: isCancelling ? "not-allowed" : "pointer", fontSize: "0.9rem", opacity: isCancelling ? 0.7 : 1 }}>
+                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
+              </button>
             </div>
-            <div className="review-stars">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button key={star} className={"review-star " + (star <= rating ? "filled" : "")} onClick={() => setRating(star)}>
-                  <Star size={18} fill={star <= rating ? "#fbbf24" : "none"} />
-                </button>
-              ))}
-            </div>
-            <textarea className="review-textarea" placeholder="Write your comment... (optional, max 500 chars)"
-              value={reviewText} onChange={(e) => setReviewText(e.target.value.slice(0, 500))} rows={2} />
-            <div className="review-image-section">
-              {!imagePreview ? (
-                <label className="review-image-upload">
-                  <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleImageChange} style={{ display: "none" }} />
-                  <span className="upload-icon">📷</span>
-                  <span className="upload-text">Add Photo (optional)</span>
-                  <span className="upload-hint">JPG, PNG - Max 2MB</span>
-                </label>
-              ) : (
-                <div className="review-image-preview">
-                  <img src={imagePreview} alt="Preview" />
-                  <button className="remove-image-btn" onClick={removeImage}><X size={16} /></button>
-                </div>
-              )}
-            </div>
-            <button className="review-submit-btn" onClick={handleSubmitReview} disabled={rating === 0 || submitted}>
-              {submitted ? "✓ Submitted" : "Submit Review"}
-            </button>
           </div>
         </div>
       )}
@@ -877,4 +884,3 @@ export default function HomePage() {
     </div>
   );
 }
-

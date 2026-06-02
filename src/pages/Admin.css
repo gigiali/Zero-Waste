@@ -51,7 +51,7 @@
 
 .admin-sidebar {
   width: var(--sidebar-width);
-  background: var(--admin-sidebar-bg);
+  background: linear-gradient( #818ebb, #475072 0%, #161b36 100%);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -68,38 +68,32 @@
 }
 
 /* Logo */
-.sidebar-logo {
+.biz-logo {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 20px 18px;
+  justify-content: center;
+  gap: 0;
+  padding: 20px 16px 16px;
+  flex-direction: column;
   border-bottom: 1px solid rgba(255,255,255,0.05);
   min-height: 70px;
 }
 
-.sidebar-logo__icon {
-  width: 34px;
-  height: 34px;
+.biz-logo-img {
+  width: 100%;
+  height: auto;
+  max-height: 70px;
   border-radius: 8px;
-  background: transparent;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
+  object-fit: cover;
 }
 
-.sidebar-logo__text {
-  display: flex;
-  flex-direction: column;
-}
-
-.sidebar-logo__name {
-  color: #fff;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
-  margin: 0;
+.biz-logo__role {
+  font-size: 0.72rem;
+  color: var(--admin-sidebar-text);
+  letter-spacing: -0.3px;
+  display: block;
+  margin-top: 8px;
+  text-align: center;
 }
 
 .sidebar-logo__role {
@@ -114,7 +108,7 @@
   position: absolute;
   top: 22px;
   right: 14px;
-  background: rgba(255,255,255,0.06);
+  background: rgba(32, 0, 0, 0.06);
   border: none;
   color: var(--admin-sidebar-text);
   cursor: pointer;
