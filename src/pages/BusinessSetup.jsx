@@ -68,7 +68,7 @@ function BusinessSetup() {
       vendorData.append("tax_card", formData.taxCard);
       if (formData.logo) vendorData.append("logo", formData.logo);
 
-      const vendorRes = await fetch("/api/vendor/complete-setup", {
+const vendorRes = await fetch("https://zero-waste-production.up.railway.app/api/vendor/complete-setup", {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         body: vendorData,

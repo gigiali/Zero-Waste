@@ -285,8 +285,13 @@ export default function MyProfileBusiness() {
       const data = await res.json();
       if (res.ok) {
         const v = data.data?.vendor || data.vendor || data.data || data;
-        const storage = "https://zero-waste-production.up.railway.app/storage/";
-        const toUrl = (path) => (path ? (path.startsWith("http") ? path : storage + path) : "");
+       // لـ
+const toUrl = (path) => {
+  if (!path) return "";
+  if (path.startsWith("http")) return path;
+  const clean = path.replace(/^\/+/, "");
+  return `https://zero-waste-production.up.railway.app/${clean}`;
+};
 
         const d = {
           business_name: v.business_name || "",

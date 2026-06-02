@@ -829,8 +829,7 @@ export default function HomePage() {
           sessionStorage.getItem("token");
 
         const vendorType = selectedCategory === "All" ? "" : selectedCategory;
-        const endpoint = `/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`;
-
+const endpoint = `${BASE_URL}/api/offers${vendorType ? `?vendor_type=${vendorType}` : ""}`;
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 

@@ -146,7 +146,7 @@ function SaleDetailsModal({ saleId, onClose }) {
           <div className="mb-details-header__left">
             {offerImage ? (
               <img
-                src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production.up.railway.app/${offerImage}`}
+src={offerImage.startsWith("http") ? offerImage : `https://zero-waste-production.up.railway.app/storage/${offerImage}`}
                 alt="offer"
                 className="mb-details-logo"
                 style={{ borderRadius: "10px", objectFit: "cover" }}
