@@ -26,7 +26,6 @@ export default function CartPage() {
 
   const handleDeliverySelect = (method) => {
     setSelectedDelivery(method);
-    // Calculate delivery fee dynamically when user selects delivery
     if (method === "delivery" && cartItems.length > 0) {
       calculateDeliveryFee(cartItems[0].id);
     }
@@ -45,7 +44,6 @@ export default function CartPage() {
       </div>
 
       <div className="cart-content">
-        {/* Cart Items */}
         <div className="cart-items">
           {cartItems.length === 0 ? (
             <div className="cart-empty">
@@ -100,7 +98,6 @@ export default function CartPage() {
           )}
         </div>
 
-        {/* Order Summary */}
         <div className="order-summary">
           <h2>{t("cart.summaryTitle")}</h2>
           <div className="summary-rows">
@@ -122,11 +119,9 @@ export default function CartPage() {
             <span>EGP {total.toFixed(2)}</span>
           </div>
 
-          {/* Delivery Options */}
           <div className="delivery-options">
             <h3>{t("cart.chooseDeliveryMethod")}</h3>
             <div className="delivery-buttons">
-              {/* Pickup */}
               <button
                 className={`delivery-btn pickup-btn ${
                   selectedDelivery === "pickup" ? "selected" : ""
@@ -145,7 +140,6 @@ export default function CartPage() {
                 )}
               </button>
 
-              {/* Home Delivery */}
               <button
                 className={`delivery-btn delivery-home-btn ${
                   selectedDelivery === "delivery" ? "selected" : ""
@@ -174,7 +168,6 @@ export default function CartPage() {
               </button>
             </div>
 
-            {/* No location warning */}
             {selectedDelivery === "delivery" && !locationName && (
               <div
                 style={{

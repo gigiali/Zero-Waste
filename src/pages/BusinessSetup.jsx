@@ -22,7 +22,6 @@ function BusinessSetup() {
 
   const validateForm = () => {
     const newErrors = {};
-    // Vendor fields validation
     if (!formData.businessName.trim())
       newErrors.businessName = t("businessSetup.errors.businessNameRequired");
     if (!formData.businessType)
@@ -59,7 +58,6 @@ function BusinessSetup() {
     }
 
     try {
-      // ── Step 1: vendor complete-setup ──
       const vendorData = new FormData();
       vendorData.append("business_name", formData.businessName.trim());
       vendorData.append("vendor_type", formData.businessType);
@@ -91,7 +89,6 @@ const vendorRes = await fetch("https://zero-waste-production.up.railway.app/api/
         return;
       }
 
-      // ── Success: Redirect to add branch page ──
       setSubmitMessage("✓ Business setup completed!");
       setTimeout(() => {
         navigate("/business/profile");
@@ -129,7 +126,6 @@ const vendorRes = await fetch("https://zero-waste-production.up.railway.app/api/
         <div className="business-setup-form-section">
           <form className="business-setup-form" onSubmit={handleSubmit}>
 
-            {/* ── Business Info Only ── */}
             <div className="form-section">
               <h3>Business Information</h3>
 

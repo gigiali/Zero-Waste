@@ -634,12 +634,17 @@ const { locationName } = useLocationContext();
                             </p>
                           )}
                           {review.image_url && (
-                            <img
-                              src={review.image_url}
-                              alt="Review"
-                              className="od-review-img"
-                            />
-                          )}
+  <img
+    src={
+      review.image_url.startsWith('http')
+        ? review.image_url
+        : `https://zero-waste-production.up.railway.app/${review.image_url}`
+    }
+    alt="Review"
+    className="od-review-img"
+    onError={(e) => { e.target.src = "/images/e.png"; }}
+  />
+)}
                           <div className="od-review-footer">
                             <span className="od-review-method">
                               {review.delivery_method === "delivery"

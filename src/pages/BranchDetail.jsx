@@ -103,14 +103,12 @@ export default function BranchDetail() {
   return (
     <div className="branch-detail-container">
 
-      {/* Header */}
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-btn">
           <ArrowLeft size={18} /> Back
         </button>
       </div>
 
-      {/* Hero Section */}
       <div className="branch-hero">
         <img
           src={vendorLogo}
@@ -129,7 +127,6 @@ export default function BranchDetail() {
         </div>
       </div>
 
-      {/* Info Strip - horizontal */}
       <div className="branch-info-strip">
         <div className="branch-info-strip-inner">
           <div className="branch-info-item">
@@ -156,7 +153,6 @@ export default function BranchDetail() {
         </div>
       </div>
 
-      {/* Vendor Info - no button */}
       {vendor && (
         <div className="vendor-info-section">
           <h2>About {vendor.business_name}</h2>
@@ -166,7 +162,6 @@ export default function BranchDetail() {
         </div>
       )}
 
-      {/* Offers Section */}
       <div className="branch-offers-section">
         <h2>Available Offers ({branchOffers.length})</h2>
         {branchOffers.length === 0 ? (
@@ -228,7 +223,6 @@ export default function BranchDetail() {
         )}
       </div>
 
-      {/* Get Directions button only - no map */}
       {lat && lng && (
         <div className="navigation-section">
           <button

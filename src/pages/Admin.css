@@ -1,8 +1,3 @@
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* ADMIN DASHBOARD — Sneat-style modern UI                                   */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
-/* ── CSS Variables ── */
 :root {
   --admin-primary:   #696cff;
   --admin-primary-light: #e7e7ff;
@@ -26,7 +21,6 @@
   --topbar-height:   64px;
 }
 
-/* ── Shell ── */
 .admin-shell {
   display: flex;
   min-height: 100vh;
@@ -34,7 +28,6 @@
   font-family: 'Public Sans', 'Segoe UI', sans-serif;
 }
 
-/* ── Auth Error ── */
 .admin-auth-error {
   display: flex;
   flex-direction: column;
@@ -44,10 +37,6 @@
   gap: 12px;
   color: var(--admin-danger);
 }
-
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* SIDEBAR                                                                   */
-/* ══════════════════════════════════════════════════════════════════════════ */
 
 .admin-sidebar {
   width: var(--sidebar-width);
@@ -67,7 +56,6 @@
   width: var(--sidebar-collapsed);
 }
 
-/* Logo */
 .biz-logo {
   display: flex;
   align-items: center;
@@ -103,7 +91,6 @@
   margin-top: 1px;
 }
 
-/* Toggle button */
 .sidebar-toggle {
   position: absolute;
   top: 22px;
@@ -121,7 +108,6 @@
 }
 .sidebar-toggle:hover { background: rgba(255,255,255,0.12); }
 
-/* Nav */
 .sidebar-nav {
   flex: 1;
   padding: 12px 8px;
@@ -195,7 +181,6 @@
   margin: 8px auto;
 }
 
-/* Profile */
 .sidebar-profile {
   display: flex;
   align-items: center;
@@ -235,10 +220,6 @@
   margin: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* MAIN CONTENT                                                              */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
 .admin-main {
   flex: 1;
   margin-left: var(--sidebar-width);
@@ -252,7 +233,6 @@
   margin-left: var(--sidebar-collapsed);
 }
 
-/* ── Top Bar ── */
 .admin-topbar {
   height: var(--topbar-height);
   background: var(--admin-card-bg);
@@ -325,15 +305,10 @@
   border: 1.5px solid #fff;
 }
 
-/* ── Page Content ── */
 .admin-page-content {
   padding: 24px 28px;
   flex: 1;
 }
-
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* STAT CARDS                                                                */
-/* ══════════════════════════════════════════════════════════════════════════ */
 
 .stats-grid {
   display: grid;
@@ -406,10 +381,6 @@
   flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* CHARTS                                                                    */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
 .charts-row {
   display: grid;
   grid-template-columns: 1fr 360px;
@@ -445,7 +416,6 @@
   margin: 0;
 }
 
-/* Pie legend */
 .pie-legend {
   margin-top: 16px;
   display: flex;
@@ -476,10 +446,6 @@
   font-weight: 700;
   color: var(--admin-text-dark);
 }
-
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* QUICK ACTIONS                                                             */
-/* ══════════════════════════════════════════════════════════════════════════ */
 
 .section-heading {
   font-size: 0.85rem;
@@ -546,10 +512,6 @@
   flex-shrink: 0;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* IMPACT BANNER                                                             */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
 .impact-banner {
   background: linear-gradient(135deg, #696cff 0%, #5f61d9 100%);
   border-radius: var(--admin-radius);
@@ -586,10 +548,6 @@
   height: 40px;
   background: rgba(255,255,255,0.2);
 }
-
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* ORDERS TABLE                                                              */
-/* ══════════════════════════════════════════════════════════════════════════ */
 
 .orders-card {
   background: var(--admin-card-bg);
@@ -675,7 +633,6 @@
 }
 .refresh-btn:hover { border-color: var(--admin-primary); color: var(--admin-primary); }
 
-/* Table */
 .table-wrapper { overflow-x: auto; }
 
 .orders-table {
@@ -762,7 +719,6 @@
   display: inline-block;
 }
 
-/* Pagination */
 .pagination {
   display: flex;
   align-items: center;
@@ -816,10 +772,6 @@
   color: var(--admin-text-muted);
 }
 
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* ACTIVITY LIST                                                             */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
 .activity-list {
   padding: 8px 22px 16px;
 }
@@ -855,10 +807,6 @@
   font-size: 0.74rem;
   color: var(--admin-text-muted);
 }
-
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* STATES                                                                    */
-/* ══════════════════════════════════════════════════════════════════════════ */
 
 .loading-state {
   display: flex;
@@ -898,10 +846,6 @@
   color: #b0bec5;
 }
 
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* RESPONSIVE                                                                */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
 @media (max-width: 1200px) {
   .charts-row { grid-template-columns: 1fr; }
   .quick-actions-grid { grid-template-columns: 1fr 1fr; }
@@ -936,9 +880,6 @@
   .quick-actions-grid { grid-template-columns: 1fr; }
   .charts-row { grid-template-columns: 1fr; }
 }
-/* ════════════════════════════════════════
-   SUSTAINABILITY SECTION CSS
-════════════════════════════════════════ */
 
 .sustainability-section {
   display: flex;
@@ -983,7 +924,6 @@
   font-weight: 500;
 }
 
-/* ── Sustainability Metrics Grid ── */
 .sustainability-metrics-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -1060,7 +1000,6 @@
   font-weight: 500;
 }
 
-/* Color variants for different metrics */
 .sustainability-metric-card:nth-child(1) {
   border-top-color: #28c76f;
 }
@@ -1093,7 +1032,6 @@
   background: rgba(245, 158, 11, 0.12);
 }
 
-/* ── Sustainability Chart ── */
 .sustainability-chart {
   margin-top: 24px;
 }
@@ -1112,7 +1050,6 @@
   color: #059669;
 }
 
-/* ── Loading & Error States ── */
 .loading-state {
   display: flex;
   align-items: center;
@@ -1163,7 +1100,6 @@
   color: #9ca3af;
 }
 
-/* ── Refresh Button ── */
 .refresh-btn {
   width: 36px;
   height: 36px;
@@ -1187,7 +1123,6 @@
   transition: all 0.3s ease;
 }
 
-/* ── Chart Card Base ── */
 .chart-card {
   background: white;
   border-radius: 12px;
@@ -1223,7 +1158,6 @@
   margin: 4px 0 0 0;
 }
 
-/* ── Responsive ── */
 @media (max-width: 1024px) {
   .sustainability-metrics-grid {
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -1267,7 +1201,6 @@
   }
 }
 
-/* ── Animation for chart data ── */
 @keyframes slideInChart {
   from {
     opacity: 0;
@@ -1283,7 +1216,6 @@
   animation: slideInChart 0.4s ease 0.2s backwards;
 }
 
-/* ── Print Styles ── */
 @media print {
   .sustainability-section {
     gap: 16px;

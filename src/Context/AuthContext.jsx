@@ -15,7 +15,6 @@ export function AuthProvider({ children }) {
 
   const [businessStatus, setBusinessStatus] = useState(null);
 
-  // ✅ تعديل الـ login لضمان حفظ التوكن بالاسمين وزيادة الأمان
   const login = (userData, token, remember = false) => {
     localStorage.setItem("token", token);
 localStorage.setItem("auth_token", token);
@@ -41,7 +40,6 @@ localStorage.setItem("auth_token", token);
 
   const isLoggedIn = !!user;
 
-  // دي الـ الـ حلال المشاكل اللي مربوطة بالـ useEffect في صفحة الـ Profile
   const role = user?.role_type ?? user?.role ?? null;
 
   return (

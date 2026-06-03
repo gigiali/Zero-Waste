@@ -89,7 +89,6 @@ export default function LocationSelector() {
               flexDirection: "column",
             }}
           >
-            {/* Header */}
             <div
               style={{
                 padding: "1rem 1.5rem",
@@ -122,7 +121,6 @@ export default function LocationSelector() {
                 </button>
               </div>
 
-              {/* Search Bar */}
               <div style={{ position: "relative", marginBottom: "8px" }}>
                 <Search
                   size={18}
@@ -215,7 +213,6 @@ export default function LocationSelector() {
                 )}
               </div>
 
-              {/* Geolocation Button */}
               <button
                 onClick={handleGeolocation}
                 style={{
@@ -241,7 +238,6 @@ export default function LocationSelector() {
               </button>
             </div>
 
-            {/* Error Message */}
             {locationError && (
               <div
                 style={{
@@ -264,7 +260,6 @@ export default function LocationSelector() {
               </div>
             )}
 
-            {/* Map */}
             <div
               ref={mapRef}
               style={{
@@ -274,7 +269,6 @@ export default function LocationSelector() {
               }}
             />
 
-            {/* Coordinates Display */}
             {selectedCoordinates.lat !== null && selectedCoordinates.lng !== null && (
               <div
                 style={{

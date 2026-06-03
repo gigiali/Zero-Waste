@@ -1,9 +1,7 @@
-// @refresh reset
 import { createContext, useContext, useState } from "react";
 
 const CartContext = createContext();
 
-// ── Conflict Dialog Component ─────────────────────────────────────────────────
 function ConflictDialog({ currentVendor, newVendor, onClear, onCancel }) {
   return (
     <div style={{
@@ -60,9 +58,7 @@ export function CartProvider({ children }) {
   const [showSignInPopup, setShowSignInPopup] = useState(false);
   const [showLocationPopup, setShowLocationPopup] = useState(false);
 
-  // ── Conflict dialog state ──
   const [conflictDialog, setConflictDialog] = useState(null);
-  // conflictDialog = { pendingItem, pendingQty, currentVendor, newVendor }
 
   const _doAdd = (item, quantity, itemId) => {
     const maxQuantity = item.stock ?? item.quantity_available ?? 999;
@@ -92,7 +88,6 @@ export function CartProvider({ children }) {
       return [...prev, { ...item, id: itemId, quantity }];
     });
 
-    // Update vendor/branch tracking
     setCartVendorId(item.vendor_id ?? item.branch?.vendor_id ?? null);
     setCartBranchId(item.branch_id ?? item.branch?.id ?? null);
     setCartVendorName(
@@ -117,7 +112,6 @@ export function CartProvider({ children }) {
       return { success: false, message: "Error: Item ID missing" };
     }
 
-    // ── Vendor/Branch conflict check ──
     const incomingVendorId = item.vendor_id ?? item.branch?.vendor_id ?? null;
     const incomingBranchId = item.branch_id ?? item.branch?.id ?? null;
     const incomingVendorName =
@@ -128,7 +122,6 @@ export function CartProvider({ children }) {
       const branchMismatch = cartBranchId && incomingBranchId && String(cartBranchId) !== String(incomingBranchId);
 
       if (vendorMismatch || branchMismatch) {
-        // Show conflict dialog — don't add yet
         setConflictDialog({
           pendingItem: item,
           pendingQty: quantity,
@@ -199,7 +192,6 @@ export function CartProvider({ children }) {
     >
       {children}
 
-      {/* ── Conflict Dialog ── */}
       {conflictDialog && (
         <ConflictDialog
           currentVendor={conflictDialog.currentVendor}
@@ -209,7 +201,6 @@ export function CartProvider({ children }) {
         />
       )}
 
-      {/* ── Sign In Popup ── */}
       {showSignInPopup && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",
@@ -241,7 +232,6 @@ export function CartProvider({ children }) {
         </div>
       )}
 
-      {/* ── Location Popup ── */}
       {showLocationPopup && (
         <div style={{
           position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)",

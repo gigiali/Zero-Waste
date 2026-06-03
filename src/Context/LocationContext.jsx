@@ -47,7 +47,6 @@ export function LocationProvider({ children }) {
     return lng ? parseFloat(lng) : null;
   });
 
-  // Map related state
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState([]);
   const [showMapSearchResults, setShowMapSearchResults] = useState(false);

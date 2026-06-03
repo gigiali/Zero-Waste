@@ -1,7 +1,3 @@
-/* ────────────────────────────────────────────────────────────────── */
-/* BUSINESS SETUP PAGE - PROFESSIONAL STYLING (VENDOR ONLY)          */
-/* ────────────────────────────────────────────────────────────────── */
-
 :root {
   --primary: #10b981;
   --primary-dark: #059669;
@@ -23,10 +19,6 @@
   --radius-xl: 16px;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* BASE LAYOUT                                                       */
-/* ────────────────────────────────────────────────────────────────── */
-
 .business-setup-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
@@ -35,16 +27,12 @@
   scroll-behavior: smooth;
 }
 
-/* Hide review banner */
 .business-setup-page [class*="alert"],
 .business-setup-page [class*="review"],
 .business-setup-page [style*="background: #fee2e2"] {
   display: none !important;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* CONTAINER & STRUCTURE                                             */
-/* ────────────────────────────────────────────────────────────────── */
 
 .business-setup-container {
   max-width: 900px;
@@ -88,9 +76,6 @@
   font-weight: 500;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* FORM SECTION                                                      */
-/* ────────────────────────────────────────────────────────────────── */
 
 .business-setup-form-section {
   background: white;
@@ -115,10 +100,6 @@
   padding: 2.5rem;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* FORM SECTIONS                                                     */
-/* ────────────────────────────────────────────────────────────────── */
-
 .form-section {
   margin-bottom: 2.5rem;
 }
@@ -136,10 +117,6 @@
   border-bottom: 2px solid var(--primary);
   display: inline-block;
 }
-
-/* ────────────────────────────────────────────────────────────────── */
-/* FORM GROUPS                                                       */
-/* ────────────────────────────────────────────────────────────────── */
 
 .form-group {
   margin-bottom: 1.5rem;
@@ -161,9 +138,6 @@
   font-weight: 600;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* INPUT FIELDS                                                      */
-/* ────────────────────────────────────────────────────────────────── */
 
 .form-input {
   padding: 0.85rem 1rem;
@@ -200,10 +174,6 @@ select.form-input {
   background-position: right 0.75rem center;
   padding-right: 2.5rem;
 }
-
-/* ────────────────────────────────────────────────────────────────── */
-/* FILE UPLOADS                                                      */
-/* ────────────────────────────────────────────────────────────────── */
 
 .file-upload {
   position: relative;
@@ -247,9 +217,6 @@ select.form-input {
   color: var(--text-tertiary);
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* ERROR MESSAGES                                                    */
-/* ────────────────────────────────────────────────────────────────── */
 
 .error-text {
   font-size: 0.8rem;
@@ -265,10 +232,6 @@ select.form-input {
   content: "⚠";
   font-size: 0.9rem;
 }
-
-/* ────────────────────────────────────────────────────────────────── */
-/* SUBMIT MESSAGE                                                    */
-/* ────────────────────────────────────────────────────────────────── */
 
 .submit-message {
   padding: 1rem 1.2rem;
@@ -317,10 +280,6 @@ select.form-input {
   font-size: 1.2rem;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* BUTTONS                                                           */
-/* ────────────────────────────────────────────────────────────────── */
-
 .complete-setup-btn {
   width: 100%;
   padding: 1rem !important;
@@ -352,9 +311,6 @@ select.form-input {
   cursor: not-allowed;
 }
 
-/* ────────────────────────────────────────────────────────────────── */
-/* BACK PROMPT                                                       */
-/* ────────────────────────────────────────────────────────────────── */
 
 .back-prompt {
   padding: 1.5rem 2.5rem;
@@ -378,10 +334,6 @@ select.form-input {
   color: var(--primary-dark);
   transform: translateX(-4px);
 }
-
-/* ────────────────────────────────────────────────────────────────── */
-/* RESPONSIVE DESIGN                                                 */
-/* ────────────────────────────────────────────────────────────────── */
 
 @media (max-width: 768px) {
   .business-setup-page {

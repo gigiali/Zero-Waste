@@ -1,4 +1,3 @@
-/* Base button styles */
 .btn {
   padding: 12px 24px;
   border: none;
@@ -14,7 +13,6 @@
   font-family: Arial, sans-serif;
 }
 
-/* Primary blue button (Sign up with email) */
 .btn.btn-primary {
   background-color: #007bff;
   color: white;
@@ -24,7 +22,6 @@
   background-color: #0056b3;
 }
 
-/* Secondary white button (Continue with Google) */
 .btn.btn-secondary {
   background-color: white;
   color: #333;
@@ -35,7 +32,6 @@
   background-color: #f8f9fa;
 }
 
-/* Green primary button (Sign In, Near Me) */
 .btn.btn-success {
   background-color: #28a745;
   color: white;
@@ -45,7 +41,6 @@
   background-color: #218838;
 }
 
-/* Red danger button (Delete) */
 .btn.btn-danger {
   background-color: #dc3545;
   color: white;
@@ -55,7 +50,6 @@
   background-color: #c82333;
 }
 
-/* Filter buttons (All, Restaurant, Hotel, etc.) */
 .btn.btn-filter {
   background-color: #f8f9fa;
   color: #6c757d;
@@ -72,7 +66,6 @@
   border-color: #007bff;
 }
 
-/* Text-only button */
 .btn.btn-text {
   background: none;
   color: #007bff;
@@ -83,7 +76,6 @@
   text-decoration: underline;
 }
 
-/* Google button */
 .btn.btn-google {
   background-color: #4285f4;
   color: white;
@@ -96,7 +88,6 @@
   background-color: #357ae8;
 }
 
-/* Coffee Shop button */
 .btn.btn-coffee {
   background-color: #6f4e37;
   color: white;
@@ -106,7 +97,6 @@
   background-color: #5a3d2b;
 }
 
-/* Dessert Shop button */
 .btn.btn-dessert {
   background-color: #e91e63;
   color: white;
@@ -116,7 +106,6 @@
   background-color: #d32f2f;
 }
 
-/* Filter buttons */
 .btn.btn-filter {
   background-color: #f8f9fa;
   color: #333;
@@ -136,7 +125,6 @@
   border-color: #dee2e6;
 }
 
-/* Google button */
 .btn.btn-google {
   background-color: white;
   color: #333;
@@ -147,7 +135,6 @@
   background-color: #f8f9fa;
 }
 
-/* Text-only buttons */
 .btn.btn-text {
   background-color: transparent;
   color: #333;
@@ -161,13 +148,11 @@
   background-color: transparent;
 }
 
-/* Small button variant for filter buttons */
 .btn-small {
   padding: 6px 12px;
   font-size: 14px;
 }
 
-/* Large button variant */
 .btn-large {
   padding: 16px 32px;
   font-size: 18px;

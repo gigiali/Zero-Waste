@@ -1,10 +1,5 @@
-/* ══════════════════════════════════════════════════════════ */
-/* ─ NAVBAR — Unified Professional Design ────────────────── */
-/* ══════════════════════════════════════════════════════════ */
-
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap');
 
-/* ── Base ── */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -20,39 +15,12 @@
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
-/* ── Logo ── */
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  cursor: pointer;
-}
-
-.logo-icon {
-  color: #10b981;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.logo h1 {
-  color: #10b981;
-  font-size: 1.4rem;
-  font-weight: 800;
-  margin: 0;
-  letter-spacing: -0.6px;
-  line-height: 1;
-}
-
-/* ── Nav Items Container ── */
 .nav-items {
   display: flex;
   align-items: center;
   gap: 4px;
 }
 
-/* ── Generic Nav Item (icon + text buttons) ── */
 .nav-item {
   display: flex;
   align-items: center;
@@ -82,7 +50,6 @@
   background: #d1fae5;
 }
 
-/* ── Notification / Cart Badge ── */
 .badge {
   position: absolute;
   top: 3px;
@@ -106,7 +73,6 @@
   background: #10b981;
 }
 
-/* ── Location Selector ── */
 .nav-location {
   display: flex;
   align-items: center;
@@ -129,7 +95,6 @@
   color: #059669;
 }
 
-/* ── Profile Button ── */
 .nav-profile-btn {
   display: flex;
   align-items: center;
@@ -152,7 +117,6 @@
   transform: translateY(-1px);
 }
 
-/* ── Sign In / CTA Button ── */
 .nav-signin-btn {
   padding: 8px 20px;
   background: linear-gradient(135deg, #10b981, #059669);
@@ -174,7 +138,6 @@
   box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
 }
 
-/* ── Divider between groups ── */
 .nav-divider {
   width: 1px;
   height: 22px;
@@ -182,7 +145,6 @@
   margin: 0 6px;
 }
 
-/* ── Language Switcher ── */
 .language-switcher {
   position: relative;
   cursor: pointer;
@@ -245,7 +207,6 @@
   box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
 }
 
-/* ── Responsive ── */
 @media (max-width: 768px) {
   .navbar {
     padding: 0 1rem;

@@ -47,8 +47,6 @@ export default function Navigation({
   const [mapSearchQuery, setMapSearchQuery] = useState("");
   const [mapSearchResults, setMapSearchResults] = useState([]);
   const [showMapSearchResults, setShowMapSearchResults] = useState(false);
-
-  // ✅ Favorites count
   const [favCount, setFavCount] = useState(() =>
     parseInt(localStorage.getItem("zw_favorites_count") || "0"),
   );
@@ -385,7 +383,6 @@ export default function Navigation({
           zIndex: 200,
         }}
       >
-        {/* Logo */}
 <div
   style={{
     cursor: "pointer",
@@ -410,9 +407,7 @@ export default function Navigation({
     }}
   />
 </div>
-        {/* Right side */}
         <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
-          {/* Location */}
           {!hideLocation && (
             <div
               style={{
@@ -478,7 +473,6 @@ export default function Navigation({
             </div>
           )}
 
-          {/* Cart */}
           {!hideCart && (
             <div
               style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
@@ -514,7 +508,6 @@ export default function Navigation({
             </div>
           )}
 
-          {/* Favorites */}
           <div
             style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
             onClick={() => navigate("/favorites")}
@@ -547,14 +540,12 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Notifications */}
           <NotificationsBell
             show={showNotifications}
             onToggle={() => setShowNotifications((v) => !v)}
             notifRef={notifRef}
           />
 
-          {/* Language */}
           <div
             data-lang-dropdown
             style={{
@@ -629,7 +620,6 @@ export default function Navigation({
             )}
           </div>
 
-          {/* Profile */}
           {!hideProfile ? (
             isLoggedIn ? (
               <div
@@ -699,7 +689,6 @@ export default function Navigation({
         </div>
       </div>
 
-      {/* Logout confirm */}
       {showLogoutConfirm && (
         <div
           style={{
@@ -780,7 +769,6 @@ export default function Navigation({
         </div>
       )}
 
-      {/* Map modal */}
       {showMap && (
         <div
           style={{

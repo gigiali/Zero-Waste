@@ -9,13 +9,11 @@ export const NOTIF_META = {
   info:    { icon: Info,        bg: "linear-gradient(135deg,#f5f3ff,#ede9fe)", color: "#8b5cf6", accent: "#a78bfa" },
 };
 
-/* ── Full-screen overlay panel (used in Business sidebar) ── */
 export function NotificationsPanel({ onClose }) {
   const { notifications, unreadCount, markRead, markAllRead, remove, clearAll } = useNotifications();
 
   return (
     <>
-      {/* Backdrop */}
       <div
         onClick={onClose}
         style={{
@@ -27,7 +25,6 @@ export function NotificationsPanel({ onClose }) {
         }}
       />
 
-      {/* Panel */}
       <div style={{
         position: "fixed",
         top: 0, right: 0,
@@ -38,7 +35,7 @@ export function NotificationsPanel({ onClose }) {
         display: "flex", flexDirection: "column",
         animation: "slideInRight 0.25s cubic-bezier(0.22,1,0.36,1)",
       }}>
-        {/* Header */}
+
         <div style={{
           padding: "24px 24px 16px",
           borderBottom: "1px solid #f3f4f6",
@@ -96,7 +93,6 @@ export function NotificationsPanel({ onClose }) {
           )}
         </div>
 
-        {/* List */}
         <div style={{ flex: 1, overflowY: "auto", padding: "8px 0" }}>
           {notifications.length === 0 ? (
             <div style={{ padding: "60px 24px", textAlign: "center" }}>
@@ -195,7 +191,6 @@ export function NotificationsPanel({ onClose }) {
           )}
         </div>
 
-        {/* Footer */}
         {notifications.length > 0 && (
           <div style={{
             padding: "16px 20px",
@@ -235,7 +230,6 @@ export function NotificationsPanel({ onClose }) {
   );
 }
 
-/* ── Dropdown panel (used in horizontal nav) ── */
 export function NotificationsDropdown({ align = "right" }) {
   const { notifications, unreadCount, markRead, markAllRead, remove, clearAll } = useNotifications();
 
@@ -253,7 +247,7 @@ export function NotificationsDropdown({ align = "right" }) {
       overflow: "hidden",
       animation: "dropIn 0.2s cubic-bezier(0.22,1,0.36,1)",
     }}>
-      {/* Arrow */}
+
       <div style={{
         position: "absolute", top: "-7px",
         ...(align === "right" ? { right: "76px" } : { left: "16px" }),
@@ -262,7 +256,6 @@ export function NotificationsDropdown({ align = "right" }) {
         transform: "rotate(45deg)", zIndex: 1,
       }} />
 
-      {/* Header */}
       <div style={{
         padding: "16px 18px 14px",
         borderBottom: "1px solid #f3f4f6",
@@ -292,7 +285,6 @@ export function NotificationsDropdown({ align = "right" }) {
         </div>
       </div>
 
-      {/* List */}
       <div style={{ maxHeight: "360px", overflowY: "auto" }}>
         {notifications.length === 0 ? (
           <div style={{ padding: "2.5rem 1rem", textAlign: "center" }}>
@@ -384,7 +376,6 @@ export function NotificationsDropdown({ align = "right" }) {
         )}
       </div>
 
-      {/* Footer */}
       {notifications.length > 0 && (
         <div style={{ padding: "10px 18px", borderTop: "1px solid #f3f4f6", background: "#fafafa" }}>
           <button onClick={clearAll} style={{
@@ -412,7 +403,6 @@ export function NotificationsDropdown({ align = "right" }) {
   );
 }
 
-/* ── Bell trigger (used in horizontal nav) ── */
 export function NotificationsBell({ show, onToggle, notifRef }) {
   const { unreadCount } = useNotifications();
 

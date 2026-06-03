@@ -95,7 +95,6 @@ const FALLBACK_CHART = [
   { day: "Sun", sales: 0, orders: 0 },
 ];
 
-// ── Sale Details Modal ────────────────────────────────────────────────────────
 function SaleDetailsModal({ saleId, onClose }) {
   const { t } = useTranslation();
   const [details, setDetails] = useState(null);
@@ -245,7 +244,6 @@ function SaleDetailsModal({ saleId, onClose }) {
   );
 }
 
-// ── Sustainability Section ────────────────────────────────────────────────────
 function VendorSustainabilitySection({ branchId }) {
   const { t } = useTranslation();
   const [metrics, setMetrics] = useState(null);
@@ -310,7 +308,6 @@ function VendorSustainabilitySection({ branchId }) {
   );
 }
 
-// ── Top Selling Section ───────────────────────────────────────────────────────
 function TopSellingSection({ branchId }) {
   const { t } = useTranslation();
   const [items, setItems] = useState([]);
@@ -376,7 +373,6 @@ function TopSellingSection({ branchId }) {
   );
 }
 
-// ── Sales History Section ─────────────────────────────────────────────────────
 function SalesHistorySection({ branchId }) {
   const { t } = useTranslation();
   const [sales, setSales] = useState([]);
@@ -478,7 +474,6 @@ function SalesHistorySection({ branchId }) {
   );
 }
 
-// ── Main Business Component ───────────────────────────────────────────────────
 export default function Business() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -518,7 +513,6 @@ export default function Business() {
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
 
-  // Handle language change
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
     i18n.changeLanguage(lang);
@@ -527,7 +521,6 @@ export default function Business() {
     localStorage.setItem("language", lang);
   };
 
-  // ── Initial data load ──────────────────────────────────────────────────────
   useEffect(() => {
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = language;
@@ -574,7 +567,6 @@ export default function Business() {
     fetchData();
   }, []);
 
-  // ── Fetch Overview Stats (/api/vendor/dashboard/overview) ─────────────────
   useEffect(() => {
     const fetchOverviewStats = async () => {
       const token = getToken();
@@ -606,7 +598,6 @@ export default function Business() {
     fetchOverviewStats();
   }, [dashboardBranchId]);
 
-  // ── Fetch Monthly Chart (/api/vendor/dashboard/monthly-chart) ─────────────
   useEffect(() => {
     const fetchMonthlyChart = async () => {
       const token = getToken();
@@ -664,7 +655,6 @@ useEffect(() => {
   };
   fetchOrdersChart();
 }, [dashboardBranchId]);
-  // ── Fetch Offers ───────────────────────────────────────────────────────────
   const fetchOffers = React.useCallback(async () => {
     if (isFetchingOffersRef.current) return;
     isFetchingOffersRef.current = true;
@@ -684,7 +674,6 @@ useEffect(() => {
 
   useEffect(() => { if (selectedBranch?.id) fetchOffers(); }, [selectedBranch?.id, fetchOffers]);
 
-  // ── Fetch Orders ───────────────────────────────────────────────────────────
   useEffect(() => {
     const fetchOrders = async () => {
       const token = getToken();
@@ -703,7 +692,6 @@ useEffect(() => {
     if (selectedBranch) fetchOrders();
   }, [selectedBranch]);
 
-  // ── Listen for order updates ───────────────────────────────────────────────
   useEffect(() => {
     const handleOrderPlaced = () => {
       if (!selectedBranch) return;
@@ -979,7 +967,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* ── KPI Cards ── */}
             <div className="biz-kpis">
               {[
                 { label: t("activeOffers"),  value: kpiData.activeOffers,  icon: "📦" },
@@ -995,14 +982,12 @@ useEffect(() => {
               ))}
             </div>
 
-            {/* ── Platform deduction note ── */}
             {kpiData.platformCut > 0 && (
               <div style={{ background: "#fffbeb", border: "1px solid #fde68a", borderRadius: "10px", padding: "10px 16px", fontSize: "0.82rem", color: "#92400e", marginBottom: "8px" }}>
                 ℹ️ {t("platformDeduction")} (12%): <strong>EGP {Number(kpiData.platformCut).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong> — {t("grossRevenueWas")} <strong>EGP {Number(kpiData.grossRevenue).toLocaleString("en-EG", { minimumFractionDigits: 2 })}</strong>
               </div>
             )}
 
-            {/* ── Charts ── */}
             <div id="charts-section" className="biz-charts" style={{ display: "flex", flexDirection: "row", gap: "16px", width: "100%" }}>
               <div className="biz-chart-card" style={{ flex: 1, minWidth: 0 }}>
                 <h3 className="biz-chart-title">{t("netRevenueMonth")} (EGP)</h3>
@@ -1042,15 +1027,12 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* ── Sustainability Impact ── */}
             <div id="sustainability-section">
               <VendorSustainabilitySection branchId={dashboardBranchId} />
             </div>
 
-            {/* ── Top Selling ── */}
             <TopSellingSection branchId={dashboardBranchId} />
 
-            {/* ── Offers ── */}
             <div className="biz-section" id="offers-section">
               <div className="biz-section-header">
                 <h2 className="biz-section-title">{t("myOffers")}</h2>
@@ -1133,7 +1115,6 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* ── Orders ── */}
             <div className="biz-section" id="orders-section">
               <div className="biz-section-header">
                 <h2 className="biz-section-title">{t("recentOrders")}</h2>
@@ -1178,13 +1159,11 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* ── Sales History ── */}
             <SalesHistorySection branchId={dashboardBranchId} />
           </>
         )}
       </main>
 
-      {/* ── Modals ── */}
       {editingBranch && (
         <div className="biz-modal-overlay">
           <div className="biz-modal">

@@ -1,7 +1,3 @@
-/* ============================================
-   FOOTER VARIABLES & GLOBAL STYLES
-   ============================================ */
-
 :root {
   --color-primary: #10b981;
   --color-primary-dark: #059669;
@@ -21,10 +17,6 @@
   --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ============================================
-   FOOTER CONTAINER
-   ============================================ */
-
 .footer {
   background: var(--color-bg-light);
   border-top: 1px solid var(--color-border);
@@ -36,10 +28,6 @@
   max-width: 1200px;
   margin: 0 auto;
 }
-
-/* ============================================
-   FOOTER TOP SECTION (Main Content)
-   ============================================ */
 
 .footer-top {
   display: flex;
@@ -56,9 +44,6 @@
   min-width: 160px;
 }
 
-/* ============================================
-   BRAND SECTION
-   ============================================ */
 
 .footer-brand {
   min-width: 200px;
@@ -96,10 +81,6 @@
   font-weight: 500;
 }
 
-/* ============================================
-   SECTION TITLE
-   ============================================ */
-
 .footer-section-title {
   font-size: 0.78rem;
   font-weight: 700;
@@ -114,9 +95,6 @@
   opacity: 0.9;
 }
 
-/* ============================================
-   QUICK LINKS SECTION
-   ============================================ */
 
 .footer-nav {
   display: flex;
@@ -157,10 +135,6 @@
 .footer-link:hover::before {
   width: 100%;
 }
-
-/* ============================================
-   CONTACT SECTION
-   ============================================ */
 
 .footer-contact-list {
   display: flex;
@@ -206,19 +180,12 @@
   filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
 }
 
-/* ============================================
-   FOOTER DIVIDER
-   ============================================ */
 
 .footer-divider {
   border-top: 1px solid var(--color-border);
   padding-top: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
 }
-
-/* ============================================
-   FOOTER BOTTOM SECTION
-   ============================================ */
 
 .footer-bottom {
   display: flex;
@@ -250,9 +217,6 @@
   animation: heartbeat 1.5s ease-in-out infinite;
 }
 
-/* ============================================
-   ANIMATIONS
-   ============================================ */
 
 @keyframes heartbeat {
   0% {
@@ -269,11 +233,6 @@
   }
 }
 
-/* ============================================
-   RESPONSIVE DESIGN
-   ============================================ */
-
-/* Tablet */
 @media (max-width: 768px) {
   .footer {
     padding: var(--spacing-xl) var(--spacing-md) var(--spacing-md);
@@ -300,7 +259,6 @@
   }
 }
 
-/* Mobile */
 @media (max-width: 480px) {
   .footer {
     padding: var(--spacing-lg) var(--spacing-md) var(--spacing-md);
@@ -355,9 +313,6 @@
   }
 }
 
-/* ============================================
-   DARK MODE SUPPORT (Optional)
-   ============================================ */
 
 @media (prefers-color-scheme: dark) {
   :root {
@@ -370,19 +325,11 @@
   }
 }
 
-/* ============================================
-   PRINT STYLES
-   ============================================ */
-
 @media print {
   .footer {
     display: none;
   }
 }
-
-/* ============================================
-   ACCESSIBILITY
-   ============================================ */
 
 .footer-link:focus,
 .footer-contact-item:focus {
@@ -391,7 +338,6 @@
   border-radius: 4px;
 }
 
-/* High contrast mode */
 @media (prefers-contrast: more) {
   .footer-link {
     font-weight: 600;
@@ -406,7 +352,6 @@
   }
 }
 
-/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .footer-link,
   .footer-contact-item,
