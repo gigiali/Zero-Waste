@@ -633,12 +633,12 @@ const { locationName } = useLocationContext();
                               "{review.comment}"
                             </p>
                           )}
-                          {review.image_url && (
+  {review.image && (
   <img
     src={
-      review.image_url.startsWith('http')
-        ? review.image_url
-        : `https://zero-waste-production.up.railway.app/${review.image_url}`
+      review.image.startsWith('http')
+        ? review.image
+        : `https://zero-waste-production.up.railway.app/${review.image}`
     }
     alt="Review"
     className="od-review-img"
