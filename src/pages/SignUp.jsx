@@ -62,7 +62,8 @@ else if (formData.password.length < 8)
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-      const response = await fetch("/api/register", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+const response = await fetch(`${apiUrl}/api/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
