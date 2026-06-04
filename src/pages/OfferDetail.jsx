@@ -48,18 +48,17 @@ const normalizeOffer = (payload) => {
     : "Today";
 
   return {
-  id: source.id,
-  title: source.title || "Untitled Offer",
-  vendor_id: branch.vendor_id || vendor.id || null,
-  branch_id: branch.id || null,
-  vendor_name: vendor.business_name || branch.branch_name || "Restaurant",
-  stock: Number(source.quantity_available ?? source.quantity ?? 99),
-  quantity_available: Number(source.quantity_available ?? source.quantity ?? 99),
-  
+    id: source.id,
+    title: source.title || "Untitled Offer",
+    vendor_id: branch.vendor_id || vendor.id || null,
+    branch_id: branch.id || null,
+    vendor_name: vendor.business_name || branch.branch_name || "Restaurant",
+    stock: Number(source.quantity_available ?? source.quantity ?? 99),
+    quantity_available: Number(source.quantity_available ?? source.quantity ?? 99),
     description: source.description || "No description available",
     image: source.image_url || (source.image
-  ? `https://zero-waste-production.up.railway.app/storage/${source.image}`
-  : "/images/e.png"),
+      ? `https://zero-waste-production.up.railway.app/storage/${source.image}`
+      : "/images/e.png"),
     discount,
     originalPrice,
     discountedPrice,
@@ -72,7 +71,7 @@ const normalizeOffer = (payload) => {
       vendor.business_name ||
       "Restaurant",
     distance: source.distance || "",
-    category: branch.type || source.category || "Restaurant",
+    category: vendor.vendor_type || branch.vendor_type || branch.type || source.category || "Restaurant",
     restaurantName: vendor.business_name || branch.branch_name || "Restaurant",
     restaurantRating: source.average_rating || vendor.rating || 0,
     restaurantHours: branch.opening_hours || "N/A",
@@ -83,7 +82,6 @@ const normalizeOffer = (payload) => {
   };
 };
 
-// استخراج اسم المستخدم من الـ review object بكل الاحتمالات
 const getReviewerName = (review) => {
   return (
     review.customer?.user?.name ||
@@ -98,7 +96,6 @@ const getReviewerName = (review) => {
   );
 };
 
-// أول حرفين من الاسم عشان نعملهم avatar
 const getInitials = (name) => {
   if (!name || name === "Anonymous") return "?";
   return name
@@ -109,11 +106,7 @@ const getInitials = (name) => {
 };
 
 function CountdownTimer({ expirationRaw }) {
-  const [timeLeft, setTimeLeft] = useState({
-    hours: 0,
-    minutes: 0,
-    seconds: 0,
-  });
+  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
   const [isUrgent, setIsUrgent] = useState(false);
   const [isExpired, setIsExpired] = useState(false);
 
@@ -122,10 +115,7 @@ function CountdownTimer({ expirationRaw }) {
       if (!expirationRaw) return;
       const target = new Date(expirationRaw);
       const diff = target - new Date();
-      if (diff <= 0) {
-        setIsExpired(true);
-        return;
-      }
+      if (diff <= 0) { setIsExpired(true); return; }
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
@@ -144,12 +134,8 @@ function CountdownTimer({ expirationRaw }) {
   return (
     <div className={`od-countdown ${isUrgent ? "urgent" : ""}`}>
       <Clock size={14} />
-      <span>
-        {pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
-      </span>
-      <span className="od-countdown-label">
-        {isUrgent ? "Hurry!" : "remaining"}
-      </span>
+      <span>{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}</span>
+      <span className="od-countdown-label">{isUrgent ? "Hurry!" : "remaining"}</span>
     </div>
   );
 }
@@ -161,8 +147,8 @@ export default function OfferDetail() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const { addToCart, showSignInPopup, setShowSignInPopup, showLocationPopup, setShowLocationPopup } = useCart();
-const { isLoggedIn } = useAuth();
-const { locationName } = useLocationContext();
+  const { isLoggedIn } = useAuth();
+  const { locationName } = useLocationContext();
   const [offer, setOffer] = useState(null);
   const [loadingOffer, setLoadingOffer] = useState(true);
   const [offerReviews, setOfferReviews] = useState([]);
@@ -174,13 +160,10 @@ const { locationName } = useLocationContext();
     (async () => {
       try {
         const token =
-          localStorage.getItem("auth_token") ||
-          localStorage.getItem("token") ||
-          sessionStorage.getItem("auth_token") ||
-          sessionStorage.getItem("token");
+          localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-
         const res = await fetch(`/api/offers/${id}`, { headers });
         if (!mounted) return;
         if (res.ok) {
@@ -195,9 +178,7 @@ const { locationName } = useLocationContext();
         if (mounted) setLoadingOffer(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [id]);
 
   useEffect(() => {
@@ -206,13 +187,10 @@ const { locationName } = useLocationContext();
     (async () => {
       try {
         const token =
-          localStorage.getItem("auth_token") ||
-          localStorage.getItem("token") ||
-          sessionStorage.getItem("auth_token") ||
-          sessionStorage.getItem("token");
+          localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+          sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-
         const res = await fetch(`/api/offers/${id}/reviews`, { headers });
         if (!mounted) return;
         if (res.ok) {
@@ -225,9 +203,7 @@ const { locationName } = useLocationContext();
         if (mounted) setLoadingReviews(false);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, [id]);
 
   const handleAddToCart = () => {
@@ -241,10 +217,7 @@ const { locationName } = useLocationContext();
 
   const avgRating =
     offerReviews.length > 0
-      ? (
-          offerReviews.reduce((a, r) => a + (r.rating || 0), 0) /
-          offerReviews.length
-        ).toFixed(1)
+      ? (offerReviews.reduce((a, r) => a + (r.rating || 0), 0) / offerReviews.length).toFixed(1)
       : null;
 
   if (loadingOffer) {
@@ -281,22 +254,11 @@ const { locationName } = useLocationContext();
 
       {/* ── Hero Image ── */}
       <div className="od-hero">
-        <img
-          src={offer.image}
-          alt={offer.title}
-          className="od-hero-img"
-          onError={(e) => {
-            e.target.src = "/images/e.png";
-          }}
-        />
+        <img src={offer.image} alt={offer.title} className="od-hero-img"
+          onError={(e) => { e.target.src = "/images/e.png"; }} />
         <div className="od-hero-overlay" />
-
-        {offer.discount > 0 && (
-          <div className="od-discount-badge">-{offer.discount}%</div>
-        )}
-
+        {offer.discount > 0 && <div className="od-discount-badge">-{offer.discount}%</div>}
         <CountdownTimer expirationRaw={offer.expirationRaw} />
-
         <div className="od-hero-bottom">
           <div className="od-restaurant-info">
             <div>
@@ -305,17 +267,12 @@ const { locationName } = useLocationContext();
                 <MapPin size={13} />
                 <span>{offer.location}</span>
                 {offer.restaurantRating > 0 && (
-                  <span className="od-rating-pill">
-                    ⭐ {offer.restaurantRating}
-                  </span>
+                  <span className="od-rating-pill">⭐ {offer.restaurantRating}</span>
                 )}
               </div>
             </div>
           </div>
-          <button
-            className="od-view-restaurant-btn"
-            onClick={() => navigate(`/restaurant/${id}`)}
-          >
+          <button className="od-view-restaurant-btn" onClick={() => navigate(`/restaurant/${id}`)}>
             <Store size={16} /> {t("offerDetail.viewRestaurant")}
           </button>
         </div>
@@ -330,13 +287,10 @@ const { locationName } = useLocationContext();
         </div>
         <div className="od-price-row">
           <span className="od-price-new">EGP {offer.discountedPrice}</span>
-          {offer.originalPrice > 0 && (
-            <span className="od-price-old">EGP {offer.originalPrice}</span>
-          )}
+          {offer.originalPrice > 0 && <span className="od-price-old">EGP {offer.originalPrice}</span>}
           {offer.discount > 0 && (
             <span className="od-save-badge">
-              <Tag size={12} /> Save EGP{" "}
-              {(offer.originalPrice - offer.discountedPrice).toFixed(2)}
+              <Tag size={12} /> Save EGP {(offer.originalPrice - offer.discountedPrice).toFixed(2)}
             </span>
           )}
         </div>
@@ -345,112 +299,113 @@ const { locationName } = useLocationContext();
       {/* ── Tabs ── */}
       <div className="od-tabs">
         {["details", "restaurant", "reviews"].map((tab) => (
-          <button
-            key={tab}
-            className={`od-tab ${activeTab === tab ? "active" : ""}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === "details"
-              ? "Offer Details"
-              : tab === "restaurant"
-                ? "Restaurant Info"
-                : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
+          <button key={tab} className={`od-tab ${activeTab === tab ? "active" : ""}`}
+            onClick={() => setActiveTab(tab)}>
+            {tab === "details" ? "Offer Details"
+              : tab === "restaurant" ? "Restaurant Info"
+              : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
           </button>
         ))}
       </div>
 
       {/* ── Tab Content ── */}
       <div className="od-tab-content">
+
         {/* Details Tab */}
         {activeTab === "details" && (
           <div className="od-details-tab">
             <div className="od-section-card">
-              <h3 className="od-section-title">
-                {t("offerDetail.aboutOffer")}
-              </h3>
+              <h3 className="od-section-title">{t("offerDetail.aboutOffer")}</h3>
               <p className="od-description">{offer.description}</p>
             </div>
 
             <div className="od-section-card">
-              <h3 className="od-section-title">
-                {t("offerDetail.offerInformation")}
-              </h3>
-              <div className="od-info-grid">
-                <div className="od-info-item">
-                  <div className="od-info-icon">
-                    <Clock size={18} />
+              <h3 className="od-section-title">{t("offerDetail.offerInformation")}</h3>
+
+              {/* ── New Info Pills Design ── */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
+
+                {/* Available */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "14px",
+                  background: "linear-gradient(135deg, #f0fdf4, #dcfce7)",
+                  border: "1.5px solid #bbf7d0", borderRadius: "14px", padding: "14px 16px",
+                }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "12px",
+                    background: "linear-gradient(135deg, #10b981, #059669)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Package size={18} color="white" />
                   </div>
                   <div>
-                    <div className="od-info-label">
-                      {t("offerDetail.pickupBy")}
-                    </div>
-                    <div className="od-info-value">{offer.pickupTime}</div>
-                  </div>
-                </div>
-                <div className="od-info-item">
-                  <div className="od-info-icon">
-                    <Package size={18} />
-                  </div>
-                  <div>
-                    <div className="od-info-label">
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       {t("offerDetail.available")}
                     </div>
-                    <div className="od-info-value">
+                    <div style={{ fontSize: "1rem", fontWeight: 700, color: "#065f46", marginTop: "2px" }}>
                       {offer.quantity} {t("offerDetail.portions")}
                     </div>
                   </div>
                 </div>
-                <div className="od-info-item">
-                  <div className="od-info-icon">
-                    <MapPin size={18} />
+
+                {/* Location */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "14px",
+                  background: "linear-gradient(135deg, #eff6ff, #dbeafe)",
+                  border: "1.5px solid #bfdbfe", borderRadius: "14px", padding: "14px 16px",
+                }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "12px",
+                    background: "linear-gradient(135deg, #3b82f6, #2563eb)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <MapPin size={18} color="white" />
                   </div>
                   <div>
-                    <div className="od-info-label">
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       {t("offerDetail.location")}
                     </div>
-                    <div className="od-info-value">
+                    <div style={{ fontSize: "0.92rem", fontWeight: 600, color: "#1e3a5f", marginTop: "2px" }}>
                       {offer.branchAddress || offer.location}
                     </div>
                   </div>
                 </div>
-                <div className="od-info-item">
-                  <div className="od-info-icon">
-                    <Tag size={18} />
+
+                {/* Category */}
+                <div style={{
+                  display: "flex", alignItems: "center", gap: "14px",
+                  background: "linear-gradient(135deg, #fdf4ff, #fae8ff)",
+                  border: "1.5px solid #e9d5ff", borderRadius: "14px", padding: "14px 16px",
+                }}>
+                  <div style={{
+                    width: "40px", height: "40px", borderRadius: "12px",
+                    background: "linear-gradient(135deg, #a855f7, #7c3aed)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    <Tag size={18} color="white" />
                   </div>
                   <div>
-                    <div className="od-info-label">
+                    <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#6b7280", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                       {t("offerDetail.category")}
                     </div>
-                    <div className="od-info-value">{offer.category}</div>
+                    <div style={{ fontSize: "1rem", fontWeight: 700, color: "#4c1d95", marginTop: "2px" }}>
+                      {offer.category}
+                    </div>
                   </div>
                 </div>
+
               </div>
             </div>
 
             {/* Qty Selector */}
             <div className="od-section-card od-qty-card">
-              <h3 className="od-section-title">
-                {t("offerDetail.selectQuantity")}
-              </h3>
+              <h3 className="od-section-title">{t("offerDetail.selectQuantity")}</h3>
               <div className="od-qty-row">
-                <button
-                  className="od-qty-btn"
-                  onClick={() => setQty((q) => Math.max(1, q - 1))}
-                >
-                  −
-                </button>
+                <button className="od-qty-btn" onClick={() => setQty((q) => Math.max(1, q - 1))}>−</button>
                 <span className="od-qty-value">{qty}</span>
-                <button
-                  className="od-qty-btn"
-                  onClick={() => setQty((q) => Math.min(offer.quantity, q + 1))}
-                >
-                  +
-                </button>
+                <button className="od-qty-btn" onClick={() => setQty((q) => Math.min(offer.quantity, q + 1))}>+</button>
                 <div className="od-qty-total">
-                  {t("offerDetail.total")}:{" "}
-                  <strong>
-                    EGP {(offer.discountedPrice * qty).toFixed(2)}
-                  </strong>
+                  {t("offerDetail.total")}: <strong>EGP {(offer.discountedPrice * qty).toFixed(2)}</strong>
                 </div>
               </div>
             </div>
@@ -463,67 +418,29 @@ const { locationName } = useLocationContext();
             <div className="od-section-card">
               <div className="od-restaurant-header">
                 {offer.restaurantLogo && (
-                  <img
-                    src={offer.restaurantLogo}
-                    alt={offer.restaurantName}
-                    className="od-rest-logo-lg"
-                    onError={(e) => {
-                      e.target.style.display = "none";
-                    }}
-                  />
+                  <img src={offer.restaurantLogo} alt={offer.restaurantName} className="od-rest-logo-lg"
+                    onError={(e) => { e.target.style.display = "none"; }} />
                 )}
                 <div>
                   <h2 className="od-rest-name-lg">{offer.restaurantName}</h2>
                   {offer.restaurantRating > 0 && (
                     <div className="od-rest-stars">
                       {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          size={16}
-                          fill={
-                            s <= Math.round(offer.restaurantRating)
-                              ? "#fbbf24"
-                              : "none"
-                          }
-                          color={
-                            s <= Math.round(offer.restaurantRating)
-                              ? "#fbbf24"
-                              : "#d1d5db"
-                          }
-                        />
+                        <Star key={s} size={16}
+                          fill={s <= Math.round(offer.restaurantRating) ? "#fbbf24" : "none"}
+                          color={s <= Math.round(offer.restaurantRating) ? "#fbbf24" : "#d1d5db"} />
                       ))}
                       <span>{offer.restaurantRating} / 5</span>
                     </div>
                   )}
                 </div>
               </div>
-
               <div className="od-rest-details">
                 {[
-                  {
-                    icon: <MapPin size={16} />,
-                    key: "address",
-                    label: t("offerDetail.address"),
-                    value: offer.branchAddress || offer.location,
-                  },
-                  {
-                    icon: <Clock size={16} />,
-                    key: "openingHours",
-                    label: t("offerDetail.openingHours"),
-                    value: offer.restaurantHours,
-                  },
-                  {
-                    icon: <Phone size={16} />,
-                    key: "phone",
-                    label: t("offerDetail.phone"),
-                    value: offer.restaurantPhone,
-                  },
-                  {
-                    icon: <Mail size={16} />,
-                    key: "email",
-                    label: t("offerDetail.email"),
-                    value: offer.restaurantEmail,
-                  },
+                  { icon: <MapPin size={16} />, key: "address", label: t("offerDetail.address"), value: offer.branchAddress || offer.location },
+                  { icon: <Clock size={16} />, key: "openingHours", label: t("offerDetail.openingHours"), value: offer.restaurantHours },
+                  { icon: <Phone size={16} />, key: "phone", label: t("offerDetail.phone"), value: offer.restaurantPhone },
+                  { icon: <Mail size={16} />, key: "email", label: t("offerDetail.email"), value: offer.restaurantEmail },
                 ].map(({ icon, key, label, value }) => (
                   <div className="od-rest-row" key={key}>
                     <div className="od-rest-row-icon">{icon}</div>
@@ -534,11 +451,7 @@ const { locationName } = useLocationContext();
                   </div>
                 ))}
               </div>
-
-              <button
-                className="od-view-rest-full-btn"
-                onClick={() => navigate(`/restaurant/${id}`)}
-              >
+              <button className="od-view-rest-full-btn" onClick={() => navigate(`/restaurant/${id}`)}>
                 <Store size={16} /> {t("offerDetail.viewFullRestaurant")}
               </button>
             </div>
@@ -549,10 +462,7 @@ const { locationName } = useLocationContext();
         {activeTab === "reviews" && (
           <div className="od-reviews-tab">
             {loadingReviews ? (
-              <div
-                className="od-section-card"
-                style={{ textAlign: "center", padding: "2rem" }}
-              >
+              <div className="od-section-card" style={{ textAlign: "center", padding: "2rem" }}>
                 <div className="od-spinner" />
               </div>
             ) : offerReviews.length === 0 ? (
@@ -568,99 +478,65 @@ const { locationName } = useLocationContext();
                   <div>
                     <div className="od-avg-stars">
                       {[1, 2, 3, 4, 5].map((s) => (
-                        <Star
-                          key={s}
-                          size={20}
+                        <Star key={s} size={20}
                           fill={s <= Math.round(avgRating) ? "#fbbf24" : "none"}
-                          color={
-                            s <= Math.round(avgRating) ? "#fbbf24" : "#d1d5db"
-                          }
-                        />
+                          color={s <= Math.round(avgRating) ? "#fbbf24" : "#d1d5db"} />
                       ))}
                     </div>
-                    <p className="od-reviews-count">
-                      {t("offerDetail.reviewsCount", {
-                        count: offerReviews.length,
-                      })}
-                    </p>
+                    <p className="od-reviews-count">{t("offerDetail.reviewsCount", { count: offerReviews.length })}</p>
                   </div>
                 </div>
-
                 <div className="od-reviews-list">
-                  {offerReviews
-                    .slice()
-                    .reverse()
-                    .map((review, idx) => {
-                      const reviewerName = getReviewerName(review);
-                      const initials = getInitials(reviewerName);
-                      return (
-                        <div key={idx} className="od-review-card">
-                          <div className="od-review-top">
-                            {/* ── Reviewer info ── */}
-                            <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
-                              <div style={{
-                                width: "36px", height: "36px", borderRadius: "50%",
-                                background: "linear-gradient(135deg, #10b981, #059669)",
-                                display: "flex", alignItems: "center", justifyContent: "center",
-                                color: "white", fontWeight: 700, fontSize: "0.82rem", flexShrink: 0,
-                              }}>
-                                {initials === "?" ? <User size={16} color="white" /> : initials}
-                              </div>
-                              <div>
-                                <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#111827" }}>
-                                  {reviewerName}
-                                </div>
-                                <div className="od-review-stars" style={{ marginTop: "2px" }}>
-                                  {[1, 2, 3, 4, 5].map((s) => (
-                                    <Star
-                                      key={s}
-                                      size={12}
-                                      fill={s <= review.rating ? "#fbbf24" : "none"}
-                                      color={s <= review.rating ? "#fbbf24" : "#d1d5db"}
-                                    />
-                                  ))}
-                                </div>
+                  {offerReviews.slice().reverse().map((review, idx) => {
+                    const reviewerName = getReviewerName(review);
+                    const initials = getInitials(reviewerName);
+                    return (
+                      <div key={idx} className="od-review-card">
+                        <div className="od-review-top">
+                          <div style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
+                            <div style={{
+                              width: "36px", height: "36px", borderRadius: "50%",
+                              background: "linear-gradient(135deg, #10b981, #059669)",
+                              display: "flex", alignItems: "center", justifyContent: "center",
+                              color: "white", fontWeight: 700, fontSize: "0.82rem", flexShrink: 0,
+                            }}>
+                              {initials === "?" ? <User size={16} color="white" /> : initials}
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: "0.88rem", color: "#111827" }}>{reviewerName}</div>
+                              <div className="od-review-stars" style={{ marginTop: "2px" }}>
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} size={12}
+                                    fill={s <= review.rating ? "#fbbf24" : "none"}
+                                    color={s <= review.rating ? "#fbbf24" : "#d1d5db"} />
+                                ))}
                               </div>
                             </div>
-                            <span className="od-review-date">
-                              {review.created_at
-                                ? new Date(review.created_at).toLocaleDateString()
-                                : ""}
-                            </span>
                           </div>
-                          {review.comment && (
-                            <p className="od-review-comment">
-                              "{review.comment}"
-                            </p>
-                          )}
-  {review.image && (
-  <img
-    src={
-      review.image.startsWith('http')
-        ? review.image
-        : `https://zero-waste-production.up.railway.app/${review.image}`
-    }
-    alt="Review"
-    className="od-review-img"
-    onError={(e) => { e.target.src = "/images/e.png"; }}
-  />
-)}
-                          <div className="od-review-footer">
-                            <span className="od-review-method">
-                              {review.delivery_method === "delivery"
-                                ? t("offerDetail.reviewDelivery")
-                                : t("offerDetail.reviewPickup")}
-                            </span>
-                          </div>
+                          <span className="od-review-date">
+                            {review.created_at ? new Date(review.created_at).toLocaleDateString() : ""}
+                          </span>
                         </div>
-                      );
-                    })}
+                        {review.comment && <p className="od-review-comment">"{review.comment}"</p>}
+                        {review.image_url && <img src={review.image_url} alt="Review" className="od-review-img" />}
+                        <div className="od-review-footer">
+                          <span className="od-review-method">
+                            {review.delivery_method === "delivery"
+                              ? t("offerDetail.reviewDelivery")
+                              : t("offerDetail.reviewPickup")}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </>
             )}
           </div>
         )}
       </div>
+
+      {/* ── Location Popup ── */}
       {showLocationPopup && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setShowLocationPopup(false)}>
@@ -676,6 +552,8 @@ const { locationName } = useLocationContext();
           </div>
         </div>
       )}
+
+      {/* ── Sign In Popup ── */}
       {showSignInPopup && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}
           onClick={() => setShowSignInPopup(false)}>
@@ -697,26 +575,18 @@ const { locationName } = useLocationContext();
           </div>
         </div>
       )}
+
       {/* ── Sticky Add to Cart ── */}
       <div className="od-sticky-bar">
         <div className="od-sticky-price">
           <span className="od-sticky-label">{t("offerDetail.total")}</span>
-          <span className="od-sticky-total">
-            EGP {(offer.discountedPrice * qty).toFixed(2)}
-          </span>
+          <span className="od-sticky-total">EGP {(offer.discountedPrice * qty).toFixed(2)}</span>
         </div>
-        <button
-          className={`od-add-btn ${added ? "added" : ""}`}
-          onClick={handleAddToCart}
-        >
+        <button className={`od-add-btn ${added ? "added" : ""}`} onClick={handleAddToCart}>
           {added ? (
-            <>
-              <Check size={18} /> {t("offerDetail.addedToCart")}
-            </>
+            <><Check size={18} /> {t("offerDetail.addedToCart")}</>
           ) : (
-            <>
-              <ShoppingCart size={18} /> {t("offerDetail.addToCart")}
-            </>
+            <><ShoppingCart size={18} /> {t("offerDetail.addToCart")}</>
           )}
         </button>
       </div>

@@ -20,7 +20,7 @@
     "listBusiness": "List your business and connect with customers",
     "fullName": "Full Name",
     "emailAddress": "Email",
-    "passwordPlaceholder": "At least 6 characters",
+    "passwordPlaceholder": "At least 8 characters",
     "newPassword": "New Password",
     "confirmPassword": "Confirm Password",
     "confirmPasswordPlaceholder": "••••••••",

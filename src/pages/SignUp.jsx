@@ -9,8 +9,7 @@ import "./SignUp.css";
 function SignUp() {
   const [activeRole, setActiveRole] = useState("customer");
   const navigate = useNavigate();
-  const { setBusinessStatus } = useAuth();
-  const [formData, setFormData] = useState({
+const { setBusinessStatus, login } = useAuth();  const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
@@ -32,8 +31,8 @@ function SignUp() {
     if (!formData.email.trim()) e.email = t("auth.emailRequired");
     else if (!validateEmail(formData.email)) e.email = t("auth.invalidEmail");
     if (!formData.password.trim()) e.password = t("auth.passwordRequired");
-    else if (formData.password.length < 6)
-      e.password = t("auth.passwordPlaceholder");
+else if (formData.password.length < 8)
+  e.password = t("auth.passwordMinLength");
     if (!formData.phone.trim()) e.phone = t("auth.phoneRequired");
     else if (!validatePhone(formData.phone)) e.phone = t("auth.invalidPhone");
     if (!formData.address.trim()) e.address = t("auth.addressRequired");
@@ -78,14 +77,11 @@ function SignUp() {
       const data = await response.json();
 
       if (response.ok) {
-        if (data.token) localStorage.setItem("auth_token", data.token);
-        if (data.user) {
-          localStorage.setItem("user", JSON.stringify(data.user));
-          localStorage.setItem("userRole", data.user.role || formData.role);
-        }
-
+        if (data.token && data.user) {
+  login(data.user, data.token);
+  localStorage.setItem("userRole", data.user.role || formData.role);
+}
         if (formData.role === "vendor") {
-          // ✅ بعد الـ register كـ vendor → روح على business-setup
           navigate("/business-setup");
         } else {
           navigate("/home");

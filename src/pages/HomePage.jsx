@@ -19,26 +19,14 @@ function CountdownTimer({ pickupTime }) {
 
   useEffect(() => {
     const calculateTime = () => {
-      let targetTime;
-      if (pickupTime && pickupTime.includes(":")) {
-        const now = new Date();
-        const timePart = pickupTime.replace("Today ", "").replace("today ", "");
-        const [time, period] = timePart.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (period === "PM" && hours !== 12) hours += 12;
-        if (period === "AM" && hours === 12) hours = 0;
-        targetTime = new Date(now);
-        targetTime.setHours(hours, minutes || 0, 0, 0);
-        if (targetTime <= now) targetTime.setDate(targetTime.getDate() + 1);
-      } else {
-        targetTime = new Date(Date.now() + Math.random() * 18000000 + 3600000);
-      }
+      if (!pickupTime) return { hours: 0, minutes: 0, seconds: 0 };
+      const targetTime = new Date(pickupTime);
       const diff = targetTime - new Date();
       if (diff <= 0) return { hours: 0, minutes: 0, seconds: 0 };
       const h = Math.floor(diff / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-      setIsUrgent(h === 0 && m < 60);
+      setIsUrgent(h === 0 && m < 30);
       return { hours: h, minutes: m, seconds: s };
     };
     setTimeLeft(calculateTime());
@@ -59,6 +47,35 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [currentStep, setCurrentStep] = useState(1);
   const [showReview, setShowReview] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
+
+  const handleCancelOrder = async () => {
+    const token =
+      localStorage.getItem("auth_token") ||
+      localStorage.getItem("token") ||
+      sessionStorage.getItem("auth_token") ||
+      sessionStorage.getItem("token");
+    try {
+      const orderId = order.orderNumber || order.id;
+      const res = await fetch(`${BASE_URL}/api/orders/${orderId}/cancel`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: "Bearer " + token,
+        },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setIsCancelled(true);
+        setTimeout(() => onDismiss(), 2000);
+      } else {
+        alert(data.message || "Failed to cancel order");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error cancelling order");
+    }
+  };
+
   const [reviewDismissed, setReviewDismissed] = useState(() => {
     return localStorage.getItem("review_dismissed_" + order.orderNumber) === "true";
   });
@@ -70,8 +87,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [reviewImage, setReviewImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [submitted, setSubmitted] = useState(false);
-const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-const [isCancelling, setIsCancelling] = useState(false);
 
   const dismissReview = () => {
     setShowReview(false);
@@ -190,29 +205,6 @@ const [isCancelling, setIsCancelling] = useState(false);
     setImagePreview(null);
   };
 
-  const handleCancelOrder = async () => {
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("token") ||
-      sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
-    if (!token || !order.orderNumber) return;
-    setIsCancelling(true);
-    try {
-      const res = await fetch(BASE_URL + "/api/orders/" + order.orderNumber + "/cancel", {
-        method: "POST",
-        headers: { Accept: "application/json", Authorization: "Bearer " + token },
-      });
-      if (res.ok) {
-        setIsCancelled(true);
-        setShowCancelConfirm(false);
-        setTimeout(() => onDismiss(), 3000);
-      }
-    } catch (err) {
-      console.error("Cancel failed:", err);
-    } finally {
-      setIsCancelling(false);
-    }
-  };
-
   if (isCancelled) {
     return (
       <div className="order-strip" style={{ borderColor: "#fca5a5" }}>
@@ -225,7 +217,7 @@ const [isCancelling, setIsCancelling] = useState(false);
           </div>
           <div className="order-strip-right">
             <span className="order-strip-total">EGP {Number(order.total || 0).toFixed(2)}</span>
-            <button className="order-strip-dismiss" onClick={() => setShowCancelConfirm(true)} title="Cancel Order"><X size={12} /></button>
+            <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss"><X size={12} /></button>
           </div>
         </div>
         <p style={{ fontSize: "13px", color: "#ef4444", margin: "6px 0 4px", padding: "0 4px" }}>
@@ -248,7 +240,33 @@ const [isCancelling, setIsCancelling] = useState(false);
         </div>
         <div className="order-strip-right">
           <span className="order-strip-total">EGP {Number(order.total || 0).toFixed(2)}</span>
-          <button className="order-strip-dismiss" onClick={onDismiss} title="Dismiss"><X size={12} /></button>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+            <button
+              className="order-strip-dismiss"
+              onClick={(currentStep === 1 || currentStep === 2) ? handleCancelOrder : onDismiss}
+              title={(currentStep === 1 || currentStep === 2) ? "Cancel Order" : "Dismiss"}
+              style={{
+                background: (currentStep === 1 || currentStep === 2) ? "#1f2937" : "rgba(255,255,255,0.15)",
+                borderRadius: "50%",
+                width: 26,
+                height: 26,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                border: "none",
+                cursor: "pointer",
+                color: "white",
+                flexShrink: 0,
+              }}
+            >
+              <X size={13} />
+            </button>
+            {(currentStep === 1 || currentStep === 2) && (
+              <span style={{ fontSize: "9px", color: "rgba(255,255,255,0.75)", fontWeight: 600, letterSpacing: "0.3px", whiteSpace: "nowrap" }}>
+                Cancel
+              </span>
+            )}
+          </div>
         </div>
       </div>
       <div className="order-strip-track">
@@ -266,24 +284,42 @@ const [isCancelling, setIsCancelling] = useState(false);
           );
         })}
       </div>
-      {showCancelConfirm && (
-        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 999999, display: "flex", alignItems: "center", justifyContent: "center" }}
-          onClick={() => setShowCancelConfirm(false)}>
-          <div style={{ background: "white", borderRadius: "16px", padding: "1.75rem", maxWidth: "320px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
-            onClick={(e) => e.stopPropagation()}>
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>⚠️</div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.1rem" }}>Cancel Order?</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.88rem", margin: "0 0 1.5rem" }}>Are you sure you want to cancel this order? This action cannot be undone.</p>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button onClick={() => setShowCancelConfirm(false)}
-                style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "10px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}>
-                Keep Order
-              </button>
-              <button onClick={handleCancelOrder} disabled={isCancelling}
-                style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "10px", background: "#ef4444", color: "white", fontWeight: 600, cursor: isCancelling ? "not-allowed" : "pointer", fontSize: "0.9rem", opacity: isCancelling ? 0.7 : 1 }}>
-                {isCancelling ? "Cancelling..." : "Yes, Cancel"}
-              </button>
+      {showReview && (
+        <div className="review-overlay" onClick={dismissReview}>
+          <div className="review-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="review-close" onClick={dismissReview}><X size={18} /></button>
+            <div className="review-header">
+              <div className="review-icon">🎉</div>
+              <h3>Order Delivered!</h3>
+              <p>How was your experience?</p>
             </div>
+            <div className="review-stars">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button key={star} className={"review-star " + (star <= rating ? "filled" : "")} onClick={() => setRating(star)}>
+                  <Star size={18} fill={star <= rating ? "#fbbf24" : "none"} />
+                </button>
+              ))}
+            </div>
+            <textarea className="review-textarea" placeholder="Write your comment... (optional, max 500 chars)"
+              value={reviewText} onChange={(e) => setReviewText(e.target.value.slice(0, 500))} rows={2} />
+            <div className="review-image-section">
+              {!imagePreview ? (
+                <label className="review-image-upload">
+                  <input type="file" accept="image/jpeg,image/jpg,image/png" onChange={handleImageChange} style={{ display: "none" }} />
+                  <span className="upload-icon">📷</span>
+                  <span className="upload-text">Add Photo (optional)</span>
+                  <span className="upload-hint">JPG, PNG - Max 2MB</span>
+                </label>
+              ) : (
+                <div className="review-image-preview">
+                  <img src={imagePreview} alt="Preview" />
+                  <button className="remove-image-btn" onClick={removeImage}><X size={16} /></button>
+                </div>
+              )}
+            </div>
+            <button className="review-submit-btn" onClick={handleSubmitReview} disabled={rating === 0 || submitted}>
+              {submitted ? "✓ Submitted" : "Submit Review"}
+            </button>
           </div>
         </div>
       )}
@@ -300,9 +336,7 @@ function RecommendedCard({ offer, onNavigate, onAddToCart, isLoggedIn, locationN
     ? (offer.image.startsWith("http") ? offer.image : BASE_URL + "/" + offer.image.replace(/^\/+/, ""))
     : null);
 
-  const pickupTime = offer.expiration_time
-    ? new Date(offer.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
-    : "Today";
+  const pickupTime = offer.expiration_time || null;
 
   return (
     <div
@@ -578,9 +612,7 @@ export default function HomePage() {
                 stock: qty,
                 quantity_available: qty,
                 status: source.status || "active",
-                pickupTime: source.expiration_time
-                  ? new Date(source.expiration_time).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })
-                  : "Today",
+                pickupTime: source.expiration_time || null,
                 location:
                   (source.branch && source.branch.branch_name) ||
                   (source.branch && source.branch.store_address) ||
@@ -821,8 +853,14 @@ export default function HomePage() {
                         onClick={(e) => {
                           e.stopPropagation();
                           if (!offer.id) return;
-                          const offerToAdd = { ...offer, id: String(offer.id) };
-                          const result = addToCart(offerToAdd, 1, isLoggedIn, locationName);
+const offerToAdd = {
+  ...offer,
+  id: String(offer.id),
+  stock: offer.quantity_available || offer.stock || offer.quantity || 999,
+  quantity_available: offer.quantity_available || offer.stock || offer.quantity || 999,
+  discountedPrice: offer.discountedPrice || offer.discount_price || 0,
+  originalPrice: offer.originalPrice || offer.original_price || 0,
+};                          const result = addToCart(offerToAdd, 1, isLoggedIn, locationName);
                           if (result && result.message !== "conflict") {
                             showAlert(result.message, result.success ? "success" : "error");
                           }
