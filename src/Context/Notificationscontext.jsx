@@ -8,6 +8,8 @@ const getToken = () =>
   sessionStorage.getItem("auth_token") ||
   sessionStorage.getItem("token");
 
+const getApiUrl = () => import.meta.env.VITE_API_URL || window.location.origin;
+
 const typeFromData = (notif) => {
   const title = (notif.title || notif.data?.title || "").toLowerCase();
   const msg = (notif.data?.message || notif.message || "").toLowerCase();
@@ -39,7 +41,8 @@ export function NotificationsProvider({ children }) {
     if (!token) return;
     setLoading(true);
     try {
-      const res = await fetch("/api/notifications", {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/notifications`, {
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
       if (!res.ok) return;
@@ -48,7 +51,8 @@ export function NotificationsProvider({ children }) {
       const mapped = raw.map((n) => ({
         id: n.id,
         type: typeFromData(n),
-read: !!n.read_at || n.is_read === 1 || n.is_read === true,        time: timeAgo(n.created_at),
+        read: !!n.read_at || n.is_read === 1 || n.is_read === true,
+        time: timeAgo(n.created_at),
         title: n.data?.title || n.title || "Notification",
         message: n.data?.message || n.message || "",
       }));
@@ -73,7 +77,8 @@ read: !!n.read_at || n.is_read === 1 || n.is_read === true,        time: timeAgo
     const token = getToken();
     if (!token) return;
     try {
-      await fetch(`/api/notifications/${id}/read`, {
+      const apiUrl = getApiUrl();
+      await fetch(`${apiUrl}/api/notifications/${id}/read`, {
         method: "PATCH",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
@@ -87,11 +92,12 @@ read: !!n.read_at || n.is_read === 1 || n.is_read === true,        time: timeAgo
     const token = getToken();
     if (!token) return;
     try {
-     await fetch("/api/notifications/read-all", {
-  method: "POST",
-  headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-});
-await fetchNotifications();
+      const apiUrl = getApiUrl();
+      await fetch(`${apiUrl}/api/notifications/read-all`, {
+        method: "POST",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      await fetchNotifications();
     } catch (err) {
       console.error("Failed to mark all as read:", err);
     }
@@ -102,7 +108,8 @@ await fetchNotifications();
     const token = getToken();
     if (!token) return;
     try {
-      await fetch(`/api/notifications/${id}`, {
+      const apiUrl = getApiUrl();
+      await fetch(`${apiUrl}/api/notifications/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
@@ -116,7 +123,8 @@ await fetchNotifications();
     const token = getToken();
     if (!token) return;
     try {
-      await fetch("/api/notifications/clear-all", {
+      const apiUrl = getApiUrl();
+      await fetch(`${apiUrl}/api/notifications/clear-all`, {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
