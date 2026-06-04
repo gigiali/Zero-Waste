@@ -444,10 +444,8 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const deliveryMethod = searchParams.get("method") || "pickup";
 
   const subtotal = cartItems.reduce(
-
-    (sum, item) => sum + Number(item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0
-
-  );
+  (sum, item) => sum + Number(item.discount_price ?? item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0
+);
 
   const deliveryFee = deliveryMethod === "delivery" ? (parseFloat(searchParams.get("fee")) || 25) : 0;
 
@@ -669,7 +667,8 @@ const response = await fetch(`${apiUrl}/api/orders`, {
     }
     try {
 
-      const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
+      const token = localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+              sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
 
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
@@ -946,7 +945,8 @@ const response = await fetch(`${apiUrl}/api/orders`, {
 
                 orderTime: new Date().toISOString(),
 
-                offerId: frozenCartItemsRef.current[0]?.id || 1,
+                offerId: serverOrderRef.current?.id || serverOrderRef.current?.order?.id || 1,
+orderId: serverOrderRef.current?.id || serverOrderRef.current?.order?.id,
 
                 items: frozenCartItemsRef.current,
 
