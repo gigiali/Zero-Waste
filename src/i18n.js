@@ -27,6 +27,7 @@ i18n.use(initReactI18next).init({
   supportedLngs: supportedLanguages,
   interpolation: { escapeValue: false },
   react: { useSuspense: false },
+  returnObjects: true,
 });
 
 setDocumentDirection(defaultLanguage);

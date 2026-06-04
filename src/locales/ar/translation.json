@@ -507,7 +507,15 @@
     "orderUpdates": "تحديثات الطلب",
     "newOffers": "عروض جديدة بالقرب منك",
     "paymentConfirmations": "تأكيدات الدفع",
-    "newsPromotions": "الأخبار والعروض"
+    "newsPromotions": "الأخبار والعروض",
+"reviews": "التقييمات",
+"noReviews": "لا توجد تقييمات بعد",
+"loading": "جاري التحميل...",
+"showLess": "عرض أقل",
+"viewAll": "عرض الكل",
+"cancel": "إلغاء",
+"save": "حفظ",
+"delete": "حذف"
   },
   "userManagement": {
     "title": "إدارة المستخدمين",

@@ -381,6 +381,7 @@ const translateText = (value) => {
 
 function applyArabicTranslations(root) {
   textNodes(root).forEach((node) => {
+    if (node.parentElement?.closest('[data-no-translate]')) return;
     const original = originalTextNodes.get(node) ?? node.nodeValue;
     const translated = translateText(original);
     if (!translated) return;
@@ -389,6 +390,7 @@ function applyArabicTranslations(root) {
   });
 
   root.querySelectorAll("[placeholder], [title], [aria-label]").forEach((element) => {
+    if (element.closest('[data-no-translate]')) return;
     if (!originalAttributes.has(element)) originalAttributes.set(element, {});
     const originals = originalAttributes.get(element);
     ["placeholder", "title", "aria-label"].forEach((attr) => {

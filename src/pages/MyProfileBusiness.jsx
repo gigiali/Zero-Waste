@@ -484,7 +484,7 @@ export default function MyProfileBusiness() {
 
   return (
     <>
-      <div className="biz-page">
+      <div className="biz-page" data-no-translate>
         {timeoutMsg && (
           <TimeoutMessage
             message={timeoutMsg}

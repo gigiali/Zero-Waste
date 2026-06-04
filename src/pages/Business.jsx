@@ -376,7 +376,7 @@ function TopSellingSection({ branchId }) {
   );
 }
 
-// ✅ قسم REVIEWS المحسّن
+// ✅ قسم REVIEWS - معدل بشكل صحيح
 function ReviewsSection({ branchId }) {
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
@@ -412,30 +412,30 @@ function ReviewsSection({ branchId }) {
   fetchReviews();
 }, [branchId]);
 
-  // ✅ عرض حالة التحميل
+  // حالة التحميل
   if (loading) {
     return (
       <div className="biz-section" id="reviews-section">
         <div className="biz-section-header">
-          <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+          <h2 className="biz-section-title">⭐ {t("common.reviews")}</h2>
         </div>
         <div style={{ padding: "40px", textAlign: "center", color: "#9ca3af" }}>
           <Loader2 size={24} className="mb-spin" style={{ display: "inline" }} />
-          <p style={{ marginTop: "10px" }}>{t("loading")}</p>
+          <p style={{ marginTop: "10px" }}>{t("common.loading")}</p>
         </div>
       </div>
     );
   }
 
-  // ✅ عرض حالة عدم وجود تقييمات
+  // حالة عدم وجود تقييمات
   if (reviews.length === 0) {
     return (
       <div className="biz-section" id="reviews-section">
         <div className="biz-section-header">
-          <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+          <h2 className="biz-section-title">⭐ {t("common.reviews")}</h2>
         </div>
         <div style={{ padding: "40px", textAlign: "center", color: "#9ca3af" }}>
-          📦 {t("noReviews") || "لا توجد تقييمات حتى الآن"}
+          📦 {t("common.noReviews")}
         </div>
       </div>
     );
@@ -461,10 +461,10 @@ function ReviewsSection({ branchId }) {
   return (
     <div className="biz-section" id="reviews-section">
       <div className="biz-section-header">
-        <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+        <h2 className="biz-section-title">⭐ {t("common.reviews")}</h2>
         {reviews.length > 5 && (
           <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
-            {showAll ? t("showLess") : `${t("viewAll")} (${reviews.length})`}
+            {showAll ? t("common.showLess") : `${t("common.viewAll")} (${reviews.length})`}
           </button>
         )}
       </div>
@@ -545,7 +545,7 @@ function SalesHistorySection({ branchId }) {
           <h2 className="biz-section-title">{t("salesHistory")}</h2>
           {sales.length > 5 && (
             <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
-              {showAll ? t("showLess") : `${t("viewAll")} (${sales.length})`}
+              {showAll ? t("common.showLess") : `${t("common.viewAll")} (${sales.length})`}
             </button>
           )}
         </div>
@@ -988,15 +988,15 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
     finally { setUpdatingOrderId(null); }
   };
 
-  // ✅ Navigation updated مع Reviews
+  // Navigation
   const navItems = [
     { id: "charts", icon: BarChart2, label: t("salesCharts"), onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sustainability", icon: Leaf, label: t("sustainabilityImpact"), onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "offers", icon: Package, label: t("myOffers"), onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "orders", icon: ShoppingCart, label: t("recentOrders"), onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "reviews", icon: MessageSquare, label: t("reviews") || "Reviews", onClick: () => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "reviews", icon: MessageSquare, label: t("common.reviews"), onClick: () => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sales", icon: History, label: t("salesHistory"), onClick: () => document.getElementById("sales-section")?.scrollIntoView({ behavior: "smooth" }) },
-    { id: "notifications", icon: Bell, label: t("notifications"), badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
+    { id: "notifications", icon: Bell, label: t("nav.notifications"), badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
     { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => handleLanguageChange(language === "en" ? "ar" : "en") },
     { id: "branches", icon: GitBranch, label: t("branches"), expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
   ];
@@ -1045,7 +1045,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
                           <button type="button" onClick={() => setEditingBranch(b)} style={{ background: "rgba(59,130,246,0.15)", border: "none", borderRadius: "6px", color: "#3b82f6", cursor: "pointer", padding: "4px 7px", fontSize: "0.75rem" }}>✏️</button>
                         </div>
                       ))}
-                      {item.hasAddBranch && <button type="button" className="biz-branch-btn biz-branch-add" onClick={() => navigate("/add-branch")}>+ {t("addBranch")}</button>}
+                      {item.hasAddBranch && <button type="button" className="biz-branch-btn biz-branch-add" onClick={() => navigate("/add-branch")}>+ {t("addBranch.title")}</button>}
                     </div>
                   )}
                 </div>
@@ -1175,7 +1175,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
                 <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
                   {filteredOffers.length > 2 && (
                     <button type="button" className="biz-link-btn" onClick={() => setShowAllOffers((v) => !v)}>
-                      {showAllOffers ? t("showLess") : `${t("viewAll")} (${filteredOffers.length})`}
+                      {showAllOffers ? t("common.showLess") : `${t("common.viewAll")} (${filteredOffers.length})`}
                     </button>
                   )}
                   <button type="button" className="biz-add-btn" onClick={openAdd}>+ {t("addOffer")}</button>
@@ -1216,7 +1216,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
                     )}
                   </div>
                   <div className="biz-drawer-footer">
-                    <button type="button" className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>{t("cancel")}</button>
+                    <button type="button" className="biz-btn-cancel" onClick={closeDrawer} disabled={isSubmitting}>{t("common.cancel")}</button>
                     <button type="button" className="biz-btn-save" onClick={handleSave} disabled={isSubmitting}>
                       {isSubmitting ? <><Loader size={14} style={{ display: "inline", marginRight: "6px" }} />{t("saving")}...</> : editingId ? t("saveChanges") : t("createOffer")}
                     </button>
@@ -1256,7 +1256,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
                 <h2 className="biz-section-title">{t("recentOrders")}</h2>
                 {filteredOrders.length > 2 && (
                   <button type="button" className="biz-link-btn" onClick={() => setShowAllOrders((v) => !v)}>
-                    {showAllOrders ? t("showLess") : `${t("viewAll")} (${filteredOrders.length})`}
+                    {showAllOrders ? t("common.showLess") : `${t("common.viewAll")} (${filteredOrders.length})`}
                   </button>
                 )}
               </div>
@@ -1295,10 +1295,10 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
               </div>
             </div>
 
-            {/* ✅ قسم Reviews بعد Orders */}
+            {/* قسم Reviews */}
             <ReviewsSection branchId={dashboardBranchId} />
 
-            {/* ✅ قسم Sales History في الآخر */}
+            {/* قسم Sales History */}
             <SalesHistorySection branchId={dashboardBranchId} />
           </>
         )}
@@ -1310,8 +1310,8 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
             <h3 className="biz-modal-title">{t("editBranch")}</h3>
             <input className="biz-modal-input" value={editingBranch.branch_name || ""} onChange={(e) => setEditingBranch((prev) => ({ ...prev, branch_name: e.target.value }))} />
             <div className="biz-modal-actions">
-              <button className="biz-modal-btn-cancel" onClick={() => setEditingBranch(null)}>{t("cancel")}</button>
-              <button className="biz-modal-btn-save" onClick={handleEditBranch}>{t("save")}</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setEditingBranch(null)}>{t("common.cancel")}</button>
+              <button className="biz-modal-btn-save" onClick={handleEditBranch}>{t("common.save")}</button>
             </div>
           </div>
         </div>
@@ -1324,8 +1324,8 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
             <h3 className="biz-modal-title">{t("deleteOffer")}</h3>
             <p className="biz-modal-body">{t("confirmDelete")}</p>
             <div className="biz-modal-actions-center">
-              <button className="biz-modal-btn-cancel" onClick={() => setDeleteConfirmId(null)}>{t("cancel")}</button>
-              <button className="biz-modal-btn-danger" onClick={() => handleDelete(deleteConfirmId)}>{t("delete")}</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setDeleteConfirmId(null)}>{t("common.cancel")}</button>
+              <button className="biz-modal-btn-danger" onClick={() => handleDelete(deleteConfirmId)}>{t("common.delete")}</button>
             </div>
           </div>
         </div>
@@ -1338,8 +1338,8 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
             <h3 className="biz-modal-title">{t("deleteBranch")}</h3>
             <p className="biz-modal-body">{t("confirmDelete")}</p>
             <div className="biz-modal-actions-center">
-              <button className="biz-modal-btn-cancel" onClick={() => setDeleteBranchId(null)}>{t("cancel")}</button>
-              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>{t("delete")}</button>
+              <button className="biz-modal-btn-cancel" onClick={() => setDeleteBranchId(null)}>{t("common.cancel")}</button>
+              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>{t("common.delete")}</button>
             </div>
           </div>
         </div>
