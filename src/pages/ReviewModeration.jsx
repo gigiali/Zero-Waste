@@ -20,7 +20,9 @@ const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager    = (r) => r === "manager";
+const isSupport    = (r) => r === "support";
 const canManage    = (r) => isSuperAdmin(r) || isManager(r);
+const canViewReviews = (r) => isSuperAdmin(r) || isManager(r) || isSupport(r);
 
 const statusConfig = {
   visible: { bg: "var(--rm-green-bg)", text: "var(--rm-green-text)", dot: "#10b981", label: "Visible" },
@@ -146,7 +148,7 @@ export default function ReviewModeration() {
   const [filterStatus,setFilterStatus]= useState("all");
 
   useEffect(() => {
-    if (!role || !token) return;
+    if (!role || !token || !canViewReviews(role)) return;
     let timeoutId;
 
     (async () => {
@@ -155,26 +157,24 @@ export default function ReviewModeration() {
       timeoutId = setTimeout(() => setSlowWarning(true), 10000);
 
       try {
-        const offersRes  = await fetch(`${BASE_URL}/offers`, {
+        // ✅ SHELLE: استخدم endpoint admin/reviews الصحيح بدل /offers
+        const reviewsRes = await fetch(`${BASE_URL}/admin/reviews`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
-        const offersJson = await offersRes.json();
-        const offers     = Array.isArray(offersJson?.data) ? offersJson.data : (offersJson?.data?.data ?? []);
 
-        const reviewArrays = await Promise.all(
-          offers.map(async (offer) => {
-            try {
-              const r = await fetch(`${BASE_URL}/offers/${offer.id}/reviews`, {
-                headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-              });
-              const d    = await r.json();
-              const revs = d?.reviews ?? d?.data ?? (Array.isArray(d) ? d : []);
-              return revs.map((rev) => ({ ...rev, offer }));
-            } catch { return []; }
-          })
-        );
+        if (!reviewsRes.ok) throw new Error(`Failed to fetch reviews: ${reviewsRes.status}`);
 
-        const raw = reviewArrays.flat();
+        const reviewsData = await reviewsRes.json();
+        
+        // ✅ HODYA: handle different response structures
+        const raw = Array.isArray(reviewsData?.data) 
+          ? reviewsData.data 
+          : Array.isArray(reviewsData?.reviews)
+          ? reviewsData.reviews
+          : Array.isArray(reviewsData) 
+          ? reviewsData 
+          : [];
+
         setReviews(
           raw.map((r) => ({
             id:          r.id,

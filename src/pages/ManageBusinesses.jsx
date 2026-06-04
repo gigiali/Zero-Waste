@@ -14,8 +14,10 @@ const LOAD_TIMEOUT = 5000;
 
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager = (r) => r === "manager";
+const isSupport = (r) => r === "support";
 const canManage = (r) => isSuperAdmin(r) || isManager(r);
 const canDelete = (r) => isSuperAdmin(r);
+const canViewBusinesses = (r) => isSuperAdmin(r) || isManager(r);
 
 const statusConfig = {
   approved: { bg: "#e8faf0", text: "#28c76f", dot: "#28c76f", labelKey: "manageBusinesses.status.approved" },
@@ -676,6 +678,14 @@ export default function ManageBusinesses() {
     const matchSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
     const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchCat = filterCategory === "all" || b.category === filterCategory;
+    if (!role || !canViewBusinesses(role)) {
+  return (
+    <div style={{ padding: "20px", textAlign: "center" }}>
+      <AlertCircle size={40} />
+      <p>You don't have permission to manage businesses.</p>
+    </div>
+  );
+}
     return matchSearch && matchStatus && matchCat;
   });
 

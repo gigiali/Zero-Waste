@@ -35,9 +35,10 @@ const API_TIMEOUT = 8000;
 
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager = (r) => r === "manager";
+const isSupport = (r) => r === "support";
 const canManage = (r) => isSuperAdmin(r) || isManager(r);
 const canDelete = (r) => isSuperAdmin(r);
-
+const canViewUsers = (r) => isSuperAdmin(r) || isManager(r);
 const STATUS_CFG = {
   active: { bg: "#dcfce7", text: "#166534", label: "Active" },
   inactive: { bg: "#f3f4f6", text: "#4b5563", label: "Inactive" },
@@ -329,6 +330,15 @@ export default function UserManagement() {
   }, []);
 
   const removeToast = (id) => setToasts((prev) => prev.filter((t) => t.id !== id));
+
+if (!role || !canViewUsers(role)) {
+  return (
+    <div className="admin-auth-error">
+      <AlertCircle size={40} />
+      <p>You don't have permission to access user management.</p>
+    </div>
+  );
+}
 
   const fetchUsers = useCallback(async () => {
     if (!token) return;

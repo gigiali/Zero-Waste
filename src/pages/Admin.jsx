@@ -20,7 +20,9 @@ const PIE_COLORS = ["#696cff", "#ff4d49", "#28c76f", "#ff9f43"];
 
 const isSuperAdmin = (r) => r === "super_admin";
 const isManager = (r) => r === "manager";
+const isSupport = (r) => r === "support";
 const canManage = (r) => isSuperAdmin(r) || isManager(r);
+const canViewReports = (r) => isSuperAdmin(r) || isManager(r) || isSupport(r);
 
 const buildWeeklyData = (orders = []) => {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -407,7 +409,7 @@ const Admin = () => {
   }, [isLoggedIn, token]);
 
   useEffect(() => {
-    if (!isLoggedIn || !token) return;
+    if (!isLoggedIn || !token || !canManage(role)) return; // ✅ SHELLE: Support ما يحمل earnings
     (async () => {
       setEarningsLoading(true);
       try {
@@ -422,7 +424,7 @@ const Admin = () => {
       } catch (err) { if (err.name !== "AbortError") console.error("Earnings fetch error:", err); }
       finally { setEarningsLoading(false); }
     })();
-  }, [isLoggedIn, token]);
+  }, [isLoggedIn, token, role]);
 
   useEffect(() => {
     if (!isLoggedIn || !token) return;
@@ -554,24 +556,37 @@ const Admin = () => {
     );
   }
 
-  const navItems = [
-    { id: "dashboard",      icon: LayoutDashboard, label: "Dashboard" },
-    { id: "offers",         icon: Package,         label: "All Offers" },
-    { id: "orders",         icon: ShoppingBag,     label: "Latest Orders", badge: (() => {
+  // ✅ HODYA: Support nav - اضفنا reviews tab هنا
+  const navItems = isSupport(role) 
+  ? [
+      { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { id: "orders", icon: ShoppingBag, label: "Latest Orders", badge: (() => {
         const yesterday = new Date(Date.now() - 86400000);
         const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
         return recent > 0 ? recent : null;
-      })()
-    },
-    { id: "activity",       icon: Activity,        label: "Activity" },
-    { id: "sustainability", icon: Leaf,            label: "Sustainability Impact" },
-  ];
+      })() },
+      { id: "activity", icon: Activity, label: "Activity" },
+      { id: "reviews", icon: Star, label: "Reviews", badge: null }, // ✅ HODYA: Support يشوف reviews
+    ]
+  : [
+      { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
+      { id: "offers", icon: Package, label: "All Offers" },
+      { id: "orders", icon: ShoppingBag, label: "Latest Orders", badge: (() => {
+        const yesterday = new Date(Date.now() - 86400000);
+        const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
+        return recent > 0 ? recent : null;
+      })() },
+      { id: "activity", icon: Activity, label: "Activity" },
+      { id: "sustainability", icon: Leaf, label: "Sustainability Impact" },
+    ];
 
-  const managementItems = [
+  const managementItems = canManage(role) ? [
     { id: "users",      icon: Users,         label: "Users",      path: "/admin/users" },
     { id: "businesses", icon: ClipboardList, label: "Businesses", path: "/admin/businesses" },
     { id: "reviews",    icon: Star,          label: "Reviews",    path: "/admin/review-moderation" },
-  ];
+  ] : isSupport(role) ? [
+    // ✅ SHELLE: Support ما عنده management items - بيشوف reviews من التاب العادي
+  ] : [];
 
   return (
     <div className="admin-shell">
@@ -596,7 +611,7 @@ const Admin = () => {
               active={activeSection === item.id} badge={item.badge} onClick={() => setActiveSection(item.id)} />
           ))}
 
-          {sidebarOpen && <p className="sidebar-nav-section-title">MANAGEMENT</p>}
+          {sidebarOpen && managementItems.length > 0 && <p className="sidebar-nav-section-title">MANAGEMENT</p>}
           {managementItems.map((item) => (
             <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
               active={activeSection === item.id} onClick={() => navigate(item.path)} />
@@ -644,6 +659,7 @@ const Admin = () => {
               {activeSection === "activity"       && "Recent Activity"}
               {activeSection === "sustainability" && "Sustainability Impact"}
               {activeSection === "notifications"  && "Notifications"}
+              {activeSection === "reviews"        && "Review Moderation"}
             </h1>
             <div className="admin-topbar__breadcrumb">
               <span>Admin</span>
@@ -655,7 +671,7 @@ const Admin = () => {
 
         <div className="admin-page-content">
 
-          {activeSection === "dashboard" && (
+          {activeSection === "dashboard" && !isSupport(role) && (
             <>
               {statsLoading ? (
                 <div className="loading-state"><Loader2 size={20} className="spin" /> Loading stats…</div>
@@ -665,7 +681,8 @@ const Admin = () => {
                   <StatCard title="Total Vendors" value={Number(totalVendors).toLocaleString()} icon={ShoppingBag} color="#28c76f" />
                   <StatCard title="Total Orders" value={Number(totalOrders).toLocaleString()} icon={Package} color="#ff9f43" trend={`Avg EGP ${avgOrder}`} />
                   <StatCard title="Active Offers" value={Number(activeOffers).toLocaleString()} icon={Star} color="#ff4d49" />
-                  {canManage(role) && (
+                  {/* ✅ SHELLE: Support ما يشوف financial cards */}
+                  {canManage(role) && !isSupport(role) && (
                     <>
                       <StatCard title="Gross Revenue" value={`EGP ${fmtCurrency(grossRev)}`} icon={DollarSign} color="#03c3ec" />
                       <StatCard title="Platform Profit (Net)" value={`EGP ${fmtCurrency(netProfit)}`} icon={TrendingUp} color="#28c76f" />
@@ -693,7 +710,7 @@ const Admin = () => {
                           <linearGradient id="ordersGrad" x1="0" y1="0" x2="0" y2="1">
                             <stop offset="5%" stopColor="#696cff" stopOpacity={0.2} /><stop offset="95%" stopColor="#696cff" stopOpacity={0} />
                           </linearGradient>
-                          {canManage(role) && (
+                          {canManage(role) && !isSupport(role) && (
                             <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                               <stop offset="5%" stopColor="#28c76f" stopOpacity={0.2} /><stop offset="95%" stopColor="#28c76f" stopOpacity={0} />
                             </linearGradient>
@@ -702,11 +719,11 @@ const Admin = () => {
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                         <XAxis dataKey="day" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
                         <YAxis yAxisId="left" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
-                        {canManage(role) && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />}
+                        {canManage(role) && !isSupport(role) && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />}
                         <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }} labelStyle={{ color: "#566a7f", fontWeight: 600 }} />
                         <Legend iconType="circle" iconSize={8} />
                         <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#696cff" strokeWidth={2} fill="url(#ordersGrad)" dot={{ r: 4, fill: "#696cff" }} name="Orders" />
-                        {canManage(role) && <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#28c76f" strokeWidth={2} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#28c76f" }} name="Revenue (EGP)" />}
+                        {canManage(role) && !isSupport(role) && <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#28c76f" strokeWidth={2} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#28c76f" }} name="Revenue (EGP)" />}
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
@@ -734,7 +751,8 @@ const Admin = () => {
                 </div>
               </div>
 
-              {canManage(role) && (
+              {/* ✅ SHELLE: Support ما يشوف earnings chart */}
+              {canManage(role) && !isSupport(role) && (
                 <div className="chart-card" style={{ marginBottom: 24 }}>
                   <div className="chart-card__header">
                     <div><h3 className="chart-card__title">Monthly Earnings</h3><p className="chart-card__sub">Net sales — last 12 months</p></div>
@@ -759,32 +777,49 @@ const Admin = () => {
                 </div>
               )}
 
-              <div className="quick-actions">
-                <h3 className="section-heading">Quick Actions</h3>
-                <div className="quick-actions-grid">
-                  <button type="button" className="action-card" onClick={() => navigate("/admin/users")}>
-                    <div className="action-card__icon" style={{ background: "#e7e7ff" }}><Users size={20} color="#696cff" /></div>
-                    <div><p className="action-card__title">User Management</p><p className="action-card__sub">Manage customers & vendors</p></div>
-                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
-                  </button>
-                  <button type="button" className="action-card" onClick={() => navigate("/admin/review-moderation")}>
-                    <div className="action-card__icon" style={{ background: "#ffecd9" }}><CircleAlert size={20} color="#ff9f43" /></div>
-                    <div><p className="action-card__title">Review Moderation</p><p className="action-card__sub">Manage user reviews</p></div>
-                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
-                  </button>
-                  <button type="button" className="action-card" onClick={() => navigate("/admin/businesses")}>
-                    <div className="action-card__icon" style={{ background: "#e8f8ee" }}><ClipboardList size={20} color="#28c76f" /></div>
-                    <div><p className="action-card__title">Business Management</p><p className="action-card__sub">Approve & manage vendors</p></div>
-                    <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
-                  </button>
+              {!isSupport(role) && (
+                <div className="quick-actions">
+                  <h3 className="section-heading">Quick Actions</h3>
+                  <div className="quick-actions-grid">
+                    <button type="button" className="action-card" onClick={() => navigate("/admin/users")}>
+                      <div className="action-card__icon" style={{ background: "#e7e7ff" }}><Users size={20} color="#696cff" /></div>
+                      <div><p className="action-card__title">User Management</p><p className="action-card__sub">Manage customers & vendors</p></div>
+                      <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                    </button>
+                    <button type="button" className="action-card" onClick={() => navigate("/admin/review-moderation")}>
+                      <div className="action-card__icon" style={{ background: "#ffecd9" }}><CircleAlert size={20} color="#ff9f43" /></div>
+                      <div><p className="action-card__title">Review Moderation</p><p className="action-card__sub">Manage user reviews</p></div>
+                      <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                    </button>
+                    <button type="button" className="action-card" onClick={() => navigate("/admin/businesses")}>
+                      <div className="action-card__icon" style={{ background: "#e8f8ee" }}><ClipboardList size={20} color="#28c76f" /></div>
+                      <div><p className="action-card__title">Business Management</p><p className="action-card__sub">Approve & manage vendors</p></div>
+                      <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {activeSection === "dashboard" && isSupport(role) && (
+            <div className="orders-card">
+              <div className="orders-card__header">
+                <div className="orders-card__title-row">
+                  <LayoutDashboard size={20} color="#696cff" />
+                  <h3>Dashboard Overview</h3>
                 </div>
               </div>
-            </>
+              <div style={{ padding: "40px 20px", textAlign: "center", color: "#8592a3" }}>
+                <p style={{ fontSize: "0.95rem", marginBottom: "20px" }}>Welcome to Support Dashboard</p>
+                <p style={{ fontSize: "0.85rem" }}>Navigate using the menu to view Orders, Activity, and Reviews.</p>
+              </div>
+            </div>
           )}
 
           {activeSection === "offers" && <AllOffersSection token={token} />}
 
-          {activeSection === "sustainability" && (
+          {activeSection === "sustainability" && !isSupport(role) && (
             <div className="sustainability-section">
               <div className="sustainability-section__header">
                 <div>
@@ -840,6 +875,12 @@ const Admin = () => {
                   <h3>Latest Orders</h3>
                   <span className="orders-count-badge">{filteredOrders.length}</span>
                 </div>
+                {/* ✅ HODYA: Support info message */}
+                {isSupport(role) && (
+                  <div style={{ paddingLeft: "10px", fontSize: "0.85rem", color: "#4f46e5", fontWeight: 500 }}>
+                    ℹ️ Support: Viewing customer orders
+                  </div>
+                )}
                 <div className="orders-card__controls">
                   <div className="search-box">
                     <Search size={14} color="#8592a3" />
@@ -934,6 +975,24 @@ const Admin = () => {
                   ))}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* ✅ HODYA: Reviews section - يشتغل للـ Support و للمنagement */}
+          {activeSection === "reviews" && (
+            <div className="orders-card">
+              <div className="orders-card__header">
+                <div className="orders-card__title-row">
+                  <Star size={20} color="#696cff" /><h3>Review Moderation</h3>
+                </div>
+              </div>
+              <div style={{ padding: "20px", textAlign: "center", color: "#8592a3" }}>
+                <p>Navigate to the full Review Moderation page for detailed management.</p>
+                <button type="button" style={{ marginTop: "10px", padding: "8px 16px", background: "#696cff", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem" }}
+                  onClick={() => navigate("/admin/review-moderation")}>
+                  Open Reviews
+                </button>
+              </div>
             </div>
           )}
 
