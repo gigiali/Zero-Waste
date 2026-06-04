@@ -11,7 +11,7 @@ import { useLocationContext } from "../Context/LocationContext";
 import Footer from "../Components/Footer";
 import { useCustomAlert, AlertContainer } from "../Components/CustomAlert";
 
-const BASE_URL = "https://zero-waste-production.up.railway.app";
+const BASE_URL = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
 
 function CountdownTimer({ pickupTime }) {
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });

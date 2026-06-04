@@ -560,7 +560,8 @@ const handleCardSubmit = async (paymentMethodId) => {
     let userAddress = "";
     if (deliveryMethod === "delivery") {
       try {
-        const profileRes = await fetch("https://zero-waste-production.up.railway.app/api/myprofile", {
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         const profileData = await profileRes.json();
@@ -583,7 +584,8 @@ const handleCardSubmit = async (paymentMethodId) => {
 
     console.log("📤 Sending order body:", JSON.stringify(submitBody, null, 2));
 
-    const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+const response = await fetch(`${apiUrl}/api/orders`, {
       method: "POST",
       headers: { 
         Accept: "application/json", 
@@ -668,11 +670,9 @@ console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
       let userAddress = "";
 
       if (deliveryMethod === "delivery") {
-
-        try {
-
-          const profileRes = await fetch("https://zero-waste-production.up.railway.app/api/myprofile", {
-
+  try {
+    const apiUrl = import.meta.env.VITE_API_URL || "";
+    const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
             headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
 
           });
@@ -708,7 +708,8 @@ console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
 
 
 
-      const response = await fetch("https://zero-waste-production.up.railway.app/api/orders", {
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+const response = await fetch(`${apiUrl}/api/orders`, {
 
         method: "POST",
 
