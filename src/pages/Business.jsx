@@ -20,8 +20,8 @@ const EMPTY_FORM = {
 };
 
 const getToken = () =>
-  localStorage.getItem("auth_token") || localStorage.getItem("token") ||
-  sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+  sessionStorage.getItem("auth_token") || sessionStorage.getItem("token") ||
+  localStorage.getItem("auth_token") || localStorage.getItem("token");
 
 const readJson = async (response) => { try { return await response.json(); } catch { return {}; } };
 
@@ -55,8 +55,8 @@ const normalizeOffer = (offer) => ({
 
 const normalizeOrder = (order) => {
   const firstItem = order.items?.[0] || order.order_items?.[0] || order.orderItems?.[0];
-  const offer = order.offer || firstItem?.offer;
-  const customer = order.user || order.customer || firstItem?.user || firstItem?.customer;
+  const offer = firstItem?.offer || order.offer;
+  const customer = order.customer || order.user;
   
   const customerName = 
     customer?.user?.name ||
@@ -71,6 +71,7 @@ const normalizeOrder = (order) => {
 
   return {
     id: order.id,
+    reservation_id: order.reservation_id || order.reservationId,
     offer: offer?.title || offer?.name || order.offer_title || "N/A",
     customer: customerName,
     amount: `EGP ${order.total_amount ?? order.total ?? order.amount ?? 0}`,
@@ -376,7 +377,6 @@ function TopSellingSection({ branchId }) {
   );
 }
 
-// ✅ قسم REVIEWS - معدل بشكل صحيح
 function ReviewsSection({ branchId }) {
   const { t } = useTranslation();
   const [reviews, setReviews] = useState([]);
@@ -412,7 +412,6 @@ function ReviewsSection({ branchId }) {
   fetchReviews();
 }, [branchId]);
 
-  // حالة التحميل
   if (loading) {
     return (
       <div className="biz-section" id="reviews-section">
@@ -427,7 +426,6 @@ function ReviewsSection({ branchId }) {
     );
   }
 
-  // حالة عدم وجود تقييمات
   if (reviews.length === 0) {
     return (
       <div className="biz-section" id="reviews-section">
@@ -516,7 +514,6 @@ function SalesHistorySection({ branchId }) {
       if (!token) { setLoading(false); return; }
       try {
         const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-        console.log("🟢 API URL:", apiUrl);
         const url = new URL("/api/vendor/dashboard/sales", apiUrl);
         if (branchId) url.searchParams.set("branch_id", branchId);
 
@@ -604,6 +601,7 @@ function SalesHistorySection({ branchId }) {
   );
 }
 
+// ✅ MAIN EXPORT - Business Component starts here
 export default function Business() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -642,6 +640,7 @@ export default function Business() {
   const [deleteBranchId, setDeleteBranchId] = useState(null);
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
+  const isFetchingOrdersRef = React.useRef(false); // ✅ اضفنا ده
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
@@ -796,71 +795,106 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     try {
     const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
     const res = await fetch(`${apiUrl}/api/vendor/myoffers`, {
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-    });
-      if (res.ok) {
-        const data = await readJson(res);
-        setOffers(extractList(data, ["offers"]).map(normalizeOffer));
-      }
+  headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+});
+  if (res.ok) {
+    const data = await readJson(res);
+    const list = data?.data?.data || data?.data || [];
+    setOffers(list.map(normalizeOffer));
+  }
     } catch (err) { console.error("Offers fetch error:", err); }
     finally { isFetchingOffersRef.current = false; }
   }, []);
 
-  useEffect(() => { if (selectedBranch?.id) fetchOffers(); }, [selectedBranch?.id, fetchOffers]);
+  useEffect(() => { fetchOffers(); }, [fetchOffers]);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      const token = getToken();
-      if (!token) return;
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-        const res = await fetch(`${apiUrl}/api/vendor/orders`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (res.ok) {
-          const data = await readJson(res);
-          const orderList = extractList(data, ["orders"]).map(normalizeOrder);
-          setOrders(orderList);
+  // ✅ FIXED: جلب الـ Orders بشكل صحيح
+  const fetchOrders = React.useCallback(async () => {
+    if (isFetchingOrdersRef.current) return;
+    isFetchingOrdersRef.current = true;
+    
+    const token = getToken();
+    if (!token) { isFetchingOrdersRef.current = false; return; }
+    
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      console.log('📡 Fetching orders from API...');
+      
+      const res = await fetch(`${apiUrl}/api/vendor/orders`, {
+        headers: { 
+          Accept: "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
+      });
+      
+      console.log('📊 Response status:', res.status);
+      
+      if (res.ok) {
+        const data = await readJson(res);
+        console.log('✅ Raw API Response:', data);
+        
+        // معالجة صحيحة للـ response structure
+        let orderList = [];
+        if (Array.isArray(data)) {
+          orderList = data;
+        } else if (data.data && Array.isArray(data.data)) {
+          orderList = data.data;
+        } else if (data.orders && Array.isArray(data.orders)) {
+          orderList = data.orders;
         }
-      } catch (err) { console.error("Orders fetch error:", err); }
-    };
-    if (selectedBranch) fetchOrders();
-  }, [selectedBranch]);
+        
+        console.log('📋 Order count:', orderList.length);
+        
+        // تطبيع البيانات مع الحفاظ على reservation_id
+        const processedOrders = orderList.map((order) => {
+          const normalized = normalizeOrder(order);
+          return {
+            ...normalized,
+            reservation_id: order.reservation_id || order.reservationId || order.id,
+            reservationId: order.reservation_id || order.reservationId || order.id,
+          };
+        });
+        
+        console.log('✅ Processed Orders:', processedOrders);
+        setOrders(processedOrders);
+      } else {
+        console.error('❌ API Error:', res.status);
+        setOrders([]);
+      }
+    } catch (err) { 
+      console.error('❌ Orders fetch error:', err); 
+      setOrders([]);
+    }
+    finally { isFetchingOrdersRef.current = false; }
+  }, []);
 
   useEffect(() => {
+    fetchOrders();
+    
+    // جلب دوري كل 10 ثواني
+    const interval = setInterval(fetchOrders, 10000);
+    
+    // استمع للـ Events
     const handleOrderPlaced = () => {
-      if (!selectedBranch) return;
-      const fetchLatestOrders = async () => {
-        const token = getToken();
-        if (!token) return;
-        try {
-          const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-          const res = await fetch(`${apiUrl}/api/vendor/orders`, {
-            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await readJson(res);
-            setOrders(extractList(data, ["orders"]).map(normalizeOrder));
-          }
-        } catch (err) { console.error("Orders refresh error:", err); }
-      };
-      fetchLatestOrders();
+      console.log('🔔 Order placed event received!');
+      fetchOrders();
     };
+    
     window.addEventListener("order-placed", handleOrderPlaced);
     window.addEventListener("zw-user-orders-updated", handleOrderPlaced);
+    window.addEventListener("zw-vendor-order-placed", handleOrderPlaced);
+    
     return () => {
+      clearInterval(interval);
       window.removeEventListener("order-placed", handleOrderPlaced);
       window.removeEventListener("zw-user-orders-updated", handleOrderPlaced);
+      window.removeEventListener("zw-vendor-order-placed", handleOrderPlaced);
     };
-  }, [selectedBranch]);
+  }, [fetchOrders]);
 
   const selectedBranchName = branchName(selectedBranch);
-  const filteredOffers = selectedBranch
-    ? offers.filter((o) => o.branch_id === selectedBranch.id || o.branch === selectedBranchName)
-    : offers;
-  const filteredOrders = selectedBranch
-    ? orders.filter((o) => o.branch_id === selectedBranch.id || o.branch === selectedBranchName)
-    : orders;
+  const filteredOffers = offers;
+  const filteredOrders = orders;
 
   const openAdd = () => { setEditingId(null); setForm(EMPTY_FORM); setSubmitError(""); setSubmitSuccess(""); setDrawerOpen(true); };
   const closeDrawer = () => { setDrawerOpen(false); setEditingId(null); setForm(EMPTY_FORM); setSubmitError(""); setSubmitSuccess(""); };
@@ -978,20 +1012,84 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
     finally { setDeleteConfirmId(null); }
   };
 
+  // ✅ FIXED: handleOrderStatusUpdate
   const handleOrderStatusUpdate = async (orderId, newStatus) => {
+    console.log('🔄 Updating order status:', { orderId, newStatus });
     setUpdatingOrderId(orderId);
     const token = getToken();
+    
     try {
       const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-      const res = await fetch(`${apiUrl}/api/vendor/orders/${orderId}/status`, {
+      const url = `${apiUrl}/api/vendor/orders/${orderId}/status`;
+      
+      console.log('📡 Sending PATCH to:', url);
+      
+      const res = await fetch(url, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
+        headers: { 
+          "Content-Type": "application/json", 
+          Accept: "application/json", 
+          Authorization: `Bearer ${token}` 
+        },
         body: JSON.stringify({ status: newStatus }),
       });
-      if (res.ok) setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o)));
-      else { const data = await readJson(res); alert(data.message || t("failedUpdateStatus")); }
-    } catch (err) { console.error("Order status error:", err); alert(t("networkError")); }
-    finally { setUpdatingOrderId(null); }
+      
+      console.log('📊 Response status:', res.status);
+      
+      if (res.ok) {
+        const responseData = await res.json();
+        console.log('✅ Status update response:', responseData);
+        
+        // تحديث الـ local state
+        setOrders((prev) => 
+          prev.map((o) => 
+            o.id === orderId 
+              ? { ...o, status: newStatus, order_status: newStatus } 
+              : o
+          )
+        );
+        
+        // جلب reservation_id
+        const updatedOrder = orders.find(o => o.id === orderId);
+        const reservationId = updatedOrder?.reservation_id || updatedOrder?.reservationId;
+        
+        console.log('📤 Will dispatch event with:', {
+          orderId,
+          reservationId,
+          newStatus
+        });
+        
+        // Dispatch events
+        window.dispatchEvent(new CustomEvent("zw-vendor-order-updated", {
+          detail: { 
+            orderId: orderId,
+            reservationId: reservationId,
+            newStatus: newStatus,
+            timestamp: new Date().toISOString(),
+            source: 'vendor'
+          }
+        }));
+        
+        window.dispatchEvent(new CustomEvent("order-status-changed", {
+          detail: {
+            reservationId: reservationId,
+            orderId: orderId,
+            status: newStatus
+          }
+        }));
+        
+        console.log('✅ Events dispatched successfully');
+      } else { 
+        const data = await readJson(res); 
+        console.error('❌ API Error:', res.status, data);
+        alert(data.message || t("failedUpdateStatus")); 
+      }
+    } catch (err) { 
+      console.error('❌ Error updating status:', err); 
+      alert(t("networkError")); 
+    } finally { 
+      setUpdatingOrderId(null); 
+    }
   };
 
   // Navigation
@@ -1301,10 +1399,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
               </div>
             </div>
 
-            {/* قسم Reviews */}
             <ReviewsSection branchId={dashboardBranchId} />
-
-            {/* قسم Sales History */}
             <SalesHistorySection branchId={dashboardBranchId} />
           </>
         )}

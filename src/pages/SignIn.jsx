@@ -132,7 +132,7 @@ function SignIn() {
           } catch {
             navigate("/business/profile");
           }
-        } else if (userRole === "super_admin" || userRole === "manager" || userRole === "admin") {
+        } else if (userRole === "super_admin" || userRole === "manager" || userRole === "support") {
           navigate("/admin");
         } else {
           navigate("/home");

@@ -55,7 +55,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
       sessionStorage.getItem("auth_token") ||
       sessionStorage.getItem("token");
     try {
-      const orderId = order.orderNumber || order.id;
+      const orderId = order.orderNumber || order.id || order.reservationId;
       const res = await fetch(`${BASE_URL}/api/orders/${orderId}/cancel`, {
         method: "POST",
         headers: {
@@ -77,10 +77,10 @@ function OrderTrackingStrip({ order, onDismiss }) {
   };
 
   const [reviewDismissed, setReviewDismissed] = useState(() => {
-    return localStorage.getItem("review_dismissed_" + order.orderNumber) === "true";
+    return localStorage.getItem("review_dismissed_" + (order.orderNumber || order.reservationId)) === "true";
   });
   const [reviewSubmitted, setReviewSubmitted] = useState(() => {
-    return localStorage.getItem("review_submitted_" + order.orderNumber) === "true";
+    return localStorage.getItem("review_submitted_" + (order.orderNumber || order.reservationId)) === "true";
   });
   const [rating, setRating] = useState(0);
   const [reviewText, setReviewText] = useState("");
@@ -91,7 +91,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const dismissReview = () => {
     setShowReview(false);
     setReviewDismissed(true);
-    localStorage.setItem("review_dismissed_" + order.orderNumber, "true");
+    localStorage.setItem("review_dismissed_" + (order.orderNumber || order.reservationId), "true");
   };
 
   const statusToStep = (status, deliveryMethod) => {
@@ -121,6 +121,61 @@ function OrderTrackingStrip({ order, onDismiss }) {
 
   const steps = order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
+  // ✅ FIXED: Event listener with proper ID matching
+  useEffect(() => {
+    const handleVendorUpdate = (e) => {
+      console.log("🎯 Event received from vendor:", e.detail);
+      console.log("📋 Order comparison:", {
+        eventReservationId: e.detail.reservationId,
+        eventOrderId: e.detail.orderId,
+        orderReservationId: order.reservationId,
+        orderOrderNumber: order.orderNumber,
+        orderId: order.id
+      });
+      
+      // ✅ Check all ID formats: reservationId first, then database IDs
+      const eventMatches = 
+        (e.detail.reservationId && String(e.detail.reservationId) === String(order.reservationId)) ||
+        (e.detail.orderId && String(e.detail.orderId) === String(order.id)) ||
+        (e.detail.orderId && String(e.detail.orderId) === String(order.orderNumber));
+      
+      if (eventMatches) {
+        console.log("✅ MATCH FOUND! Updating UI with status:", e.detail.newStatus);
+        
+        const newStep = statusToStep(e.detail.newStatus, order.deliveryMethod);
+        setCurrentStep(newStep);
+        
+        // Update sessionStorage
+        const updatedOrder = { ...order, status: e.detail.newStatus };
+        sessionStorage.setItem("zw_active_order", JSON.stringify(updatedOrder));
+        
+        // Show review if completed
+        if (e.detail.newStatus.toLowerCase() === "completed" && !reviewSubmitted && !reviewDismissed) {
+          console.log("🎉 Order completed - showing review");
+          setShowReview(true);
+        }
+        
+        // If cancelled
+        if (e.detail.newStatus.toLowerCase() === "cancelled") {
+          console.log("❌ Order cancelled");
+          setIsCancelled(true);
+          setTimeout(() => onDismiss(), 3000);
+        }
+      } else {
+        console.log("❌ No match - this event is for a different order");
+      }
+    };
+
+    window.addEventListener("zw-vendor-order-updated", handleVendorUpdate);
+    window.addEventListener("order-status-changed", handleVendorUpdate);
+    
+    return () => {
+      window.removeEventListener("zw-vendor-order-updated", handleVendorUpdate);
+      window.removeEventListener("order-status-changed", handleVendorUpdate);
+    };
+  }, [order.reservationId, order.orderNumber, order.id, order.deliveryMethod, reviewSubmitted, reviewDismissed]);
+
+  // ✅ Polling backup
   useEffect(() => {
     const fetchOrderStatus = async () => {
       const token =
@@ -168,7 +223,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
     formData.append("offer_id", offerId);
     formData.append("rating", rating);
     formData.append("comment", reviewText);
-    formData.append("order_id", order.orderNumber);
+    formData.append("order_id", order.orderNumber || order.id);
     formData.append("delivery_method", order.deliveryMethod);
     formData.append("offer_title", (order.items && order.items[0] && order.items[0].title) || order.title || "Food Item");
     if (reviewImage) formData.append("image", reviewImage);
@@ -181,8 +236,8 @@ function OrderTrackingStrip({ order, onDismiss }) {
       setSubmitted(true);
       setReviewDismissed(true);
       setReviewSubmitted(true);
-      localStorage.setItem("review_dismissed_" + order.orderNumber, "true");
-      localStorage.setItem("review_submitted_" + order.orderNumber, "true");
+      localStorage.setItem("review_dismissed_" + (order.orderNumber || order.reservationId), "true");
+      localStorage.setItem("review_submitted_" + (order.orderNumber || order.reservationId), "true");
       setTimeout(() => onDismiss(), 1500);
     } catch (error) {
       alert("Unable to submit your review. Please try again.");
@@ -211,7 +266,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
         <div className="order-strip-header">
           <div className="order-strip-meta">
             <div className="order-strip-icon-wrap" style={{ background: "#fef2f2", color: "#ef4444" }}><X size={13} /></div>
-            <span className="order-strip-number">#{order.orderNumber}</span>
+            <span className="order-strip-number">#{order.orderNumber || order.reservationId}</span>
             <span className="order-strip-dot" />
             <span className="order-strip-method-badge" style={{ background: "#fef2f2", color: "#ef4444" }}>Order Cancelled</span>
           </div>
@@ -232,7 +287,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
       <div className="order-strip-header">
         <div className="order-strip-meta">
           <div className="order-strip-icon-wrap"><Package size={13} /></div>
-          <span className="order-strip-number">#{order.orderNumber}</span>
+          <span className="order-strip-number">#{order.orderNumber || order.reservationId}</span>
           <span className="order-strip-dot" />
           <span className="order-strip-method-badge">
             {order.deliveryMethod === "delivery" ? "Delivery" : "Pickup"}
@@ -520,16 +575,31 @@ export default function HomePage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
+  // ✅ FIXED: Properly handle reservation_id from PaymentMethodPage
   useEffect(() => {
     if (location.state && location.state.trackingActive) {
-      setActiveOrder(location.state);
-      sessionStorage.setItem("zw_active_order", JSON.stringify(location.state));
+      const orderData = {
+        ...location.state,
+        orderNumber: location.state.reservationId || location.state.orderNumber || location.state.id,
+        id: location.state.id || location.state.orderNumber || location.state.reservationId,
+        reservationId: location.state.reservationId
+      };
+      
+      console.log("📍 Setting active order:", orderData);
+      setActiveOrder(orderData);
+      sessionStorage.setItem("zw_active_order", JSON.stringify(orderData));
       window.history.replaceState({}, document.title);
     } else {
       const savedOrder = sessionStorage.getItem("zw_active_order");
       if (savedOrder) {
-        try { setActiveOrder(JSON.parse(savedOrder)); }
-        catch (err) { console.error("Failed to parse saved order:", err); sessionStorage.removeItem("zw_active_order"); }
+        try { 
+          const parsed = JSON.parse(savedOrder);
+          setActiveOrder(parsed); 
+        }
+        catch (err) { 
+          console.error("Failed to parse saved order:", err); 
+          sessionStorage.removeItem("zw_active_order"); 
+        }
       }
     }
   }, [location.state]);

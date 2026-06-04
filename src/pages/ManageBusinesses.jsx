@@ -26,8 +26,7 @@ const statusConfig = {
   under_review: { bg: "#e7e7ff", text: "#696cff", dot: "#696cff", labelKey: "manageBusinesses.status.underReview" },
   rejected: { bg: "#ffeaea", text: "#ef4444", dot: "#ef4444", labelKey: "manageBusinesses.status.rejected" },
 };
-const fallbackStatus = { bg: "#f0f0f5", text: "#8592a3", dot: "#8592a3", labelKey: "manageBusinesses.status.unknown" };
-const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
+const fallbackStatus = { bg: "#e8faf0", text: "#28c76f", dot: "#28c76f", labelKey: "manageBusinesses.status.active" };const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
 
 function SkeletonRow() {
   return (

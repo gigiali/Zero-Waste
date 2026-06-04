@@ -916,8 +916,8 @@ const Admin = () => {
                       </thead>
                       <tbody>
                         {pagedOrders.map((order, idx) => (
-                          <tr key={`order-${order.id ?? idx}-${idx}`}>
-                            <td className="order-id">#{order.id}</td>
+                          <tr key={`order-${order.reservation_id?? idx}-${idx}`}>
+                            <td className="order-id">#{order.reservation_id}</td>
                             <td className="order-customer">
                               <div className="customer-avatar">
                                 {(order.customer?.name || order.customer?.full_name || order.customer_name || "C")[0].toUpperCase()}

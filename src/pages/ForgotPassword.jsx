@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
-const API_URL = "https://zero-waste-production.up.railway.app";
-
+const API_URL = "https://zero-waste-production.up.railway.app/api";
 function RecoveryFrame({ title, children, showFooter = true }) {
   const navigate = useNavigate();
   const { t } = useTranslation();

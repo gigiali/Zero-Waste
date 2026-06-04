@@ -5,8 +5,7 @@ import { RecoveryFrame } from "./ForgotPassword";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
-const API_URL = "https://zero-waste-production.up.railway.app";
-
+const API_URL = "https://zero-waste-production.up.railway.app/api";
 export default function ResetPassword() {
   const { t } = useTranslation();
   const navigate = useNavigate();

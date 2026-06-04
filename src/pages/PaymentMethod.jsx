@@ -531,17 +531,19 @@ const handleCardSubmit = async (paymentMethodId) => {
   setIsSubmitting(true);
   setSubmitError("");
 
+  let items;
   try {
-    // ✅ تصليح: التحقق من البيانات أولاً
-    let items;
-    try {
-      items = validateAndPrepareItems();
-      if (!items) return;
-    } catch (err) {
-      setSubmitError(err.message || "Invalid cart items");
-      setIsSubmitting(false);
-      return;
-    }
+    items = validateAndPrepareItems();
+  } catch (err) {
+    setSubmitError(err.message || "Invalid cart items");
+    setIsSubmitting(false);
+    return;
+  }
+  if (!items) {
+    setIsSubmitting(false);
+    return;
+  }
+  try {
 
     const token =
       localStorage.getItem("auth_token") || localStorage.getItem("token") ||
@@ -602,6 +604,7 @@ const response = await fetch(`${apiUrl}/api/orders`, {
       console.log("✅ Order created successfully!");
       serverOrderRef.current = data.order ?? data;
       console.log("🆔 Reservation ID:", extractReservationId(data.order ?? data));
+      const firstItem = cartItems[0];
       const businessPhone = 
         data.order?.vendor?.phone ||
         data.order?.vendor_phone ||
@@ -652,18 +655,19 @@ const response = await fetch(`${apiUrl}/api/orders`, {
 
     setSubmitError("");
 
+    let items;
     try {
-
-      // ✅ تصليح: التحقق من البيانات أولاً
-      let items;
-      try {
-        items = validateAndPrepareItems();
-        if (!items) return;
-      } catch (err) {
-        setSubmitError(err.message || "Invalid cart items");
-        setIsSubmitting(false);
-        return;
-      }
+      items = validateAndPrepareItems();
+    } catch (err) {
+      setSubmitError(err.message || "Invalid cart items");
+      setIsSubmitting(false);
+      return;
+    }
+    if (!items) {
+      setIsSubmitting(false);
+      return;
+    }
+    try {
 
       const token = localStorage.getItem("auth_token") || localStorage.getItem("token");
 
