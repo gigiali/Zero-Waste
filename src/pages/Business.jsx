@@ -390,8 +390,8 @@ function ReviewsSection({ branchId }) {
     const token = getToken();
     if (!token) { setLoading(false); return; }
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي
-      const res = await fetch(`${apiUrl}/api/vendor/orders`, {  // 👈 استخدمي apiUrl
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const res = await fetch(`${apiUrl}/api/vendor/reviews`, {
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
       
@@ -646,50 +646,48 @@ export default function Business() {
   };
 
   useEffect(() => {
-    document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
-    document.documentElement.lang = language;
-  }, [language]);
-
-  useEffect(() => {
-    const fetchData = async () => {
-      const token = getToken();
-      if (!token) { navigate("/signin"); return; }
-      setIsLoading(true);
-      setApiError("");
-      const slowTimer = setTimeout(() => setIsSlowLoading(true), 5000);
-      try {
-        const profileRes = await fetch("/api/myprofile", {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (profileRes.ok) {
-          const data = await readJson(profileRes);
-          const vendor = data.data?.vendor || data.vendor || data;
-          if (vendor?.business_name || vendor?.name) setBusinessName(vendor.business_name || vendor.name);
-        }
-        const branchRes = await fetch("/api/my-branches", {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        if (branchRes.ok) {
-          const data = await readJson(branchRes);
-          const branchList = extractList(data, ["branches"]);
-          setBranches(branchList);
-          if (branchList.length === 0) { setSelectedBranch(null); return; }
-          setSelectedBranch(branchList[0]);
-        } else {
-          const errData = await readJson(branchRes);
-          setApiError(errData.message || t("failedLoadBranches"));
-        }
-      } catch (err) {
-        console.error("Fetch error:", err);
-        setApiError(t("networkError"));
-      } finally {
-        setIsLoading(false);
-        clearTimeout(slowTimer);
-        setIsSlowLoading(false);
+  const fetchData = async () => {
+    const token = getToken();
+    if (!token) { navigate("/signin"); return; }
+    setIsLoading(true);
+    setApiError("");
+    const slowTimer = setTimeout(() => setIsSlowLoading(true), 5000);
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      
+      const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (profileRes.ok) {
+        const data = await readJson(profileRes);
+        const vendor = data.data?.vendor || data.vendor || data;
+        if (vendor?.business_name || vendor?.name) setBusinessName(vendor.business_name || vendor.name);
       }
-    };
-    fetchData();
-  }, []);
+      
+      const branchRes = await fetch(`${apiUrl}/api/my-branches`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (branchRes.ok) {
+        const data = await readJson(branchRes);
+        const branchList = extractList(data, ["branches"]);
+        setBranches(branchList);
+        if (branchList.length === 0) { setSelectedBranch(null); return; }
+        setSelectedBranch(branchList[0]);
+      } else {
+        const errData = await readJson(branchRes);
+        setApiError(errData.message || t("failedLoadBranches"));
+      }
+    } catch (err) {
+      console.error("Fetch error:", err);
+      setApiError(t("networkError"));
+    } finally {
+      setIsLoading(false);
+      clearTimeout(slowTimer);
+      setIsSlowLoading(false);
+    }
+  };
+  fetchData();
+}, []);
 
   useEffect(() => {
     const fetchOverviewStats = async () => {
@@ -790,8 +788,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     const token = getToken();
     if (!token) { isFetchingOffersRef.current = false; return; }
     try {
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي هذا
-    const res = await fetch(`${apiUrl}/api/vendor/myoffers`, {  // 👈 استخدمي apiUrl
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+    const res = await fetch(`${apiUrl}/api/vendor/myoffers`, {
       headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
     });
       if (res.ok) {
@@ -809,7 +807,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
       const token = getToken();
       if (!token) return;
       try {
-        const res = await fetch("/api/vendor/orders", {
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const res = await fetch(`${apiUrl}/api/vendor/orders`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         });
         if (res.ok) {
@@ -829,10 +828,10 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
         const token = getToken();
         if (!token) return;
         try {
-    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي
-    const res = await fetch(`${apiUrl}/api/vendor/orders`, {  // 👈 استخدمي apiUrl
-      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-    });
+          const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+          const res = await fetch(`${apiUrl}/api/vendor/orders`, {
+            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+          });
           if (res.ok) {
             const data = await readJson(res);
             setOrders(extractList(data, ["orders"]).map(normalizeOrder));
@@ -902,7 +901,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
       if (form.image && typeof form.image === "object") fd.append("image", form.image);
       if (editingId) fd.append("_method", "PUT");
 
-      const res = await fetch(editingId ? `/api/vendor/offers/${editingId}` : "/api/vendor/offers", {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const res = await fetch(editingId ? `${apiUrl}/api/vendor/offers/${editingId}` : `${apiUrl}/api/vendor/offers`, {
         method: "POST",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
         body: fd,
@@ -920,7 +920,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     if (!editingBranch) return;
     const token = getToken();
     try {
-      const res = await fetch(`/api/branches/${editingBranch.id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const res = await fetch(`${apiUrl}/api/branches/${editingBranch.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ branch_name: editingBranch.branch_name }),
@@ -937,7 +938,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     const id = deleteBranchId;
     const token = getToken();
     try {
-      const res = await fetch(`/api/branches/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const res = await fetch(`${apiUrl}/api/branches/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
@@ -953,7 +955,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
   const handleDelete = async (id) => {
     const token = getToken();
     try {
-      const res = await fetch(`/api/vendor/offers/${id}`, {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
@@ -973,7 +976,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     setUpdatingOrderId(orderId);
     const token = getToken();
     try {
-      const res = await fetch(`/api/vendor/orders/${orderId}/status`, {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const res = await fetch(`${apiUrl}/api/vendor/orders/${orderId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: newStatus }),
