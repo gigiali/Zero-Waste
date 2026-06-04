@@ -384,50 +384,36 @@ function ReviewsSection({ branchId }) {
   const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      setLoading(true);
-      setShowAll(false);
-      const token = getToken();
-      if (!token) { setLoading(false); return; }
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-        const url = new URL("/api/vendor/reviews", apiUrl);
-        if (branchId) url.searchParams.set("branch_id", branchId);
+  const fetchReviews = async () => {
+    setLoading(true);
+    setShowAll(false);
+    const token = getToken();
+    if (!token) { setLoading(false); return; }
+    try {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const url = new URL("/api/vendor/reviews", apiUrl);
+      if (branchId) url.searchParams.set("branch_id", branchId);
 
-        const res = await fetch(url.toString(), {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        
-        const data = await readJson(res);
-        
-        // 🔍 DEBUG
-        console.log("🔍 Full API Response:", data);
-        console.log("🔍 Status:", res.status);
-        
-        if (res.ok) {
-          // جرب كل الاحتمالات
-          let reviewList = [];
-          
-          if (Array.isArray(data)) {
-            reviewList = data;
-          } else if (data.data && Array.isArray(data.data)) {
-            reviewList = data.data;
-          } else if (data.reviews && Array.isArray(data.reviews)) {
-            reviewList = data.reviews;
-          }
-          
-          console.log("✅ Final Reviews List:", reviewList);
-          setReviews(reviewList);
-        } else {
-          console.error("❌ API Error Response:", data);
-        }
-      } catch (err) { 
-        console.error("❌ Reviews fetch error:", err); 
+      const res = await fetch(url.toString(), {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      
+      const data = await readJson(res);
+      
+      if (res.ok && (Array.isArray(data) || data.data || data.reviews)) {
+        let reviewList = Array.isArray(data) ? data : (data.data || data.reviews || []);
+        setReviews(reviewList);
+      } else {
+        setReviews([]);
       }
-      finally { setLoading(false); }
-    };
-    fetchReviews();
-  }, [branchId]);
+    } catch (err) { 
+      console.error("Reviews fetch error:", err);
+      setReviews([]);
+    }
+    finally { setLoading(false); }
+  };
+  fetchReviews();
+}, [branchId]);
 
   // ✅ عرض حالة التحميل
   if (loading) {
@@ -527,6 +513,7 @@ function SalesHistorySection({ branchId }) {
       if (!token) { setLoading(false); return; }
       try {
         const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        console.log("🟢 API URL:", apiUrl);
         const url = new URL("/api/vendor/dashboard/sales", apiUrl);
         if (branchId) url.searchParams.set("branch_id", branchId);
 
@@ -712,7 +699,8 @@ export default function Business() {
       const token = getToken();
       if (!token) return;
       try {
-        const url = new URL("/api/vendor/dashboard/overview", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const url = new URL("/api/vendor/dashboard/overview", apiUrl);
         if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
 
         const res = await fetch(url.toString(), {
@@ -743,7 +731,8 @@ export default function Business() {
       const token = getToken();
       if (!token) return;
       try {
-        const url = new URL("/api/vendor/dashboard/monthly-chart", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const url = new URL("/api/vendor/dashboard/monthly-chart", apiUrl);
         if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
 
         const res = await fetch(url.toString(), {
@@ -777,7 +766,8 @@ export default function Business() {
       const token = getToken();
       if (!token) return;
       try {
-        const url = new URL("/api/vendor/dashboard/orders-chart", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
         if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
         const res = await fetch(url.toString(), {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
