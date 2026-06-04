@@ -164,7 +164,8 @@ export default function OfferDetail() {
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`/api/offers/${id}`, { headers });
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+const res = await fetch(`${apiUrl}/api/offers/${id}`, { headers });
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
@@ -191,7 +192,8 @@ export default function OfferDetail() {
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const res = await fetch(`/api/offers/${id}/reviews`, { headers });
+        const apiUrl = import.meta.env.VITE_API_URL || "";
+const res = await fetch(`${apiUrl}/api/offers/${id}/reviews`, { headers });
         if (!mounted) return;
         if (res.ok) {
           const data = await res.json();
