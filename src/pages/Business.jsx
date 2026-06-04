@@ -1004,10 +1004,10 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
   return (
     <div className="biz-root">
       <aside className="biz-sidebar">
-        <div className="biz-logo" onClick={() => navigate("/home")} style={{ cursor: "pointer" }}>
-          <img src="/images/zerowaste-logo.png" alt="ZeroWaste" className="biz-logo-img" />
-          <span className="biz-logo-text"></span>
-        </div>
+        <div className="biz-logo">
+  <img src="/images/zerowaste-logo.png" alt="ZeroWaste" className="biz-logo-img" />
+  <span className="biz-logo-text"></span>
+</div>
         <div style={{ height: "1px", background: "rgba(255,255,255,0.08)", margin: "4px 16px 8px" }} />
         <nav className="biz-nav">
           {navItems.map((item) => {
