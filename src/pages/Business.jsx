@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Bell, User, Globe, GitBranch, Package, ShoppingCart,
   ChevronRight, Loader, AlertCircle, CheckCircle, BarChart2, Leaf, Loader2,
-  History,
+  History, MessageSquare,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -110,7 +110,8 @@ function SaleDetailsModal({ saleId, onClose }) {
         const token = getToken();
         const controller = new AbortController();
         const abort = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(`/api/vendor/dashboard/sales/${saleId}`, {
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const res = await fetch(`${apiUrl}/api/vendor/dashboard/sales/${saleId}`, {
           headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
           signal: controller.signal,
         });
@@ -253,7 +254,8 @@ function VendorSustainabilitySection({ branchId }) {
       try {
         const token = getToken();
         if (!token) return;
-        const url = new URL("/api/vendor/sustainability/metrics", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const url = new URL("/api/vendor/sustainability/metrics", apiUrl);
         if (branchId !== null) url.searchParams.set("branch_id", branchId);
         
         const res = await fetch(url.toString(), {
@@ -319,7 +321,8 @@ function TopSellingSection({ branchId }) {
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        const url = new URL("/api/vendor/dashboard/top-selling", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const url = new URL("/api/vendor/dashboard/top-selling", apiUrl);
         if (branchId) url.searchParams.set("branch_id", branchId);
 
         const res = await fetch(url.toString(), {
@@ -373,6 +376,142 @@ function TopSellingSection({ branchId }) {
   );
 }
 
+// ✅ قسم REVIEWS المحسّن
+function ReviewsSection({ branchId }) {
+  const { t } = useTranslation();
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setLoading(true);
+      setShowAll(false);
+      const token = getToken();
+      if (!token) { setLoading(false); return; }
+      try {
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const url = new URL("/api/vendor/reviews", apiUrl);
+        if (branchId) url.searchParams.set("branch_id", branchId);
+
+        const res = await fetch(url.toString(), {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        
+        const data = await readJson(res);
+        
+        // 🔍 DEBUG
+        console.log("🔍 Full API Response:", data);
+        console.log("🔍 Status:", res.status);
+        
+        if (res.ok) {
+          // جرب كل الاحتمالات
+          let reviewList = [];
+          
+          if (Array.isArray(data)) {
+            reviewList = data;
+          } else if (data.data && Array.isArray(data.data)) {
+            reviewList = data.data;
+          } else if (data.reviews && Array.isArray(data.reviews)) {
+            reviewList = data.reviews;
+          }
+          
+          console.log("✅ Final Reviews List:", reviewList);
+          setReviews(reviewList);
+        } else {
+          console.error("❌ API Error Response:", data);
+        }
+      } catch (err) { 
+        console.error("❌ Reviews fetch error:", err); 
+      }
+      finally { setLoading(false); }
+    };
+    fetchReviews();
+  }, [branchId]);
+
+  // ✅ عرض حالة التحميل
+  if (loading) {
+    return (
+      <div className="biz-section" id="reviews-section">
+        <div className="biz-section-header">
+          <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+        </div>
+        <div style={{ padding: "40px", textAlign: "center", color: "#9ca3af" }}>
+          <Loader2 size={24} className="mb-spin" style={{ display: "inline" }} />
+          <p style={{ marginTop: "10px" }}>{t("loading")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ✅ عرض حالة عدم وجود تقييمات
+  if (reviews.length === 0) {
+    return (
+      <div className="biz-section" id="reviews-section">
+        <div className="biz-section-header">
+          <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+        </div>
+        <div style={{ padding: "40px", textAlign: "center", color: "#9ca3af" }}>
+          📦 {t("noReviews") || "لا توجد تقييمات حتى الآن"}
+        </div>
+      </div>
+    );
+  }
+
+  const displayed = showAll ? reviews : reviews.slice(0, 5);
+  const getRatingStars = (rating) => {
+    const stars = [];
+    const rate = Math.min(Math.max(Math.round(rating), 1), 5);
+    for (let i = 0; i < 5; i++) {
+      stars.push(i < rate ? "⭐" : "☆");
+    }
+    return stars.join("");
+  };
+
+  const getRatingColor = (rating) => {
+    const rate = Math.round(rating);
+    if (rate >= 4) return { bg: "#d1fae5", text: "#065f46" };
+    if (rate >= 3) return { bg: "#fef3c7", text: "#92400e" };
+    return { bg: "#fee2e2", text: "#7f1d1d" };
+  };
+
+  return (
+    <div className="biz-section" id="reviews-section">
+      <div className="biz-section-header">
+        <h2 className="biz-section-title">⭐ {t("reviews") || "Customer Reviews"}</h2>
+        {reviews.length > 5 && (
+          <button type="button" className="biz-link-btn" onClick={() => setShowAll((v) => !v)}>
+            {showAll ? t("showLess") : `${t("viewAll")} (${reviews.length})`}
+          </button>
+        )}
+      </div>
+      <div className="biz-reviews-list">
+        {displayed.map((review, idx) => {
+          const ratingColor = getRatingColor(review.rating);
+          return (
+            <div key={idx} className="biz-review-card">
+              <div className="biz-review-header">
+                <div className="biz-review-left">
+                  <div className="biz-review-avatar">{(review.customer_name || review.user?.name || "C").charAt(0).toUpperCase()}</div>
+                  <div>
+                    <p className="biz-review-customer">{review.customer_name || review.user?.name || "Anonymous"}</p>
+                    <p className="biz-review-date">{review.created_at ? new Date(review.created_at).toLocaleDateString("en-EG") : "—"}</p>
+                  </div>
+                </div>
+                <span className={`biz-review-rating`} style={{ background: ratingColor.bg, color: ratingColor.text }}>
+                  {getRatingStars(review.rating)} {review.rating || "0"}
+                </span>
+              </div>
+              <p className="biz-review-text">{review.comment || review.review || "No comment"}</p>
+              {review.offer?.title && <p className="biz-review-offer">📦 {review.offer.title}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SalesHistorySection({ branchId }) {
   const { t } = useTranslation();
   const [sales, setSales] = useState([]);
@@ -387,7 +526,8 @@ function SalesHistorySection({ branchId }) {
       const token = getToken();
       if (!token) { setLoading(false); return; }
       try {
-        const url = new URL("/api/vendor/dashboard/sales", window.location.origin);
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+        const url = new URL("/api/vendor/dashboard/sales", apiUrl);
         if (branchId) url.searchParams.set("branch_id", branchId);
 
         const res = await fetch(url.toString(), {
@@ -631,30 +771,32 @@ export default function Business() {
     };
     fetchMonthlyChart();
   }, [dashboardBranchId]);
-useEffect(() => {
-  const fetchOrdersChart = async () => {
-    const token = getToken();
-    if (!token) return;
-    try {
-      const url = new URL("/api/vendor/dashboard/orders-chart", window.location.origin);
-      if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
-      const res = await fetch(url.toString(), {
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await readJson(res);
-        console.log("orders-chart response:", data);
-        if (Array.isArray(data.data) && data.data.length > 0) {
-          setOrdersChartData(data.data.map((item) => ({
-            day: new Date(item.date).toLocaleDateString("en-EG", { month: "short", day: "numeric" }),
-            orders: item.total_orders || 0,
-          })));
+
+  useEffect(() => {
+    const fetchOrdersChart = async () => {
+      const token = getToken();
+      if (!token) return;
+      try {
+        const url = new URL("/api/vendor/dashboard/orders-chart", window.location.origin);
+        if (dashboardBranchId !== null) url.searchParams.set("branch_id", dashboardBranchId);
+        const res = await fetch(url.toString(), {
+          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await readJson(res);
+          console.log("orders-chart response:", data);
+          if (Array.isArray(data.data) && data.data.length > 0) {
+            setOrdersChartData(data.data.map((item) => ({
+              day: new Date(item.date).toLocaleDateString("en-EG", { month: "short", day: "numeric" }),
+              orders: item.total_orders || 0,
+            })));
+          }
         }
-      }
-    } catch (err) { console.error("Orders chart error:", err); }
-  };
-  fetchOrdersChart();
-}, [dashboardBranchId]);
+      } catch (err) { console.error("Orders chart error:", err); }
+    };
+    fetchOrdersChart();
+  }, [dashboardBranchId]);
+
   const fetchOffers = React.useCallback(async () => {
     if (isFetchingOffersRef.current) return;
     isFetchingOffersRef.current = true;
@@ -853,11 +995,13 @@ useEffect(() => {
     finally { setUpdatingOrderId(null); }
   };
 
+  // ✅ Navigation updated مع Reviews
   const navItems = [
     { id: "charts", icon: BarChart2, label: t("salesCharts"), onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sustainability", icon: Leaf, label: t("sustainabilityImpact"), onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "offers", icon: Package, label: t("myOffers"), onClick: () => document.getElementById("offers-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "orders", icon: ShoppingCart, label: t("recentOrders"), onClick: () => document.getElementById("orders-section")?.scrollIntoView({ behavior: "smooth" }) },
+    { id: "reviews", icon: MessageSquare, label: t("reviews") || "Reviews", onClick: () => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sales", icon: History, label: t("salesHistory"), onClick: () => document.getElementById("sales-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "notifications", icon: Bell, label: t("notifications"), badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
     { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => handleLanguageChange(language === "en" ? "ar" : "en") },
@@ -955,7 +1099,6 @@ useEffect(() => {
 
         {!isLoading && !apiError && (
           <>
-            {/* ── Welcome ── */}
             <div className="biz-welcome">
               <div>
                 <h1 className="biz-welcome-title">{t("welcomeBack")} {businessName || t("yourBusiness")} 👋</h1>
@@ -1159,6 +1302,10 @@ useEffect(() => {
               </div>
             </div>
 
+            {/* ✅ قسم Reviews بعد Orders */}
+            <ReviewsSection branchId={dashboardBranchId} />
+
+            {/* ✅ قسم Sales History في الآخر */}
             <SalesHistorySection branchId={dashboardBranchId} />
           </>
         )}

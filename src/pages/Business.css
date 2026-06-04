@@ -861,6 +861,95 @@
   font-weight: 500;
 }
 
+/* ── Reviews Section ── */
+.biz-reviews-list {
+  padding: 12px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.biz-review-card {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  transition: var(--transition);
+}
+
+.biz-review-card:hover {
+  border-color: var(--green);
+  box-shadow: 0 2px 8px rgba(16,185,129,0.08);
+}
+
+.biz-review-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.biz-review-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.biz-review-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green), var(--green-dark));
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+.biz-review-customer {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.biz-review-date {
+  font-size: 0.75rem;
+  color: var(--text-3);
+  margin: 4px 0 0;
+}
+
+.biz-review-rating {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.biz-review-text {
+  font-size: 0.875rem;
+  color: var(--text);
+  line-height: 1.5;
+  margin: 0 0 8px;
+}
+
+.biz-review-offer {
+  font-size: 0.8rem;
+  color: var(--text-2);
+  margin: 0;
+}
+
 .biz-skeleton-wrapper {
   display: flex;
   flex-direction: column;
@@ -1366,4 +1455,12 @@
 
 [dir="rtl"] .biz-offer-meta {
   align-items: flex-start;
+}
+
+[dir="rtl"] .biz-review-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .biz-review-left {
+  flex-direction: row-reverse;
 }
