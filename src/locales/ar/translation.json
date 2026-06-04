@@ -512,10 +512,7 @@
 "noReviews": "لا توجد تقييمات بعد",
 "loading": "جاري التحميل...",
 "showLess": "عرض أقل",
-"viewAll": "عرض الكل",
-"cancel": "إلغاء",
-"save": "حفظ",
-"delete": "حذف"
+"viewAll": "عرض الكل"
   },
   "userManagement": {
     "title": "إدارة المستخدمين",
