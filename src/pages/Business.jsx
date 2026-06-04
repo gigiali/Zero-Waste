@@ -390,11 +390,8 @@ function ReviewsSection({ branchId }) {
     const token = getToken();
     if (!token) { setLoading(false); return; }
     try {
-      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
-      const url = new URL("/api/vendor/reviews", apiUrl);
-      if (branchId) url.searchParams.set("branch_id", branchId);
-
-      const res = await fetch(url.toString(), {
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي
+      const res = await fetch(`${apiUrl}/api/vendor/orders`, {  // 👈 استخدمي apiUrl
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
       
@@ -793,9 +790,10 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
     const token = getToken();
     if (!token) { isFetchingOffersRef.current = false; return; }
     try {
-      const res = await fetch("/api/vendor/myoffers", {
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-      });
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي هذا
+    const res = await fetch(`${apiUrl}/api/vendor/myoffers`, {  // 👈 استخدمي apiUrl
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    });
       if (res.ok) {
         const data = await readJson(res);
         setOffers(extractList(data, ["offers"]).map(normalizeOffer));
@@ -831,9 +829,10 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
         const token = getToken();
         if (!token) return;
         try {
-          const res = await fetch("/api/vendor/orders", {
-            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-          });
+    const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;  // 👈 أضيفي
+    const res = await fetch(`${apiUrl}/api/vendor/orders`, {  // 👈 استخدمي apiUrl
+      headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    });
           if (res.ok) {
             const data = await readJson(res);
             setOrders(extractList(data, ["orders"]).map(normalizeOrder));
