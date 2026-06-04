@@ -577,7 +577,7 @@ const Admin = () => {
     <div className="admin-shell">
       <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
         <div className="biz-logo">
-          <img src="public/images/zerowaste-logo.png" alt="ZeroWaste Logo" className="biz-logo-img" />
+          <img src="/images/zerowaste-logo.png" alt="ZeroWaste Logo" className="biz-logo-img" />
           {sidebarOpen && (
             <span className="biz-logo__role">
               {ROLE_LABEL[role] ?? role}

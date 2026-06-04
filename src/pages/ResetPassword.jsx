@@ -5,6 +5,8 @@ import { RecoveryFrame } from "./ForgotPassword";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
+const API_URL = "https://zero-waste-production.up.railway.app";
+
 export default function ResetPassword() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -32,7 +34,8 @@ export default function ResetPassword() {
     try {
       const email = sessionStorage.getItem("passwordResetEmail");
 
-      const response = await fetch("/api/reset-password", {
+      // ✅ غيّر هنا
+      const response = await fetch(`${API_URL}/reset-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

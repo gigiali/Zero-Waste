@@ -90,7 +90,7 @@ function CardPaymentForm({ onSubmit, isSubmitting, total }) {
 
 
 
-function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, selectedMethod, orderId, userAddress }) {
+function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, commission, total, onConfirm, onCancel, isSubmitting, onTrackOrder, businessPhone, orderSuccess, selectedMethod, reservationId, userAddress }) {
 
   const [phase, setPhase] = useState(1);
 
@@ -340,20 +340,23 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
           <div className="orm-body orm-fade-in">
 
- <div className="orm-confirm-icon orm-success" style={{ position: "relative", width: 80, height: 80 }}>
-  <CheckCircle size={44} />
-  {orderId && (
-    <div style={{ position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)", background: "#059669", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap" }}>
-      #{orderId}
-    </div>
-  )}
-</div>
-<h3 className="orm-confirm-title" style={{ marginTop: "1.2rem" }}>Order Confirmed!</h3>
-            {orderId && (
+            <div className="orm-confirm-icon orm-success" style={{ position: "relative", width: 80, height: 80 }}>
+              <CheckCircle size={44} />
+              {reservationId && (
+                <div style={{ position: "absolute", bottom: -10, left: "50%", transform: "translateX(-50%)", background: "#059669", color: "white", fontSize: "0.65rem", fontWeight: 700, padding: "2px 8px", borderRadius: 20, whiteSpace: "nowrap" }}>
+                  {reservationId}
+                </div>
+              )}
+            </div>
+
+            <h3 className="orm-confirm-title" style={{ marginTop: "1.2rem" }}>Order Confirmed!</h3>
+
+            {reservationId && (
               <p style={{ textAlign: "center", color: "#6b7280", fontSize: "0.85rem", margin: "0.25rem 0" }}>
-                Order ID: <strong style={{ color: "#111827" }}>#{orderId}</strong>
+                Reservation ID: <strong style={{ color: "#111827" }}>{reservationId}</strong>
               </p>
             )}
+
             <p className="orm-confirm-subtitle">Your order has been placed successfully</p>
 
             <div className="orm-success-details">
@@ -490,16 +493,10 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
 
 
-  const extractOrderId = (data) =>
-
-    data?.order?.id
-
-    ?? data?.order?.order_id
-
-    ?? data?.id
-
-    ?? data?.order_id
-
+  // ✅ استخراج Reservation ID من الـ Response
+  const extractReservationId = (data) =>
+    data?.order?.reservation_id
+    ?? data?.reservation_id
     ?? null;
 
 
@@ -601,11 +598,18 @@ const response = await fetch(`${apiUrl}/api/orders`, {
     console.log("📥 Response data:", JSON.stringify(data, null, 2));
 
     if (response.ok) {
+      
       console.log("✅ Order created successfully!");
       serverOrderRef.current = data.order ?? data;
-console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
-      const firstItem = cartItems[0];
-      const businessPhone = firstItem?.phone || firstItem?.vendor_phone || data.order?.vendor_phone || "";
+      console.log("🆔 Reservation ID:", extractReservationId(data.order ?? data));
+      const businessPhone = 
+        data.order?.vendor?.phone ||
+        data.order?.vendor_phone ||
+        data.vendor?.phone ||
+        data.phone ||
+        firstItem?.vendor_phone ||
+        firstItem?.phone ||
+        "";
       orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
       frozenCartItemsRef.current = [...cartItems];
       clearCart();
@@ -730,7 +734,7 @@ const response = await fetch(`${apiUrl}/api/orders`, {
       if (response.ok) {
 
         serverOrderRef.current = data.order ?? data;
-console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
+        console.log("🆔 Reservation ID:", extractReservationId(data.order ?? data));
 
         const firstItem = cartItems[0];
 
@@ -900,7 +904,7 @@ console.log("🆔 Order ID:", extractOrderId(data.order ?? data));
           cartItems={orderSuccess ? frozenCartItemsRef.current : cartItems}
 
           deliveryMethod={deliveryMethod}
-userAddress={locationName}
+          userAddress={locationName}
 
           cartTotal={orderDataRef.current?.cartTotal ?? cartTotal}
 
@@ -922,7 +926,7 @@ userAddress={locationName}
 
             setShowReviewModal(false);
 
-            const orderId = extractOrderId(serverOrderRef.current);
+            const reservationId = extractReservationId(serverOrderRef.current);
 
             navigate("/home", {
 
@@ -930,7 +934,7 @@ userAddress={locationName}
 
                 trackingActive: true,
 
-                orderNumber: orderId,
+                reservationId: reservationId,
 
                 deliveryMethod,
 
@@ -949,7 +953,7 @@ userAddress={locationName}
           }}
 
           isSubmitting={isSubmitting}
-          orderId={extractOrderId(serverOrderRef.current) || null}
+          reservationId={extractReservationId(serverOrderRef.current) || null}
           businessPhone={orderDataRef.current?.businessPhone || cartItems[0]?.phone || ""}
 
         />
