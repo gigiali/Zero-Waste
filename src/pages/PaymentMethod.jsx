@@ -282,8 +282,14 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
 
                 <span className="orm-detail-label">Items</span>
 
-                <span className="orm-detail-value">{cartItems.reduce((sum, i) => sum + i.quantity, 0)} item(s)</span>
-
+                <span className="orm-detail-value">
+  {cartItems.map((item, idx) => (
+    <span key={idx}>
+      {item.title || item.name || "Item"} × {item.quantity}
+      {idx < cartItems.length - 1 ? ", " : ""}
+    </span>
+  ))}
+</span>
               </div>
 
             </div>
