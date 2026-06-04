@@ -774,7 +774,7 @@ const Admin = () => {
                   </button>
                   <button type="button" className="action-card" onClick={() => navigate("/admin/businesses")}>
                     <div className="action-card__icon" style={{ background: "#e8f8ee" }}><ClipboardList size={20} color="#28c76f" /></div>
-                    <div><p className="action-card__title">Manage Businesses</p><p className="action-card__sub">Approve & manage vendors</p></div>
+                    <div><p className="action-card__title">Business Management</p><p className="action-card__sub">Approve & manage vendors</p></div>
                     <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
                   </button>
                 </div>

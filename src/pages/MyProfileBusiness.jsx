@@ -65,35 +65,35 @@ function ChangePassword({ onCancel }) {
 
   const handleChange = async () => {
     const e = {};
-    if (!form.current) e.current_password = "Current password is required";
+    if (!form.current) e.current_password = t("profile.currentPasswordRequired");
     if (!form.next) {
-  e.new_password = "New password is required";
-} else if (form.next.length < 8) {
-  e.new_password = "Password must be at least 8 characters";
-}
-    if (!form.confirm) e.new_password_confirmation = "Please confirm password";
-    else if (form.next !== form.confirm) e.new_password_confirmation = "Passwords do not match";
+      e.new_password = t("profile.newPasswordRequired");
+    } else if (form.next.length < 8) {
+      e.new_password = t("profile.passwordMin8Chars");
+    }
+    if (!form.confirm) e.new_password_confirmation = t("profile.confirmPasswordRequired");
+    else if (form.next !== form.confirm) e.new_password_confirmation = t("profile.passwordsDoNotMatch");
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
     setIsLoading(true);
     try {
-const res = await fetch(`${BASE_URL}/vendor/change-password`, {
-  method: "PUT",
-  headers: {
-    "Content-Type": "application/json",
-    Accept: "application/json",
-    Authorization: `Bearer ${getToken()}`,
-  },
-  body: JSON.stringify({
-    current_password: form.current,
-    password: form.next,
-    password_confirmation: form.confirm,
-  }),
-});
+      const res = await fetch(`${BASE_URL}/vendor/change-password`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${getToken()}`,
+        },
+        body: JSON.stringify({
+          current_password: form.current,
+          password: form.next,
+          password_confirmation: form.confirm,
+        }),
+      });
       const data = await res.json();
       if (res.ok) {
-        setSuccess("✓ Password changed successfully!");
+        setSuccess(`✓ ${t("profile.passwordChangedSuccessfully")}`);
         setTimeoutMsg("");
         setTimeout(() => onCancel(), 1500);
       } else if (data.errors) {
@@ -103,10 +103,10 @@ const res = await fetch(`${BASE_URL}/vendor/change-password`, {
         });
         setErrors(newErrors);
       } else {
-        setTimeoutMsg(data.message || "Failed to change password.");
+        setTimeoutMsg(data.message || t("profile.failedChangePassword"));
       }
     } catch (err) {
-      setTimeoutMsg("Network error. Please check your connection.");
+      setTimeoutMsg(t("profile.networkError"));
     } finally {
       setIsLoading(false);
     }
@@ -119,41 +119,29 @@ const res = await fetch(`${BASE_URL}/vendor/change-password`, {
           <div className="biz-hero-left">
             <div>
               <h1 className="biz-hero-title">
-  {t("auth.changePasswordTitle")}
-</h1>
+                {t("auth.changePasswordTitle")}
+              </h1>
               <p className="biz-hero-sub">
-  {t("auth.changePasswordSubtitle")}
-</p>
+                {t("auth.changePasswordSubtitle")}
+              </p>
             </div>
           </div>
           <button className="biz-hero-btn" onClick={onCancel}>
-  ← {t("auth.goBack")}
-</button>
+            ← {t("auth.goBack")}
+          </button>
         </div>
       </div>
       <div className="biz-body">
         {timeoutMsg && <TimeoutMessage message={timeoutMsg} type="error" onClose={() => setTimeoutMsg("")} />}
         <div className="biz-card">
           <h2 className="biz-card-title">
-  {t("auth.changePassword")}
-</h2>
+            {t("auth.changePassword")}
+          </h2>
           <div className="biz-pw-group">
             {[
-              [
-  "current",
-  "current_password",
-  t("auth.currentPassword")
-],
-              [
-  "next",
-  "new_password",
-  t("auth.newPassword")
-],
-              [
-  "confirm",
-  "new_password_confirmation",
-  t("auth.confirmNewPassword")
-],
+              ["current", "current_password", t("auth.currentPassword")],
+              ["next", "new_password", t("auth.newPassword")],
+              ["confirm", "new_password_confirmation", t("auth.confirmNewPassword")],
             ].map(([fk, ek, ph]) => (
               <div key={fk} className="biz-pw-wrap">
                 <input
@@ -173,9 +161,7 @@ const res = await fetch(`${BASE_URL}/vendor/change-password`, {
               disabled={isLoading}
               className="biz-btn-save biz-btn-fullwidth"
             >
-              {isLoading
-  ? t("saving")
-  : t("auth.updatePassword")}
+              {isLoading ? t("profile.saving") : t("auth.updatePassword")}
             </button>
           </div>
         </div>
@@ -185,6 +171,7 @@ const res = await fetch(`${BASE_URL}/vendor/change-password`, {
 }
 
 function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onClear, error, hint }) {
+  const { t } = useTranslation();
   const inputRef = useRef();
   const isImage =
     file?.type?.startsWith("image/") ||
@@ -204,7 +191,7 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
             ) : (
               <div className="biz-preview-doc">
                 <FileText size={15} />
-                <span>{file?.name || "Uploaded file"}</span>
+                <span>{file?.name || t("profile.uploadedFile")}</span>
               </div>
             )}
             <button className="biz-clear-btn" onClick={onClear} type="button">
@@ -219,7 +206,7 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
           onClick={() => inputRef.current.click()}
         >
           <Upload size={14} />
-          {previewUrl ? "Change file" : "Upload file"}
+          {previewUrl ? t("profile.changeFile") : t("profile.uploadFile")}
         </button>
         <input
           ref={inputRef}
@@ -235,6 +222,7 @@ function FileUploadField({ label, icon, accept, file, previewUrl, onChange, onCl
 }
 
 function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel }) {
+  const { t } = useTranslation();
   return (
     <div className="biz-overlay" onClick={onCancel}>
       <div className="biz-modal" onClick={(e) => e.stopPropagation()}>
@@ -242,7 +230,7 @@ function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel
         <h3>{title}</h3>
         <p>{message}</p>
         <div className="biz-modal-actions">
-          <button className="biz-modal-cancel" onClick={onCancel}>Cancel</button>
+          <button className="biz-modal-cancel" onClick={onCancel}>{t("common.cancel")}</button>
           <button className="biz-modal-confirm" onClick={onConfirm}>{confirmLabel}</button>
         </div>
       </div>
@@ -302,49 +290,48 @@ export default function MyProfileBusiness() {
       });
       const data = await res.json();
 
-if (res.ok) {
-  const v = data.data?.vendor || data.vendor || data.data || data;
+      if (res.ok) {
+        const v = data.data?.vendor || data.vendor || data.data || data;
 
-  const toUrl = (path) => {
-    if (!path) return "";
-    if (path.startsWith("http")) return path;
-    const clean = path.replace(/^\/+/, "");
-    return `https://zero-waste-production.up.railway.app/${clean}`;
-  };
+        const toUrl = (path) => {
+          if (!path) return "";
+          if (path.startsWith("http")) return path;
+          const clean = path.replace(/^\/+/, "");
+          return `https://zero-waste-production.up.railway.app/${clean}`;
+        };
         const d = {
           business_name: v.business_name || "",
           tax_number: v.tax_number || "",
           vendor_type: v.vendor_type || "",
           status: v.status || "",
         };
-        
+
         setVendorData(d);
         setEditData(d);
-        
-        // Set owner information from API response
-        setOwnerInfo({
-  name: data.data?.name || "",
-  email: data.data?.email || "",
-  phone: data.data?.phone || "",
-  address: data.data?.address || "",
-});
 
-setEditOwner({
-  name: data.data?.name || "",
-  email: data.data?.email || "",
-  phone: data.data?.phone || "",
-  address: data.data?.address || "",
-});
-        
+        setOwnerInfo({
+          name: data.data?.name || "",
+          email: data.data?.email || "",
+          phone: data.data?.phone || "",
+          address: data.data?.address || "",
+        });
+
+        setEditOwner({
+          name: data.data?.name || "",
+          email: data.data?.email || "",
+          phone: data.data?.phone || "",
+          address: data.data?.address || "",
+        });
+
         setLogoPreview(toUrl(v.logo));
         setCommercialPreview(toUrl(v.commercial_register));
         setTaxCardPreview(toUrl(v.tax_card));
       } else {
-        setTimeoutMsg("Failed to load profile");
+        setTimeoutMsg(t("profile.failedLoadProfile"));
         setTimeoutType("error");
       }
     } catch (err) {
-      setTimeoutMsg("Network error. Please check your connection.");
+      setTimeoutMsg(t("profile.networkError"));
       setTimeoutType("error");
     } finally {
       setIsLoadingProfile(false);
@@ -370,7 +357,7 @@ setEditOwner({
 
   const handleSave = async () => {
     const e = {};
-    if (!editData.business_name.trim()) e.business_name = "Business name is required";
+    if (!editData.business_name.trim()) e.business_name = t("profile.businessNameRequired");
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
@@ -400,7 +387,7 @@ setEditOwner({
         setCommercialFile(null);
         setTaxCardFile(null);
         setIsEditing(false);
-        setTimeoutMsg("Profile updated successfully");
+        setTimeoutMsg(t("profile.profileUpdatedSuccess"));
         setTimeoutType("success");
         setOwnerInfo({
           name: editOwner.name,
@@ -415,14 +402,14 @@ setEditOwner({
           newErrors[f] = Array.isArray(data.errors[f]) ? data.errors[f][0] : data.errors[f];
         });
         setErrors(newErrors);
-        setTimeoutMsg("Please fix the errors below");
+        setTimeoutMsg(t("profile.pleaseFixErrors"));
         setTimeoutType("error");
       } else {
-        setTimeoutMsg(data.message || "Failed to update profile.");
+        setTimeoutMsg(data.message || t("profile.failedUpdateProfile"));
         setTimeoutType("error");
       }
     } catch (err) {
-      setTimeoutMsg("Network error. Please check your connection.");
+      setTimeoutMsg(t("profile.networkError"));
       setTimeoutType("error");
     } finally {
       setIsLoading(false);
@@ -455,11 +442,11 @@ setEditOwner({
         logout();
         navigate("/home");
       } else {
-        setTimeoutMsg("Failed to delete account");
+        setTimeoutMsg(t("profile.failedDeleteAccount"));
         setTimeoutType("error");
       }
     } catch (err) {
-      setTimeoutMsg("Network error");
+      setTimeoutMsg(t("profile.networkError"));
       setTimeoutType("error");
     }
   };
@@ -487,18 +474,11 @@ setEditOwner({
     : "pending";
 
   const statusLabel =
-    vendorData.status === "approved" ? "✓ Approved"
-    : vendorData.status === "rejected" ? "✗ Rejected"
-    : "⏳ Pending Review";
+    vendorData.status === "approved" ? `✓ ${t("profile.approved")}`
+    : vendorData.status === "rejected" ? `✗ ${t("profile.rejected")}`
+    : `⏳ ${t("profile.pendingReview")}`;
 
   const vendorTypes = ["restaurant", "supermarket", "coffee-shop", "hotel", "bakery", "dessert-shop"];
-
-  const ownerRows = [
-    ["Owner Name", ownerInfo.name],
-    ["Email", ownerInfo.email],
-    ["Phone", ownerInfo.phone],
-    ["Address", ownerInfo.address],
-  ];
 
   if (view === "password") return <ChangePassword onCancel={() => setView("main")} />;
 
@@ -519,9 +499,9 @@ setEditOwner({
               <div className="biz-avatar">{initials}</div>
               <div>
                 <h1 className="biz-hero-title">
-                  {vendorData.business_name || "Business Profile"}
+                  {vendorData.business_name || t("profile.businessName")}
                 </h1>
-                <p className="biz-hero-sub">Manage your business information</p>
+                <p className="biz-hero-sub">{t("profile.manageBusinessInfo")}</p>
                 {vendorData.status && (
                   <span className={`biz-status-badge ${statusClass}`}>
                     {statusLabel}
@@ -535,7 +515,7 @@ setEditOwner({
                 onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}
               >
                 <Edit2 size={15} />
-                {isEditing ? "Cancel Editing" : "Edit Profile"}
+                {isEditing ? t("profile.cancelEditing") : t("profile.editProfile")}
               </button>
               <button className="biz-hero-btn" onClick={async () => {
                   try {
@@ -543,32 +523,30 @@ setEditOwner({
                       headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
                     });
                     const data = await res.json();
-                    const v = data.data?.vendor || data.vendor || data.data || data;
                     const freshStatus = data.data?.status || "";
 
                     if (freshStatus !== "approved" && freshStatus !== "active") {
-                      setTimeoutMsg("⏳ Your account is still waiting for admin approval. You cannot access the dashboard yet.");
+                      setTimeoutMsg(t("profile.pendingApprovalWarning"));
                       setTimeoutType("warning");
                     } else {
-                    
-const branchRes = await fetch(`${BASE_URL}/my-branches`, {
-                      headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
-                    });
-                    const branchData = await branchRes.json();
-                    const branches = branchData.data || branchData.branches || branchData || [];
-                    const branchList = Array.isArray(branches) ? branches : [];
-                    if (branchList.length === 0) {
-                      navigate("/add-branch");
-                    } else {
-                      navigate("/business");
-                    }
+                      const branchRes = await fetch(`${BASE_URL}/my-branches`, {
+                        headers: { Accept: "application/json", Authorization: `Bearer ${getToken()}` },
+                      });
+                      const branchData = await branchRes.json();
+                      const branches = branchData.data || branchData.branches || branchData || [];
+                      const branchList = Array.isArray(branches) ? branches : [];
+                      if (branchList.length === 0) {
+                        navigate("/add-branch");
+                      } else {
+                        navigate("/business");
+                      }
                     }
                   } catch {
-                    setTimeoutMsg("Network error. Please try again.");
+                    setTimeoutMsg(t("profile.networkError"));
                     setTimeoutType("error");
                   }
                 }}>
-                Dashboard →
+                {t("profile.dashboard")} →
               </button>
             </div>
           </div>
@@ -581,8 +559,8 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
             <>
               <div className="biz-card">
                 <h2 className="biz-card-title">
-  {t("profile.ownerInformation")}
-</h2>
+                  {t("profile.ownerInformation")}
+                </h2>
                 <div className="biz-info-list">
                   {[
                     [t("profile.ownerName"), "name"],
@@ -613,15 +591,15 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
 
               <div className="biz-card">
                 <h2 className="biz-card-title">
-  {t("profile.businessInformation")}
-</h2>
+                  {t("profile.businessInformation")}
+                </h2>
                 <div className="biz-info-list">
                   <div className="biz-info-row">
                     <span className="biz-info-icon"><Building2 size={17} /></span>
                     <div className="biz-info-text">
                       <span className="biz-info-label">
-  {t("profile.businessName")}
-</span>
+                        {t("profile.businessName")}
+                      </span>
                       {isEditing ? (
                         <>
                           <input
@@ -645,17 +623,17 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                     <span className="biz-info-icon"><Building2 size={17} /></span>
                     <div className="biz-info-text">
                       <span className="biz-info-label">
-  {t("profile.businessType")}
-</span>
+                        {t("profile.businessType")}
+                      </span>
                       {isEditing ? (
                         <select
                           className="biz-input"
                           value={editData.vendor_type}
                           onChange={(e) => setEditData({ ...editData, vendor_type: e.target.value })}
                         >
-                          <option value="">Select type</option>
-                          {vendorTypes.map((t) => (
-                            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1).replace("-", " ")}</option>
+                          <option value="">{t("profile.selectType")}</option>
+                          {vendorTypes.map((type) => (
+                            <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1).replace("-", " ")}</option>
                           ))}
                         </select>
                       ) : (
@@ -672,14 +650,14 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                     <span className="biz-info-icon"><Hash size={17} /></span>
                     <div className="biz-info-text">
                       <span className="biz-info-label">
-  {t("profile.taxNumber")}
-</span>
+                        {t("profile.taxNumber")}
+                      </span>
                       {isEditing ? (
                         <>
                           <input
                             className={`biz-input${errors.tax_number ? " has-error" : ""}`}
                             type="text"
-                            placeholder="Optional"
+                            placeholder={t("profile.optional")}
                             value={editData.tax_number}
                             onChange={(e) => {
                               setEditData({ ...editData, tax_number: e.target.value });
@@ -697,7 +675,7 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                   {isEditing ? (
                     <>
                       <FileUploadField
-                        label="Business Logo"
+                        label={t("profile.businessLogo")}
                         icon={<Image size={17} />}
                         accept="image/jpeg,image/png,image/jpg"
                         file={logoFile}
@@ -708,7 +686,7 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                         hint="JPEG or PNG · max 2 MB"
                       />
                       <FileUploadField
-                        label="Commercial Register"
+                        label={t("profile.commercialRegister")}
                         icon={<FileText size={17} />}
                         accept="application/pdf,image/jpeg,image/png,image/jpg"
                         file={commercialFile}
@@ -719,7 +697,7 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                         hint="PDF, JPG or PNG · max 5 MB"
                       />
                       <FileUploadField
-                        label="Tax Card"
+                        label={t("profile.taxCard")}
                         icon={<FileText size={17} />}
                         accept="application/pdf,image/jpeg,image/png,image/jpg"
                         file={taxCardFile}
@@ -735,7 +713,7 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                       <div className="biz-info-row">
                         <span className="biz-info-icon"><Image size={17} /></span>
                         <div className="biz-info-text">
-                          <span className="biz-info-label">Business Logo</span>
+                          <span className="biz-info-label">{t("profile.businessLogo")}</span>
                           {logoPreview ? (
                             <img src={logoPreview} alt="Logo" className="biz-preview-img" />
                           ) : (
@@ -747,9 +725,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                       <div className="biz-info-row">
                         <span className="biz-info-icon"><FileText size={17} /></span>
                         <div className="biz-info-text">
-                          <span className="biz-info-label">Commercial Register</span>
+                          <span className="biz-info-label">{t("profile.commercialRegister")}</span>
                           {commercialPreview
-                            ? <a href={commercialPreview} target="_blank" rel="noreferrer" className="biz-doc-link">View document ↗</a>
+                            ? <a href={commercialPreview} target="_blank" rel="noreferrer" className="biz-doc-link">{t("profile.viewDocument")} ↗</a>
                             : <span className="biz-info-value">—</span>}
                         </div>
                       </div>
@@ -757,9 +735,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                       <div className="biz-info-row">
                         <span className="biz-info-icon"><FileText size={17} /></span>
                         <div className="biz-info-text">
-                          <span className="biz-info-label">Tax Card</span>
+                          <span className="biz-info-label">{t("profile.taxCard")}</span>
                           {taxCardPreview
-                            ? <a href={taxCardPreview} target="_blank" rel="noreferrer" className="biz-doc-link">View document ↗</a>
+                            ? <a href={taxCardPreview} target="_blank" rel="noreferrer" className="biz-doc-link">{t("profile.viewDocument")} ↗</a>
                             : <span className="biz-info-value">—</span>}
                         </div>
                       </div>
@@ -772,22 +750,22 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
                 {isEditing && (
                   <div className="biz-edit-actions">
                     <button className="biz-btn-save" onClick={handleSave} disabled={isLoading}>
-                      {isLoading ? "Saving…" : "Save Changes"}
+                      {isLoading ? t("profile.saving") : t("profile.saveChanges")}
                     </button>
                     <button className="biz-btn-cancel" onClick={handleCancel} disabled={isLoading}>
-                      Cancel
+                      {t("profile.cancel")}
                     </button>
                   </div>
                 )}
               </div>
 
               <div className="biz-card">
-                <h2 className="biz-card-title">Account Settings</h2>
+                <h2 className="biz-card-title">{t("profile.accountSettings")}</h2>
                 <div className="biz-settings-list">
                   {[
-                    { icon: <KeyRound size={16} />, label: "Change Password", onClick: () => setView("password"), red: false, chevron: true },
-                    { icon: <LogOut size={16} />, label: "Log Out", onClick: () => setShowLogout(true), red: true, chevron: false },
-                    { icon: <Trash2 size={16} />, label: "Delete Account", onClick: () => setShowDelete(true), red: true, chevron: false },
+                    { icon: <KeyRound size={16} />, label: t("profile.changePassword"), onClick: () => setView("password"), red: false, chevron: true },
+                    { icon: <LogOut size={16} />, label: t("profile.logOut"), onClick: () => setShowLogout(true), red: true, chevron: false },
+                    { icon: <Trash2 size={16} />, label: t("profile.deleteAccount"), onClick: () => setShowDelete(true), red: true, chevron: false },
                   ].map(({ icon, label, onClick, red, chevron }) => (
                     <button key={label} className={`biz-setting-row${red ? " biz-setting-red" : ""}`} onClick={onClick}>
                       <span className="biz-setting-icon">{icon}</span>
@@ -805,9 +783,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
       {showDelete && (
         <ConfirmModal
           emoji="🗑️"
-          title="Delete Account?"
-          message="This action is permanent and cannot be undone. Your business and all its data will be permanently deleted."
-          confirmLabel="Yes, Delete"
+          title={t("profile.deleteAccountTitle")}
+          message={t("profile.deleteAccountMessage")}
+          confirmLabel={t("profile.yesDelete")}
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
         />
@@ -816,9 +794,9 @@ const branchRes = await fetch(`${BASE_URL}/my-branches`, {
       {showLogout && (
         <ConfirmModal
           emoji="👋"
-          title="Log Out?"
-          message="Are you sure you want to log out of your business account?"
-          confirmLabel="Yes, Log Out"
+          title={t("profile.logoutTitle")}
+          message={t("profile.logoutMessage")}
+          confirmLabel={t("profile.yesLogout")}
           onConfirm={handleLogout}
           onCancel={() => setShowLogout(false)}
         />

@@ -64,7 +64,6 @@
     "goBack": "Go back",
     "dontHaveAccount": "Don't have an account?",
     "signUp": "Sign up",
-    "forgotPassword": "Forgot Password",
     "sendCode": "Send Recovery Code",
     "invalidEmail": "Enter a valid email address",
     "invalidPhone": "Enter a valid phone number",
@@ -76,7 +75,8 @@
     "termsRequired": "You must agree to the Terms and Privacy Policy",
     "loginFailed": "Login failed. Please check your connection and try again.",
     "registrationFailed": "Registration failed. Please try again later.",
-    "serverError": "Server error. Please try again later."
+    "serverError": "Server error. Please try again later.",
+    "changePassword": "Change Password"
   },
   "profile": {
     "name": "Name",
@@ -142,7 +142,8 @@
     "passwordMin8Chars": "Password must be at least 8 characters",
     "confirmPasswordRequired": "Please confirm password",
     "passwordsDoNotMatch": "Passwords do not match",
-    "goBack": "Go back"
+    "goBack": "Go back",
+    "pendingApprovalWarning": "Your account is still waiting for admin approval. You cannot access the dashboard yet."
   },
   "cart": {
     "title": "Shopping Cart",
@@ -165,7 +166,7 @@
     "pickupPrefix": "Pickup"
   },
   "notifications": "Notifications",
-"notificationSettings": {
+  "notificationSettings": {
     "title": "Notification Settings",
     "subtitle": "Manage how you receive notifications",
     "channelsTitle": "Notification Channels",
@@ -914,60 +915,59 @@
     "newOffers": "New offers nearby",
     "paymentConfirmations": "Payment confirmations",
     "newsPromotions": "News and promotions"
-}
-,
-"userManagement": {
-  "title": "User Management",
-  "subtitle": "View and manage all platform users",
-  "backToDashboard": "← Back to Admin Dashboard",
-  "loading": "Loading users...",
-  "na": "N/A",
-  "stats": {
-    "totalRegistries": "Total Users",
-    "activeAccounts": "Active Accounts",
-    "activeVendors": "Active Vendors"
   },
-  "searchPlaceholder": "Search by name or email...",
-  "filters": {
-    "allAccessStates": "All Statuses",
-    "allClearanceTiers": "All Roles"
-  },
-  "table": {
-    "identityLabel": "Name",
-    "emailRoute": "Email",
-    "tierClassification": "Role",
-    "stateStatus": "Status",
-    "joined": "Joined",
-    "actions": "Actions",
-    "empty": "No users found"
-  },
-  "status": {
-    "active": "Active",
-    "inactive": "Inactive",
-    "blocked": "Blocked",
-    "suspended": "Suspended",
-    "unknown": "Unknown"
-  },
-  "type": {
-    "vendor": "Vendor",
-    "customer": "Customer",
-    "admin": "Admin",
-    "unknown": "Unknown"
-  },
-  "actions": {
-    "viewRecord": "View Details",
-    "blockAccess": "Block User",
-    "unblockAccess": "Unblock User",
-    "deleteRecord": "Delete User"
-  },
-  "alert": {
-    "blockError": "Failed to block user",
-    "unblockError": "Failed to unblock user",
-    "deleteError": "Failed to delete user",
-    "viewUser": "Viewing: {{name}}"
-  },
-  "confirm": {
-    "deleteUser": "Permanently delete \"{{name}}\"?"
+  "userManagement": {
+    "title": "User Management",
+    "subtitle": "View and manage all platform users",
+    "backToDashboard": "← Back to Admin Dashboard",
+    "loading": "Loading users...",
+    "na": "N/A",
+    "stats": {
+      "totalRegistries": "Total Users",
+      "activeAccounts": "Active Accounts",
+      "activeVendors": "Active Vendors"
+    },
+    "searchPlaceholder": "Search by name or email...",
+    "filters": {
+      "allAccessStates": "All Statuses",
+      "allClearanceTiers": "All Roles"
+    },
+    "table": {
+      "identityLabel": "Name",
+      "emailRoute": "Email",
+      "tierClassification": "Role",
+      "stateStatus": "Status",
+      "joined": "Joined",
+      "actions": "Actions",
+      "empty": "No users found"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "blocked": "Blocked",
+      "suspended": "Suspended",
+      "unknown": "Unknown"
+    },
+    "type": {
+      "vendor": "Vendor",
+      "customer": "Customer",
+      "admin": "Admin",
+      "unknown": "Unknown"
+    },
+    "actions": {
+      "viewRecord": "View Details",
+      "blockAccess": "Block User",
+      "unblockAccess": "Unblock User",
+      "deleteRecord": "Delete User"
+    },
+    "alert": {
+      "blockError": "Failed to block user",
+      "unblockError": "Failed to unblock user",
+      "deleteError": "Failed to delete user",
+      "viewUser": "Viewing: {{name}}"
+    },
+    "confirm": {
+      "deleteUser": "Permanently delete \"{{name}}\"?"
+    }
   }
-}
 }
