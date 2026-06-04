@@ -398,7 +398,7 @@ function ReviewsSection({ branchId }) {
       const data = await readJson(res);
       
       if (res.ok && (Array.isArray(data) || data.data || data.reviews)) {
-        let reviewList = Array.isArray(data) ? data : (data.data || data.reviews || []);
+        let reviewList = Array.isArray(data) ? data : (data.reviews || data.data || []);
         setReviews(reviewList);
       } else {
         setReviews([]);
@@ -475,12 +475,18 @@ function ReviewsSection({ branchId }) {
             <div key={idx} className="biz-review-card">
               <div className="biz-review-header">
                 <div className="biz-review-left">
-                  <div className="biz-review-avatar">{(review.customer_name || review.user?.name || "C").charAt(0).toUpperCase()}</div>
-                  <div>
-                    <p className="biz-review-customer">{review.customer_name || review.user?.name || "Anonymous"}</p>
-                    <p className="biz-review-date">{review.created_at ? new Date(review.created_at).toLocaleDateString("en-EG") : "—"}</p>
-                  </div>
-                </div>
+  <div className="biz-review-avatar">
+    {(review.customer?.user?.name || review.customer_name || "?").charAt(0).toUpperCase()}
+  </div>
+  <div>
+    <p className="biz-review-customer">
+      {review.customer?.user?.name || review.customer_name || "Anonymous"}
+    </p>
+    <p className="biz-review-date">
+      {review.created_at ? new Date(review.created_at).toLocaleDateString("en-EG") : "—"}
+    </p>
+  </div>
+</div>
                 <span className={`biz-review-rating`} style={{ background: ratingColor.bg, color: ratingColor.text }}>
                   {getRatingStars(review.rating)} {review.rating || "0"}
                 </span>
