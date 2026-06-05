@@ -45,7 +45,7 @@
   margin-bottom: 20px;
 }
 
-/* ── Hero ── */
+
 .branch-hero {
   position: relative;
   border-radius: 20px;
@@ -116,7 +116,6 @@
   color: rgba(255,255,255,0.88);
 }
 
-/* ── Info Strip ── */
 .branch-info-strip {
   background: white;
   border-radius: 12px;
@@ -164,7 +163,7 @@
   word-break: break-all;
 }
 
-/* ── Vendor Info ── */
+
 .vendor-info-section {
   background: white;
   border-radius: 12px;
@@ -187,7 +186,6 @@
   margin: 0;
 }
 
-/* ── Offers ── */
 .branch-offers-section {
   margin-bottom: 24px;
 }
@@ -319,7 +317,6 @@
   gap: 4px;
 }
 
-/* ── Navigation ── */
 .navigation-section {
   margin-bottom: 30px;
 }
@@ -346,7 +343,6 @@
   transform: translateY(-1px);
 }
 
-/* ── Spinner ── */
 .rd-spinner {
   width: 36px;
   height: 36px;
@@ -361,7 +357,6 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Mobile ── */
 @media (max-width: 768px) {
   .branch-detail-container { padding: 12px; }
   .branch-hero { height: 140px; }

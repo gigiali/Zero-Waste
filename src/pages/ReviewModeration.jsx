@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   Search,
   MoreVertical,
@@ -24,12 +25,14 @@ const isSupport    = (r) => r === "support";
 const canManage    = (r) => isSuperAdmin(r) || isManager(r);
 const canViewReviews = (r) => isSuperAdmin(r) || isManager(r) || isSupport(r);
 
-const statusConfig = {
-  visible: { bg: "var(--rm-green-bg)", text: "var(--rm-green-text)", dot: "#10b981", label: "Visible" },
-  hidden:  { bg: "var(--rm-red-bg)",   text: "var(--rm-red-text)",   dot: "#ef4444", label: "Hidden"  },
+const getStatus = (s, t) => {
+  const statusConfig = {
+    visible: { bg: "var(--rm-green-bg)", text: "var(--rm-green-text)", dot: "#10b981", label: t?.("reviewModeration.status.visible") || "Visible" },
+    hidden:  { bg: "var(--rm-red-bg)",   text: "var(--rm-red-text)",   dot: "#ef4444", label: t?.("reviewModeration.status.hidden") || "Hidden"  },
+  };
+  const fallbackStatus = { bg: "var(--rm-muted-bg)", text: "var(--rm-muted-text)", dot: "#94a3b8", label: "Open" };
+  return statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
 };
-const fallbackStatus = { bg: "var(--rm-muted-bg)", text: "var(--rm-muted-text)", dot: "#94a3b8", label: "Open" };
-const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
 
 function SkeletonRow() {
   return (
@@ -50,7 +53,7 @@ function SkeletonRow() {
   );
 }
 
-function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
+function ActionMenu({ report, role, token, onStatusChange, onDelete, t }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0 });
@@ -77,7 +80,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
       });
       const data = await res.json().catch(() => ({}));
       if (res.ok) onStatusChange(report.id, report.status === "visible" ? "hidden" : "visible");
-      else alert("Failed: " + (data?.message ?? res.status));
+      else alert(t("reviewModeration.errors.toggleFailed") + ": " + (data?.message ?? res.status));
     } catch (err) {
       console.error("Toggle error:", err);
     } finally {
@@ -97,7 +100,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   const actions = [
     {
       icon: report.status === "visible" ? <EyeOff size={14} /> : <Eye size={14} />,
-      label: report.status === "visible" ? "Hide review" : "Show review",
+      label: report.status === "visible" ? t("reviewModeration.actions.hideReview") : t("reviewModeration.actions.showReview"),
       accent: true,
       onClick: handleToggleVisibility,
       show: canManage(role),
@@ -137,6 +140,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
 }
 
 export default function ReviewModeration() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { role, token: contextToken } = useAuth();
   const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -229,13 +233,13 @@ export default function ReviewModeration() {
         <div className="rm-header__left">
           <button className="rm-back-btn" onClick={() => navigate("/admin")}>
             <ArrowLeft size={16} />
-            Back to Admin
+            {t("reviewModeration.backToAdmin")}
           </button>
           <div className="rm-header__title-row">
             <span className="rm-header__icon"><ShieldAlert size={22} /></span>
-            <h1 className="rm-title">Review Moderation</h1>
+            <h1 className="rm-title">{t("reviewModeration.title")}</h1>
           </div>
-          <p className="rm-subtitle">Monitor and manage customer reviews across all offers</p>
+          <p className="rm-subtitle">{t("reviewModeration.subtitle")}</p>
         </div>
       </div>
 
@@ -243,7 +247,7 @@ export default function ReviewModeration() {
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--blue"><BookOpen size={18} /></span>
           <div>
-            <p className="rm-stat__label">Total Reviews</p>
+            <p className="rm-stat__label">{t("reviewModeration.stats.totalReviews")}</p>
             <p className="rm-stat__value">
               {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : reviews.length}
             </p>
@@ -252,7 +256,7 @@ export default function ReviewModeration() {
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--green"><CheckCircle size={18} /></span>
           <div>
-            <p className="rm-stat__label">Visible</p>
+            <p className="rm-stat__label">{t("reviewModeration.stats.visible")}</p>
             <p className="rm-stat__value rm-stat__value--green">
               {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : totalVisible}
             </p>
@@ -261,7 +265,7 @@ export default function ReviewModeration() {
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--red"><EyeOff size={18} /></span>
           <div>
-            <p className="rm-stat__label">Hidden</p>
+            <p className="rm-stat__label">{t("reviewModeration.stats.hidden")}</p>
             <p className="rm-stat__value rm-stat__value--red">
               {loading ? <span className="rm-skeleton rm-skeleton--stat" /> : totalHidden}
             </p>
@@ -270,7 +274,7 @@ export default function ReviewModeration() {
         <div className="rm-stat">
           <span className="rm-stat__icon rm-stat__icon--amber"><AlertTriangle size={18} /></span>
           <div>
-            <p className="rm-stat__label">Hidden Rate</p>
+            <p className="rm-stat__label">{t("reviewModeration.stats.hiddenRate")}</p>
             <p className="rm-stat__value rm-stat__value--amber">
               {loading
                 ? <span className="rm-skeleton rm-skeleton--stat" />
@@ -285,7 +289,7 @@ export default function ReviewModeration() {
           <Search size={16} className="rm-search__icon" />
           <input
             type="text"
-            placeholder="Search by offer, reviewer, or comment…"
+            placeholder={t("reviewModeration.controls.searchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="rm-search__input"
@@ -296,16 +300,16 @@ export default function ReviewModeration() {
           onChange={(e) => setFilterStatus(e.target.value)}
           className="rm-filter"
         >
-          <option value="all">All statuses</option>
-          <option value="visible">Visible</option>
-          <option value="hidden">Hidden</option>
+          <option value="all">{t("reviewModeration.controls.allStatuses")}</option>
+          <option value="visible">{t("reviewModeration.controls.statusVisible")}</option>
+          <option value="hidden">{t("reviewModeration.controls.statusHidden")}</option>
         </select>
       </div>
 
       {slowWarning && loading && (
         <div className="rm-timeout-banner">
           <Clock size={16} />
-          <span>This is taking longer than expected — please wait or check your connection.</span>
+          <span>{t("reviewModeration.timeoutWarning")}</span>
         </div>
       )}
 
@@ -314,12 +318,12 @@ export default function ReviewModeration() {
           <table className="rm-table">
             <thead>
               <tr>
-                <th>Offer</th>
-                <th>Reviewer</th>
-                <th>Comment</th>
-                <th>Rating</th>
-                <th>Status</th>
-                <th>Date</th>
+                <th>{t("reviewModeration.table.offer")}</th>
+                <th>{t("reviewModeration.table.reviewer")}</th>
+                <th>{t("reviewModeration.table.comment")}</th>
+                <th>{t("reviewModeration.table.rating")}</th>
+                <th>{t("reviewModeration.table.status")}</th>
+                <th>{t("reviewModeration.table.date")}</th>
                 <th></th>
               </tr>
             </thead>
@@ -328,7 +332,7 @@ export default function ReviewModeration() {
                 Array.from({ length: 6 }).map((_, i) => <SkeletonRow key={i} />)
               ) : filtered.length > 0 ? (
                 filtered.map((rev) => {
-                  const st = getStatus(rev.status);
+                  const st = getStatus(rev.status, t);
                   return (
                     <tr key={rev.id} className="rm-table__row">
                       <td className="rm-table__offer">
@@ -371,6 +375,7 @@ export default function ReviewModeration() {
                           token={token}
                           onStatusChange={handleStatusChange}
                           onDelete={handleDelete}
+                          t={t}
                         />
                       </td>
                     </tr>
@@ -379,7 +384,7 @@ export default function ReviewModeration() {
               ) : (
                 <tr>
                   <td colSpan={7} className="rm-table__empty">
-                    No reviews found
+                    {t("reviewModeration.emptyState")}
                   </td>
                 </tr>
               )}

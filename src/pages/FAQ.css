@@ -83,7 +83,6 @@
   color: white;
 }
 
-/* ── Section ── */
 .faq-section { margin-bottom: 32px; }
 .faq-section__title {
   font-size: 0.85rem;
@@ -94,7 +93,6 @@
   letter-spacing: 0.06em;
 }
 
-/* ── FAQ Item ── */
 .faq-item {
   border: 1px solid #e5e7eb;
   border-radius: 12px;
@@ -137,7 +135,6 @@
   line-height: 1.7;
 }
 
-/* ── CTA ── */
 .faq-cta {
   background: white;
   border-radius: 16px;

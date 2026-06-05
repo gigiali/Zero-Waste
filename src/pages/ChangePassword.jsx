@@ -37,7 +37,6 @@ export default function ChangePassword({ onCancel }) {
 
   return (
     <div className="cp-page">
-      {/* Hero */}
       <div className="cp-hero">
         <div className="cp-hero-inner">
           <h1 className="cp-title">{t("auth.changePasswordTitle")}</h1>
@@ -45,7 +44,6 @@ export default function ChangePassword({ onCancel }) {
         </div>
       </div>
 
-      {/* Card */}
       <div className="cp-body">
         <div className="cp-card">
           {success ? (
@@ -59,7 +57,6 @@ export default function ChangePassword({ onCancel }) {
             </div>
           ) : (
             <>
-              {/* Current Password */}
               <div className="cp-field">
                 <label className="cp-label">{t("auth.currentPassword")}</label>
                 <div className="cp-input-wrap">

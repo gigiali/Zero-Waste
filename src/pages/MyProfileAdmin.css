@@ -1,8 +1,5 @@
-/* ===== MyProfile — Navy Theme ===== */
-
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
-/* ── CSS Variables ── */
 :root {
   --pg-bg: #f0f4f8;
   --pg-card: #ffffff;
@@ -34,7 +31,6 @@
   box-sizing: border-box;
 }
 
-/* ── Page ── */
 .profile-page {
   min-height: 100vh;
   background: var(--pg-bg);
@@ -42,7 +38,6 @@
   transition: background 0.2s;
 }
 
-/* ── Hero ── */
 .profile-hero {
   background: var(--pg-hero-gradient);
   padding: 52px 0 56px;
@@ -129,7 +124,6 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* ── Body ── */
 .profile-body {
   max-width: 900px;
   margin: 32px auto 48px;
@@ -139,7 +133,6 @@
   gap: 20px;
 }
 
-/* ── Card ── */
 .profile-card {
   background: var(--pg-card);
   border-radius: 16px;
@@ -157,7 +150,6 @@
   letter-spacing: -0.01em;
 }
 
-/* ── Info Rows ── */
 .info-list {
   display: flex;
   flex-direction: column;
@@ -229,7 +221,6 @@
   box-shadow: 0 0 0 3px rgba(26, 74, 138, 0.12);
 }
 
-/* ── Edit Actions ── */
 .edit-actions {
   display: flex;
   gap: 12px;
@@ -278,7 +269,6 @@
   background: var(--pg-border);
 }
 
-/* ── Settings List ── */
 .settings-list {
   display: flex;
   flex-direction: column;
@@ -333,7 +323,6 @@
   color: var(--pg-icon);
 }
 
-/* Red row — Log Out / Delete */
 .setting-red {
   color: #ef4444;
 }
@@ -347,7 +336,6 @@
   background: #fef2f2 !important;
 }
 
-/* ── Avatar initials ── */
 .profile-avatar {
   width: 64px;
   height: 64px;
@@ -365,7 +353,6 @@
   margin-right: 4px;
 }
 
-/* ── Password page inputs ── */
 .pw-input-wrap {
   display: flex;
   flex-direction: column;
@@ -400,7 +387,6 @@
   font-weight: 600;
 }
 
-/* ── Responsive ── */
 @media (max-width: 600px) {
   .hero-inner {
     flex-direction: column;

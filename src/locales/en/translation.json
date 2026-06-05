@@ -621,7 +621,94 @@
     "loadingEarnings": "Loading earnings…",
     "noEarningsData": "No earnings data available.",
     "manageReviews": "Manage user reviews",
-    "deleteFailed": "Failed to delete offer"
+    "deleteFailed": "Failed to delete offer",
+    "customers": "Customers",
+    "vendors": "Vendors"
+  },
+  "reviewModeration": {
+    "title": "Review Moderation",
+    "subtitle": "Monitor and manage customer reviews across all offers",
+    "backToAdmin": "Back to Admin",
+    "stats": {
+      "totalReviews": "Total Reviews",
+      "visible": "Visible",
+      "hidden": "Hidden",
+      "hiddenRate": "Hidden Rate"
+    },
+    "controls": {
+      "searchPlaceholder": "Search by offer, reviewer, or comment…",
+      "allStatuses": "All statuses",
+      "statusVisible": "Visible",
+      "statusHidden": "Hidden"
+    },
+    "timeoutWarning": "This is taking longer than expected — please wait or check your connection.",
+    "table": {
+      "offer": "Offer",
+      "reviewer": "Reviewer",
+      "comment": "Comment",
+      "rating": "Rating",
+      "status": "Status",
+      "date": "Date"
+    },
+    "actions": {
+      "hideReview": "Hide review",
+      "showReview": "Show review"
+    },
+    "status": {
+      "visible": "Visible",
+      "hidden": "Hidden"
+    },
+    "emptyState": "No reviews found",
+    "errors": {
+      "toggleFailed": "Failed to toggle review visibility",
+      "fetchFailed": "Failed to fetch reviews"
+    }
+  },
+  "adminProfile": {
+    "myProfile": "My Profile",
+    "manageAccountInfo": "Manage your account information",
+    "personalInformation": "Personal Information",
+    "fullName": "Full Name",
+    "emailAddress": "Email Address",
+    "phoneNumber": "Phone Number",
+    "address": "Address",
+    "editProfile": "Edit Profile",
+    "cancelEditing": "Cancel Editing",
+    "saveChanges": "Save Changes",
+    "cancel": "Cancel",
+    "changePassword": "Change Password",
+    "backToDashboard": "Back to Dashboard",
+    "logOut": "Log Out",
+    "deleteAccount": "Delete Account",
+    "changePasswordTitle": "Change Password",
+    "updateAccountPassword": "Update your account password",
+    "setNewPassword": "Set New Password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "confirmNewPassword": "Confirm new password",
+    "savePassword": "Save Password",
+    "saving": "Saving…",
+    "back": "Back",
+    "nameRequired": "Name is required",
+    "emailRequired": "Email is required",
+    "phoneRequired": "Phone is required",
+    "addressRequired": "Address is required",
+    "failedUpdateProfile": "Failed to update profile. Please try again.",
+    "networkError": "Network error. Please check your connection.",
+    "accountSettings": "Account Settings",
+    "deleteAccountTitle": "Delete Account?",
+    "deleteAccountMessage": "This action is permanent and cannot be undone. All your data will be deleted.",
+    "yesDelete": "Yes, Delete",
+    "logOutTitle": "Log Out?",
+    "logOutMessage": "Are you sure you want to log out?",
+    "yesLogOut": "Yes, Log Out",
+    "passwordChangedSuccess": "✅ Password changed successfully!",
+    "passwordChangedSuccessfully": "Password changed successfully!",
+    "failedChangePassword": "Failed to change password. Please try again.",
+    "newPasswordRequired": "New password is required",
+    "passwordMin8Chars": "Password must be at least 8 characters",
+    "confirmPassword": "Please confirm your password",
+    "passwordsDoNotMatch": "Passwords do not match"
   },
   "terms": {
     "title": "Terms of Service",
@@ -1025,6 +1112,7 @@
     "unknownBusiness": "Unknown Business",
     "actions": {
       "manageDetails": "Manage Business Details",
+      "viewDetails": "View Details",
       "approve": "Approve",
       "reject": "Reject",
       "delete": "Delete"
@@ -1066,7 +1154,8 @@
     "noReviews": "No reviews yet",
     "loading": "Loading...",
     "showLess": "Show Less",
-    "viewAll": "View All"
+    "viewAll": "View All",
+    "refresh": "Refresh"
   },
   "userManagement": {
     "title": "User Management",

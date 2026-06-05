@@ -14,9 +14,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <div className="footer-container">
-        {/* Top Section */}
         <div className="footer-top">
-          {/* Brand Section */}
           <div className="footer-section footer-brand">
             <div className="footer-logo-group">
               <img 
@@ -34,7 +32,6 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Quick Links Section */}
           <div className="footer-section footer-links">
             <h3 className="footer-section-title">Quick Links</h3>
             <nav className="footer-nav">
@@ -50,7 +47,6 @@ export default function Footer() {
             </nav>
           </div>
 
-          {/* Contact Section */}
           <div className="footer-section footer-contact">
             <h3 className="footer-section-title">Contact</h3>
             <div className="footer-contact-list">
@@ -76,10 +72,8 @@ export default function Footer() {
           </div>
         </div>
 
-        {/* Divider */}
         <div className="footer-divider"></div>
 
-        {/* Bottom Section */}
         <div className="footer-bottom">
           <p className="footer-copyright">
             © {year} ZeroWaste. All rights reserved.

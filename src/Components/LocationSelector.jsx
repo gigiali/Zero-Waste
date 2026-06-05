@@ -167,7 +167,6 @@ export default function LocationSelector() {
                   />
                 )}
 
-                {/* Search Results Dropdown */}
                 {showMapSearchResults && mapSearchResults.length > 0 && (
                   <div
                     style={{

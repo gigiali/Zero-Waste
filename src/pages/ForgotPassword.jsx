@@ -65,7 +65,6 @@ export default function ForgotPassword() {
     const timeoutId = setTimeout(() => controller.abort(), 15000);
 
     try {
-      // ✅ غيّر هنا
       const response = await fetch(`${API_URL}/forgot-password`, {
         method: "POST",
         headers: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   User,
   Mail,
@@ -10,6 +11,7 @@ import {
   Trash2,
   ChevronRight,
   KeyRound,
+  LayoutDashboard,
 } from "lucide-react";
 import "./MyProfileAdmin.css";
 import { useAuth } from "../Context/AuthContext";
@@ -19,7 +21,7 @@ const BASE_URL = "https://zero-waste-production.up.railway.app/api";
 /* ─────────────────────────────────────────────
    Change Password sub-page
 ───────────────────────────────────────────── */
-function ChangePassword({ onCancel, role }) {
+function ChangePassword({ onCancel, role, t }) {
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -31,15 +33,15 @@ function ChangePassword({ onCancel, role }) {
     const e = {};
 
 if (!form.next) {
-  e.password = "New password is required";
+  e.password = t("adminProfile.newPasswordRequired");
 } else if (form.next.length < 8) {
-  e.password = "Password must be at least 8 characters";
+  e.password = t("adminProfile.passwordMin8Chars");
 }
 
 if (!form.confirm) {
-  e.password_confirmation = "Please confirm your password";
+  e.password_confirmation = t("adminProfile.confirmPassword");
 } else if (form.next !== form.confirm) {
-  e.password_confirmation = "Passwords do not match";
+  e.password_confirmation = t("adminProfile.passwordsDoNotMatch");
 }
 
 setErrors(e);
@@ -67,7 +69,7 @@ if (Object.keys(e).length > 0) return;
       const data = await response.json();
 
       if (response.ok) {
-        setSuccessMessage("✅ Password changed successfully!");
+        setSuccessMessage(t("adminProfile.passwordChangedSuccess"));
         setTimeout(() => onCancel(), 1500);
       } else if (data.errors) {
         const newErrors = {};
@@ -80,11 +82,11 @@ if (Object.keys(e).length > 0) return;
       } else {
         setErrors({
           general:
-            data.message || "Failed to change password. Please try again.",
+            data.message || t("adminProfile.failedChangePassword"),
         });
       }
     } catch (err) {
-      setErrors({ general: "Network error. Please check your connection." });
+      setErrors({ general: t("adminProfile.networkError") });
     } finally {
       setIsLoading(false);
     }
@@ -96,24 +98,24 @@ if (Object.keys(e).length > 0) return;
         <div className="hero-inner">
           <div className="hero-left">
             <div>
-              <h1 className="hero-title">Change Password</h1>
-              <p className="hero-subtitle">Update your account password</p>
+              <h1 className="hero-title">{t("adminProfile.changePasswordTitle")}</h1>
+              <p className="hero-subtitle">{t("adminProfile.updateAccountPassword")}</p>
             </div>
           </div>
           <button className="hero-edit-btn" onClick={onCancel}>
-            ← Back
+            ← {t("adminProfile.back")}
           </button>
         </div>
       </div>
 
       <div className="profile-body">
         <div className="profile-card">
-          <h2 className="card-title">Set New Password</h2>
+          <h2 className="card-title">{t("adminProfile.setNewPassword")}</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
             {[
-  ["current", "current_password", "Current password"],
-["next", "password", "New password"],
-["confirm", "password_confirmation", "Confirm new password"],
+  ["current", "current_password", t("adminProfile.currentPassword")],
+["next", "password", t("adminProfile.newPassword")],
+["confirm", "password_confirmation", t("adminProfile.confirmNewPassword")],
 ].map(([formKey, errorKey, ph]) => (
               <div key={formKey} className="pw-input-wrap">
                 <input
@@ -159,7 +161,7 @@ if (Object.keys(e).length > 0) return;
                 transition: "background 0.15s",
               }}
             >
-              {isLoading ? "Saving…" : "Save Password"}
+              {isLoading ? t("adminProfile.saving") : t("adminProfile.savePassword")}
             </button>
           </div>
         </div>
@@ -172,6 +174,7 @@ if (Object.keys(e).length > 0) return;
    Main Profile Page
 ───────────────────────────────────────────── */
 export default function UserProfile() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { logout, role, token: contextToken } = useAuth();
   const token =
@@ -236,10 +239,10 @@ export default function UserProfile() {
 
   const handleSave = async () => {
     const e = {};
-    if (!editData.name.trim()) e.name = "Name is required";
-    if (!editData.email.trim()) e.email = "Email is required";
-    if (!editData.phone.trim()) e.phone = "Phone is required";
-    if (!editData.address.trim()) e.address = "Address is required";
+    if (!editData.name.trim()) e.name = t("adminProfile.nameRequired");
+    if (!editData.email.trim()) e.email = t("adminProfile.emailRequired");
+    if (!editData.phone.trim()) e.phone = t("adminProfile.phoneRequired");
+    if (!editData.address.trim()) e.address = t("adminProfile.addressRequired");
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
@@ -275,11 +278,11 @@ export default function UserProfile() {
         setErrors(newErrors);
       } else {
         setErrors({
-          general: data.message || "Failed to update profile. Please try again.",
+          general: data.message || t("adminProfile.failedUpdateProfile"),
         });
       }
     } catch (error) {
-      setErrors({ general: "Network error. Please check your connection." });
+      setErrors({ general: t("adminProfile.networkError") });
     } finally {
       setIsLoading(false);
     }
@@ -337,35 +340,41 @@ export default function UserProfile() {
     : "?";
 
   const infoFields = [
-    { icon: <User size={18} />, label: "Full Name", key: "name", type: "text" },
-    { icon: <Mail size={18} />, label: "Email Address", key: "email", type: "email" },
-    { icon: <Phone size={18} />, label: "Phone Number", key: "phone", type: "tel" },
-    { icon: <MapPin size={18} />, label: "Address", key: "address", type: "text" },
+    { icon: <User size={18} />, label: t("adminProfile.fullName"), key: "name", type: "text" },
+    { icon: <Mail size={18} />, label: t("adminProfile.emailAddress"), key: "email", type: "email" },
+    { icon: <Phone size={18} />, label: t("adminProfile.phoneNumber"), key: "phone", type: "tel" },
+    { icon: <MapPin size={18} />, label: t("adminProfile.address"), key: "address", type: "text" },
   ];
 
   const settingItems = [
     {
+      icon: <LayoutDashboard size={17} />,
+      label: t("adminProfile.backToDashboard"),
+      onClick: () => navigate("/admin"),
+      red: false,
+    },
+    {
       icon: <KeyRound size={17} />,
-      label: "Change Password",
+      label: t("adminProfile.changePassword"),
       onClick: () => setView("password"),
       red: false,
     },
     {
       icon: <LogOut size={17} />,
-      label: "Log Out",
+      label: t("adminProfile.logOut"),
       onClick: () => setShowLogoutConfirm(true),
       red: true,
     },
     {
       icon: <Trash2 size={17} />,
-      label: "Delete Account",
+      label: t("adminProfile.deleteAccount"),
       onClick: () => setShowDeleteConfirm(true),
       red: true,
     },
   ];
 
   if (view === "password")
-    return <ChangePassword onCancel={() => setView("main")} role={role} />;
+    return <ChangePassword onCancel={() => setView("main")} role={role} t={t} />;
 
   const ConfirmModal = ({ emoji, title, message, onConfirm, onCancel, confirmLabel }) => (
     <div
@@ -431,7 +440,7 @@ export default function UserProfile() {
               fontSize: "0.88rem",
             }}
           >
-            Cancel
+            {t("adminProfile.cancel")}
           </button>
           <button
             onClick={onConfirm}
@@ -463,8 +472,8 @@ export default function UserProfile() {
             <div className="hero-left">
               <div className="profile-avatar">{initials}</div>
               <div>
-                <h1 className="hero-title">{userData.name || "My Profile"}</h1>
-                <p className="hero-subtitle">Manage your account information</p>
+                <h1 className="hero-title">{userData.name || t("adminProfile.myProfile")}</h1>
+                <p className="hero-subtitle">{t("adminProfile.manageAccountInfo")}</p>
               </div>
             </div>
             <button
@@ -475,14 +484,14 @@ export default function UserProfile() {
               }}
             >
               <Edit2 size={15} />
-              {isEditing ? "Cancel Editing" : "Edit Profile"}
+              {isEditing ? t("adminProfile.cancelEditing") : t("adminProfile.editProfile")}
             </button>
           </div>
         </div>
 
         <div className="profile-body">
           <div className="profile-card">
-            <h2 className="card-title">Personal Information</h2>
+            <h2 className="card-title">{t("adminProfile.personalInformation")}</h2>
             <div className="info-list">
               {infoFields.map(({ icon, label, key, type }) => (
                 <div className="info-row" key={key}>
@@ -533,21 +542,21 @@ export default function UserProfile() {
                   onClick={handleSave}
                   disabled={isLoading}
                 >
-                  {isLoading ? "Saving…" : "Save Changes"}
+                  {isLoading ? t("adminProfile.saving") : t("adminProfile.saveChanges")}
                 </button>
                 <button
                   className="btn-cancel"
                   onClick={handleCancel}
                   disabled={isLoading}
                 >
-                  Cancel
+                  {t("adminProfile.cancel")}
                 </button>
               </div>
             )}
           </div>
 
           <div className="profile-card">
-            <h2 className="card-title">Account Settings</h2>
+            <h2 className="card-title">{t("adminProfile.accountSettings")}</h2>
             <div className="settings-list">
               {settingItems.map(({ icon, label, onClick, red }) => (
                 <button
@@ -568,22 +577,22 @@ export default function UserProfile() {
       {showDeleteConfirm && (
         <ConfirmModal
           emoji="🗑️"
-          title="Delete Account?"
-          message="This action is permanent and cannot be undone. All your data will be deleted from the system."
+          title={t("adminProfile.deleteAccountTitle")}
+          message={t("adminProfile.deleteAccountMessage")}
           onConfirm={handleDeleteAccount}
           onCancel={() => setShowDeleteConfirm(false)}
-          confirmLabel="Yes, Delete"
+          confirmLabel={t("adminProfile.yesDelete")}
         />
       )}
 
       {showLogoutConfirm && (
         <ConfirmModal
           emoji="👋"
-          title="Log Out?"
-          message="Are you sure you want to log out of your account?"
+          title={t("adminProfile.logOutTitle")}
+          message={t("adminProfile.logOutMessage")}
           onConfirm={handleLogout}
           onCancel={() => setShowLogoutConfirm(false)}
-          confirmLabel="Yes, Log Out"
+          confirmLabel={t("adminProfile.yesLogOut")}
         />
       )}
     </>

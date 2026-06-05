@@ -601,7 +601,6 @@ function SalesHistorySection({ branchId }) {
   );
 }
 
-// ✅ MAIN EXPORT - Business Component starts here
 export default function Business() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
@@ -640,7 +639,7 @@ export default function Business() {
   const [deleteBranchId, setDeleteBranchId] = useState(null);
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
-  const isFetchingOrdersRef = React.useRef(false); // ✅ اضفنا ده
+  const isFetchingOrdersRef = React.useRef(false); 
 
   const handleLanguageChange = (lang) => {
     setLanguage(lang);
@@ -808,7 +807,6 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
 
   useEffect(() => { fetchOffers(); }, [fetchOffers]);
 
-  // ✅ FIXED: جلب الـ Orders بشكل صحيح
   const fetchOrders = React.useCallback(async () => {
     if (isFetchingOrdersRef.current) return;
     isFetchingOrdersRef.current = true;
@@ -833,7 +831,6 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
         const data = await readJson(res);
         console.log('✅ Raw API Response:', data);
         
-        // معالجة صحيحة للـ response structure
         let orderList = [];
         if (Array.isArray(data)) {
           orderList = data;
@@ -845,7 +842,6 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
         
         console.log('📋 Order count:', orderList.length);
         
-        // تطبيع البيانات مع الحفاظ على reservation_id
         const processedOrders = orderList.map((order) => {
           const normalized = normalizeOrder(order);
           return {
@@ -871,10 +867,8 @@ const url = new URL("/api/vendor/dashboard/orders-chart", apiUrl);
   useEffect(() => {
     fetchOrders();
     
-    // جلب دوري كل 10 ثواني
     const interval = setInterval(fetchOrders, 10000);
     
-    // استمع للـ Events
     const handleOrderPlaced = () => {
       console.log('🔔 Order placed event received!');
       fetchOrders();
@@ -1012,7 +1006,6 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
     finally { setDeleteConfirmId(null); }
   };
 
-  // ✅ FIXED: handleOrderStatusUpdate
   const handleOrderStatusUpdate = async (orderId, newStatus) => {
     console.log('🔄 Updating order status:', { orderId, newStatus });
     setUpdatingOrderId(orderId);
@@ -1040,7 +1033,6 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
         const responseData = await res.json();
         console.log('✅ Status update response:', responseData);
         
-        // تحديث الـ local state
         setOrders((prev) => 
           prev.map((o) => 
             o.id === orderId 
@@ -1049,7 +1041,6 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
           )
         );
         
-        // جلب reservation_id
         const updatedOrder = orders.find(o => o.id === orderId);
         const reservationId = updatedOrder?.reservation_id || updatedOrder?.reservationId;
         
@@ -1059,7 +1050,6 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
           newStatus
         });
         
-        // Dispatch events
         window.dispatchEvent(new CustomEvent("zw-vendor-order-updated", {
           detail: { 
             orderId: orderId,
@@ -1092,7 +1082,6 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
     }
   };
 
-  // Navigation
   const navItems = [
     { id: "charts", icon: BarChart2, label: t("salesCharts"), onClick: () => document.getElementById("charts-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sustainability", icon: Leaf, label: t("sustainabilityImpact"), onClick: () => document.getElementById("sustainability-section")?.scrollIntoView({ behavior: "smooth" }) },

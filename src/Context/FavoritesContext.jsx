@@ -33,7 +33,6 @@ export function FavoritesProvider({ children }) {
       setFavorites(new Set(ids));
       setFavCount(ids.length);
       localStorage.setItem("zw_favorites_count", ids.length);
-      console.log("✅ Synced favorites:", ids.length);
     } catch (err) {
       console.error("❌ Sync error:", err);
     }
@@ -71,11 +70,11 @@ export function FavoritesProvider({ children }) {
         if (data.is_favorited) {
           newFavorites.add(restaurantId);
           setFavCount(prev => prev + 1);
-          console.log("❤️ Added to favorites:", restaurantId);
+          
         } else {
           newFavorites.delete(restaurantId);
           setFavCount(prev => Math.max(0, prev - 1));
-          console.log("🤍 Removed from favorites:", restaurantId);
+          
         }
 
         setFavorites(newFavorites);

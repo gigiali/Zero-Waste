@@ -107,7 +107,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
         console.log("✅ Cancel successful:", data);
         setIsCancelled(true);
         
-        // 🔄 رجّع الستوك في الـ home page
         window.dispatchEvent(new Event('ordercancelled'));
         
         setTimeout(() => onDismiss(), 2000);
@@ -185,7 +184,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const steps =
     order.deliveryMethod === "delivery" ? deliverySteps : pickupSteps;
 
-  // ✅ FIXED: Event listener with proper ID matching
   useEffect(() => {
     const handleVendorUpdate = (e) => {
       console.log("🎯 Event received from vendor:", e.detail);
@@ -197,7 +195,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
         orderId: order.id,
       });
 
-      // ✅ Check all ID formats: reservationId first, then database IDs
       const eventMatches =
         (e.detail.reservationId &&
           String(e.detail.reservationId) === String(order.reservationId)) ||
@@ -214,11 +211,9 @@ function OrderTrackingStrip({ order, onDismiss }) {
         const newStep = statusToStep(e.detail.newStatus, order.deliveryMethod);
         setCurrentStep(newStep);
 
-        // Update sessionStorage
         const updatedOrder = { ...order, status: e.detail.newStatus };
         sessionStorage.setItem("zw_active_order", JSON.stringify(updatedOrder));
 
-        // Show review if completed
         if (
           e.detail.newStatus.toLowerCase() === "completed" &&
           !reviewSubmitted &&
@@ -228,7 +223,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
           setShowReview(true);
         }
 
-        // If cancelled
         if (e.detail.newStatus.toLowerCase() === "cancelled") {
           console.log("❌ Order cancelled");
           setIsCancelled(true);
@@ -255,7 +249,6 @@ function OrderTrackingStrip({ order, onDismiss }) {
     reviewDismissed,
   ]);
 
-  // ✅ Polling backup
   useEffect(() => {
     const fetchOrderStatus = async () => {
       const token =
@@ -1041,7 +1034,6 @@ export default function HomePage() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
-  // ✅ FIXED: Properly handle reservation_id from PaymentMethodPage
   useEffect(() => {
     if (location.state && location.state.trackingActive) {
       const orderData = {

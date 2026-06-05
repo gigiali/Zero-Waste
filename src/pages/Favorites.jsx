@@ -21,7 +21,6 @@ export default function Favorites() {
   const getLat = () => localStorage.getItem("userLocationLat") || 30.0444;
   const getLng = () => localStorage.getItem("userLocationLng") || 31.2357;
 
-  // ✅ تحديث العدد في localStorage وإطلاق الـ event عشان الـ navbar يتحدث
   const syncCount = (list) => {
     localStorage.setItem("zw_favorites_count", list.length);
     window.dispatchEvent(new Event("zw-favorites-updated"));
@@ -45,7 +44,7 @@ export default function Favorites() {
         const raw = data.data || data.favorites || data || [];
         const list = Array.isArray(raw) ? raw : [];
         setFavorites(list);
-        syncCount(list); // ✅ حدّث الـ badge فور ما تجيب البيانات
+        syncCount(list);
       } else {
         setError(data.message || "Failed to load favorites.");
       }
@@ -57,10 +56,10 @@ export default function Favorites() {
   };
 
   const handleRemoveFavorite = async (vendorId) => {
-    // ✅ حدّث الـ UI فوراً قبل ما ترسلي للـ API
+  
     const newList = favorites.filter((v) => v.id !== vendorId);
     setFavorites(newList);
-    syncCount(newList); // ✅ حدّث الـ badge فوراً
+    syncCount(newList); 
 
     try {
       const token = getToken();
@@ -73,7 +72,6 @@ export default function Favorites() {
         },
         body: JSON.stringify({ vendor_id: vendorId }),
       });
-      // لو فشلت الـ API، رجّعي البيانات الصح من السيرفر
       if (!res.ok) fetchFavorites();
     } catch {
       fetchFavorites();
@@ -104,7 +102,6 @@ export default function Favorites() {
       <Navigation />
       <div style={{ maxWidth: "1100px", margin: "0 auto", padding: "2rem 1.5rem" }}>
 
-        {/* Header */}
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "2rem" }}>
           <Heart size={28} color="#ef4444" fill="#ef4444" />
           <h1 style={{ fontSize: "1.77rem", fontWeight: 700, color: "#1f2937", margin: 0 }}>
@@ -117,7 +114,6 @@ export default function Favorites() {
           )}
         </div>
 
-        {/* Loading */}
         {isLoading && (
           <div style={{ display: "flex", justifyContent: "center", padding: "4rem" }}>
             <div style={{
@@ -131,7 +127,6 @@ export default function Favorites() {
           </div>
         )}
 
-        {/* Error */}
         {!isLoading && error && (
           <div style={{
             background: "#fef2f2", border: "1px solid #fecaca",
@@ -148,7 +143,6 @@ export default function Favorites() {
           </div>
         )}
 
-        {/* Empty */}
         {!isLoading && !error && favorites.length === 0 && (
           <div style={{ textAlign: "center", padding: "5rem 2rem" }}>
             <Heart size={64} color="#e5e7eb" style={{ marginBottom: "1rem" }} />
@@ -168,7 +162,6 @@ export default function Favorites() {
           </div>
         )}
 
-        {/* Grid */}
         {!isLoading && !error && favorites.length > 0 && (
           <div style={{
             display: "grid",
@@ -198,7 +191,6 @@ export default function Favorites() {
                     e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.06)";
                   }}
                 >
-                  {/* Image */}
                   <div
                     style={{ position: "relative" }}
                     onClick={() => firstOfferId ? navigate(`/restaurant/${firstOfferId}`) : null}
@@ -210,7 +202,6 @@ export default function Favorites() {
                       onError={(e) => { e.target.src = "/images/placeholder.png"; }}
                     />
 
-                    {/* ✅ زرار الحذف */}
                     <button
                       onClick={(e) => { e.stopPropagation(); handleRemoveFavorite(vendor.id); }}
                       style={{
@@ -236,7 +227,6 @@ export default function Favorites() {
                     )}
                   </div>
 
-                  {/* Info */}
                   <div
                     style={{ padding: "1rem" }}
                     onClick={() => firstOfferId ? navigate(`/restaurant/${firstOfferId}`) : null}

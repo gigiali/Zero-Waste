@@ -1,8 +1,3 @@
-/* ══════════════════════════════════════════════════════════════════════════ */
-/* MANAGE BUSINESSES — Admin dashboard style                                 */
-/* ══════════════════════════════════════════════════════════════════════════ */
-
-/* ── Page ── */
 .businesses-page {
   padding: 24px 28px;
   background: #f5f5f9;
@@ -10,7 +5,6 @@
   font-family: 'Public Sans', 'Segoe UI', sans-serif;
 }
 
-/* ── Header ── */
 .businesses-header {
   display: flex;
   align-items: flex-start;
@@ -59,7 +53,6 @@
   margin: 0;
 }
 
-/* ── Stats ── */
 .businesses-stats {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -136,7 +129,6 @@
   line-height: 1;
 }
 
-/* ── Controls ── */
 .businesses-controls {
   display: flex;
   gap: 12px;
@@ -203,7 +195,6 @@
   box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
 }
 
-/* ── Modals ── */
 .mb-modal-overlay {
   position: fixed;
   inset: 0;
@@ -388,7 +379,6 @@
   cursor: not-allowed !important;
 }
 
-/* ── Details Modal ── */
 .mb-details-header {
   padding: 20px 24px 16px;
   border-bottom: 1px solid #f0f0f5;
@@ -603,7 +593,6 @@
   background: #ffe8cc;
 }
 
-/* ── Table ── */
 .businesses-table-wrapper {
   background: #fff;
   border: 1px solid #e7e7e9;
@@ -722,7 +711,6 @@
   font-size: 0.9rem;
 }
 
-/* ── Skeleton Loading ── */
 .mb-skeleton {
   background: linear-gradient(90deg, #f0f0f5 25%, #e5e5eb 50%, #f0f0f5 75%);
   background-size: 200% 100%;
@@ -761,7 +749,6 @@
   border-radius: 4px;
 }
 
-/* ── Loading Timeout ── */
 .mb-loading-timeout {
   display: flex;
   align-items: center;
@@ -776,7 +763,6 @@
   font-weight: 500;
 }
 
-/* ── Error Banner ── */
 .mb-error-banner {
   background: #ffeaea;
   color: #ef4444;
@@ -786,7 +772,6 @@
   font-size: 13px;
 }
 
-/* ── Action Button ── */
 .mb-action-btn {
   background: none;
   border: none;
@@ -810,7 +795,6 @@
   cursor: not-allowed;
 }
 
-/* ── Dropdown ── */
 .mb-dropdown {
   position: fixed;
   background: #fff;
@@ -861,7 +845,6 @@
   margin: 4px 0;
 }
 
-/* ── Animations ── */
 .mb-spin {
   animation: mb-spin 1s linear infinite;
 }
@@ -872,7 +855,6 @@
   }
 }
 
-/* ── Responsive ── */
 @media (max-width: 1024px) {
   .businesses-stats {
     grid-template-columns: repeat(2, 1fr);

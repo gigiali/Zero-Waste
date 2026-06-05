@@ -511,7 +511,7 @@ function ActionMenu({ business, role, token, onStatusChange, onDelete }) {
   const actions = [
     {
       icon: <Store size={14} />,
-      label: "View Details",
+      label: t("manageBusinesses.actions.viewDetails"),
       color: "#696cff",
       onClick: () => {
         setShowModal(true);

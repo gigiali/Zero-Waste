@@ -595,7 +595,6 @@
   align-items: center;
 }
 
-/* Search */
 .search-box {
   display: flex;
   align-items: center;
@@ -709,7 +708,7 @@
 
 .order-date { color: var(--admin-text-muted); font-size: 0.8rem; }
 
-/* Status Badge */
+
 .status-badge {
   padding: 4px 10px;
   border-radius: 20px;

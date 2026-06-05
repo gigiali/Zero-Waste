@@ -1,12 +1,9 @@
-/* ===== HomePage Styles ===== */
-
 .homepage-container {
   background-color: #f4f7f4;
   min-height: 100vh;
   font-family: 'Segoe UI', sans-serif;
 }
 
-/* ===== HERO ===== */
 .hero-section {
   position: relative;
   background: #1a7a4a;
@@ -57,7 +54,6 @@
 .search-btn { background: #059669; color: white; border: none; padding: 1.25rem 1.75rem; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s; flex-shrink: 0; border-radius: 0 14px 14px 0; }
 .search-btn:hover { background: #047857; }
 
-/* ===== FILTER ===== */
 .filter-section {
   background: white;
   border-bottom: 1px solid #e5e7eb;
@@ -136,7 +132,6 @@
 .dropdown-item:hover { background-color: #f0fdf4; color: #059669; }
 .dropdown-item-active { background-color: #f0fdf4; color: #059669; font-weight: 600; }
 
-/* ===== OFFERS ===== */
 .offers-section { padding: 2rem; }
 .offers-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
 .offers-title { font-size: 1.4rem; font-weight: 800; color: #1f2937; }
@@ -157,7 +152,6 @@
 .empty-title { color: #1f2937; margin-bottom: 0.5rem; font-size: 1.2rem; font-weight: 700; }
 .empty-message { color: #6b7280; }
 
-/* ===== CARD ===== */
 .offers-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
 .offer-card {
@@ -205,11 +199,9 @@
 .original-price { font-size: 0.85rem; color: #9ca3af; text-decoration: line-through; }
 .offer-actions, .edit-button, .view-button { display: none !important; }
 
-/* ===== ANIMATIONS ===== */
 @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.75; } }
 
-/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
   .hero-title { font-size: 2.2rem; }
   .filter-inner { flex-direction: column; align-items: flex-start; }
@@ -225,10 +217,6 @@
   .offers-grid { grid-template-columns: 1fr 1fr; }
   .search-wrapper { max-width: 100%; }
 }
-
-/* ===================================================
-   ORDER TRACKING STRIP
-   =================================================== */
 
 .order-strip {
   width: 100%;
@@ -246,7 +234,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* Header row */
 .order-strip-header {
   display: flex;
   align-items: center;
@@ -299,7 +286,6 @@
   text-transform: uppercase;
 }
 
-/* Right: total + dismiss */
 .order-strip-right {
   display: flex;
   align-items: center;
@@ -334,13 +320,11 @@
   border-color: rgba(239, 68, 68, 0.4);
 }
 
-/* Progress track */
 .order-strip-track {
   display: flex;
   align-items: center;
 }
 
-/* Connector line */
 .ost-line {
   flex: 1;
   height: 1.5px;
@@ -352,7 +336,6 @@
 }
 .ost-line.done { background: #10b981; }
 
-/* Step */
 .ost-step {
   display: flex;
   flex-direction: column;
@@ -361,7 +344,6 @@
   flex-shrink: 0;
 }
 
-/* Node circle */
 .ost-node {
   width: 28px;
   height: 28px;
@@ -395,7 +377,6 @@
   50%       { box-shadow: 0 0 0 7px rgba(255, 255, 255, 0.08); }
 }
 
-/* Label */
 .ost-label {
   font-size: 0.6rem;
   font-weight: 600;
@@ -407,7 +388,6 @@
 .ost-step.done  .ost-label { color: #6ee7b7; }
 .ost-step.active .ost-label { color: #fff; }
 
-/* Review Modal Styles */
 .review-overlay {
   position: fixed;
   inset: 0;
@@ -531,7 +511,6 @@
 .review-submit-btn:hover:not(:disabled) { background: #059669; transform: translateY(-1px); }
 .review-submit-btn:disabled { background: #d1d5db; cursor: not-allowed; }
 
-/* Image Upload Styles */
 .review-image-section {
   margin-bottom: 0.6rem;
 }
@@ -607,7 +586,6 @@
   transform: scale(1.1);
 }
 
-/* Responsive */
 @media (max-width: 520px) {
   .order-strip { border-radius: 12px; padding: 0.75rem 0.85rem; }
   .ost-label { display: none; }

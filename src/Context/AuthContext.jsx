@@ -42,7 +42,6 @@ sessionStorage.removeItem("user_role");
     sessionStorage.removeItem("zw_active_order");
     localStorage.removeItem("zw_favorites_count");
 
-    // مسح الـ review data
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith("review_dismissed_") || key.startsWith("review_submitted_")) {
         localStorage.removeItem(key);
@@ -72,7 +71,7 @@ sessionStorage.removeItem("user_role");
   setBusinessStatus,
   role,
   updateUser,
-  token, // ✅ أضيفي السطر ده
+  token,
 }}
     >
       {children}
