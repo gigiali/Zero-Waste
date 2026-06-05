@@ -22,6 +22,7 @@ const [user, setUser] = useState(() => {
     sessionStorage.setItem("token", token);
 sessionStorage.setItem("auth_token", token);
 sessionStorage.setItem("user_role", userData.role_type ?? userData.role ?? "");
+ setUser(userData);
   };
 
   const updateUser = (updates) => {
