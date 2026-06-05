@@ -69,33 +69,66 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [showReview, setShowReview] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
 
-  const handleCancelOrder = async () => {
-    const token =
-      localStorage.getItem("auth_token") ||
-      localStorage.getItem("token") ||
-      sessionStorage.getItem("auth_token") ||
-      sessionStorage.getItem("token");
-    try {
-      const orderId = order.orderNumber || order.id || order.reservationId;
-      const res = await fetch(`${BASE_URL}/api/orders/${orderId}/cancel`, {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          Authorization: "Bearer " + token,
-        },
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setIsCancelled(true);
-        setTimeout(() => onDismiss(), 2000);
-      } else {
-        alert(data.message || "Failed to cancel order");
-      }
-    } catch (err) {
-      console.error(err);
-      alert("Error cancelling order");
+const handleCancelOrder = async () => {
+  const token =
+    localStorage.getItem("auth_token") ||
+    localStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token");
+ 
+  if (!token) {
+    alert("Please sign in to cancel order.");
+    return;
+  }
+ 
+  // ✅ Validate order ID
+  const orderId = order.orderNumber || order.id || order.reservationId;
+  if (!orderId) {
+    console.error("❌ No valid order ID found", {
+      orderNumber: order.orderNumber,
+      id: order.id,
+      reservationId: order.reservationId,
+    });
+    alert("Cannot cancel: Order ID not found.");
+    return;
+  }
+ 
+  console.log("📍 Attempting to cancel order:", orderId);
+  console.log("📋 Full order object:", order);
+ 
+  try {
+    const cancelUrl = `${BASE_URL}/api/orders/${orderId}/cancel`;
+    console.log("🔗 Calling API:", cancelUrl);
+ 
+    const response = await fetch(cancelUrl, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + token,
+      },
+      body: JSON.stringify({}), // Send empty body for POST
+    });
+ 
+    const data = await response.json();
+ 
+    console.log("📤 Response status:", response.status);
+    console.log("📤 Response data:", data);
+ 
+    if (response.ok) {
+      console.log("✅ Order cancelled successfully!");
+      setIsCancelled(true);
+      setTimeout(() => onDismiss(), 2000);
+    } else {
+      const errorMsg = data.message || "Failed to cancel order";
+      console.error("❌ Cancel failed:", errorMsg);
+      alert("Cannot cancel: " + errorMsg);
     }
-  };
+  } catch (err) {
+    console.error("❌ Error during cancel:", err);
+    alert("Error cancelling order: " + err.message);
+  }
+};
 
   const [reviewDismissed, setReviewDismissed] = useState(() => {
     return (
