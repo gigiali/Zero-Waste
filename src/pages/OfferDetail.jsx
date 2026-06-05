@@ -178,7 +178,7 @@ export default function OfferDetail() {
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const apiUrl = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
         const res = await fetch(`${apiUrl}/api/offers/${id}`, { headers });
         if (!mounted) return;
         if (res.ok) {
@@ -205,7 +205,7 @@ export default function OfferDetail() {
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const apiUrl = import.meta.env.VITE_API_URL || "";
+        const apiUrl = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
         const res = await fetch(`${apiUrl}/api/offers/${id}/reviews`, { headers });
         if (!mounted) return;
         if (res.ok) {

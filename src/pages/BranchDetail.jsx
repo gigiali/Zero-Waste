@@ -27,7 +27,8 @@ export default function BranchDetail() {
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const branchRes = await fetch(`/api/branches/${id}/details`, { headers });
+        const apiUrl = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
+const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers });
 
         if (!mounted) return;
 
@@ -51,7 +52,7 @@ export default function BranchDetail() {
 
         const actualVendorId = vendorId || branchDetails.vendor_id;
         if (actualVendorId) {
-          const vendorRes = await fetch(`/api/vendor/${actualVendorId}`, { headers });
+          const vendorRes = await fetch(`${apiUrl}/api/vendor/${actualVendorId}`, { headers });
           if (!mounted) return;
           if (vendorRes.ok) {
             const vendorDataResponse = await vendorRes.json();
