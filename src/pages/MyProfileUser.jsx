@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   User, Mail, Phone, MapPin, Edit2, LogOut, Trash2,
   ChevronRight, KeyRound, Package, CalendarDays,
@@ -19,10 +20,12 @@ const getToken = () => {
     ""
   );
 };
+
 /* ─────────────────────────────────────────────
    Change Password Drawer
 ───────────────────────────────────────────── */
 function ChangePasswordDrawer({ onClose }) {
+  const { t } = useTranslation();
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
@@ -31,12 +34,12 @@ function ChangePasswordDrawer({ onClose }) {
   const handleChange = async () => {
     const e = {};
 
-    if (!form.current) e.current = "Current password is required";
-    if (!form.next) e.next = "New password is required";
-    else if (form.next.length < 8) e.next = "At least 8 characters";
+    if (!form.current) e.current = t('auth.currentPasswordRequired');
+    if (!form.next) e.next = t('auth.newPasswordRequired');
+    else if (form.next.length < 8) e.next = t('auth.passwordMin8Chars');
 
-    if (!form.confirm) e.confirm = "Please confirm password";
-    else if (form.next !== form.confirm) e.confirm = "Passwords do not match";
+    if (!form.confirm) e.confirm = t('auth.confirmPasswordRequired');
+    else if (form.next !== form.confirm) e.confirm = t('auth.passwordsDoNotMatch');
 
     setErrors(e);
     if (Object.keys(e).length > 0) return;
@@ -66,7 +69,7 @@ function ChangePasswordDrawer({ onClose }) {
       console.log("Response:", data);
 
       if (res.ok) {
-        setSuccess("✅ Password changed successfully!");
+        setSuccess(`✅ ${t('profile.passwordChangedSuccessfully')}`);
         setForm({ current: "", next: "", confirm: "" });
         setTimeout(() => onClose(), 1500);
       } else if (data.errors) {
@@ -76,11 +79,11 @@ function ChangePasswordDrawer({ onClose }) {
         });
         setErrors(newErrors);
       } else {
-        setErrors({ general: data.message || "Failed to change password." });
+        setErrors({ general: data.message || t('profile.failedChangePassword') });
       }
     } catch (err) {
       console.error("Error:", err);
-      setErrors({ general: "Network error. Please check your connection." });
+      setErrors({ general: t('profile.networkError') });
     } finally {
       setIsLoading(false);
     }
@@ -90,16 +93,16 @@ function ChangePasswordDrawer({ onClose }) {
     <div className="usr-drawer-overlay" onClick={onClose}>
       <aside className="usr-drawer" onClick={(e) => e.stopPropagation()}>
         <div className="usr-drawer-header">
-          <h2>Change Password</h2>
+          <h2>{t('auth.changePasswordTitle')}</h2>
           <button className="usr-drawer-close" onClick={onClose} type="button">
             <X size={17} />
           </button>
         </div>
 
         {[
-          ["current", "Current password"],
-          ["next", "New password"],
-          ["confirm", "Confirm new password"],
+          ["current", t('auth.currentPassword')],
+          ["next", t('auth.newPassword')],
+          ["confirm", t('auth.confirmNewPassword')],
         ].map(([fk, label]) => (
           <div key={fk} className="usr-pw-wrap">
             <input
@@ -127,7 +130,7 @@ function ChangePasswordDrawer({ onClose }) {
           disabled={isLoading}
           style={{ width: "100%", marginTop: "4px" }}
         >
-          {isLoading ? "Saving…" : "Save Password"}
+          {isLoading ? t('profile.saving') : t('auth.updatePassword')}
         </button>
       </aside>
     </div>
@@ -145,7 +148,7 @@ function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel
         <h3>{title}</h3>
         <p>{message}</p>
         <div className="usr-modal-actions">
-          <button className="usr-modal-cancel" onClick={onCancel}>Cancel</button>
+          <button className="usr-modal-cancel" onClick={onCancel}>{t('common.cancel')}</button>
           <button className="usr-modal-confirm" onClick={onConfirm}>{confirmLabel}</button>
         </div>
       </div>
@@ -157,6 +160,7 @@ function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel
    Review Modal — used inside OrdersTab
 ───────────────────────────────────────────── */
 function ReviewModal({ order, onClose, onSubmitted }) {
+  const { t } = useTranslation();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [image, setImage] = useState(null);
@@ -175,7 +179,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
     const file = e.target.files[0];
     if (!file) return;
     if (!["image/jpeg", "image/jpg", "image/png"].includes(file.type)) {
-      setError("Please select JPG or PNG only.");
+      setError(t('offerDetail.addToCart'));
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
@@ -219,7 +223,6 @@ function ReviewModal({ order, onClose, onSubmitted }) {
       }
 
       const data = await res.json();
-      // pass back the new review so it shows instantly under the order
       onSubmitted(order.id, data.review || data.data || { rating, comment, id: Date.now() });
       onClose();
     } catch (err) {
@@ -244,7 +247,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
         </button>
 
         <div className="usr-modal-emoji">🎉</div>
-        <h3 style={{ marginBottom: "4px" }}>Leave a Review</h3>
+        <h3 style={{ marginBottom: "4px" }}>{t('reviews.leaveReview')}</h3>
         <p style={{ fontSize: "13px", color: "#6b7280", marginBottom: "16px" }}>
           {order.vendor_name || order.vendor?.name || "Your order"}
         </p>
@@ -264,7 +267,7 @@ function ReviewModal({ order, onClose, onSubmitted }) {
 
         {/* Comment */}
         <textarea
-          placeholder="Write your comment… (optional, max 500 chars)"
+          placeholder={t('reviews.submitReview')}
           value={comment}
           onChange={(e) => setComment(e.target.value.slice(0, 500))}
           rows={3}
@@ -314,9 +317,9 @@ function ReviewModal({ order, onClose, onSubmitted }) {
         {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "10px" }}>{error}</p>}
 
         <div className="usr-modal-actions">
-          <button className="usr-modal-cancel" onClick={onClose}>Cancel</button>
+          <button className="usr-modal-cancel" onClick={onClose}>{t('common.cancel')}</button>
           <button className="usr-modal-confirm" onClick={handleSubmit} disabled={isLoading || rating === 0}>
-            {isLoading ? "Submitting…" : "Submit Review"}
+            {isLoading ? t('profile.saving') : t('reviews.submitReview')}
           </button>
         </div>
       </div>
@@ -328,13 +331,13 @@ function ReviewModal({ order, onClose, onSubmitted }) {
    Orders Tab
 ───────────────────────────────────────────── */
 function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
+  const { t } = useTranslation();
   const [reviewingOrderId, setReviewingOrderId] = useState(null);
-  // local map of orderId -> review (populated after submit)
   const [localReviews, setLocalReviews] = useState({});
 
   const handleReviewSubmitted = (orderId, review) => {
     setLocalReviews((prev) => ({ ...prev, [orderId]: review }));
-    onReviewSubmitted(); // trigger refresh of Reviews tab
+    onReviewSubmitted();
   };
 
   const reviewingOrder = orders.find((o) => o.id === reviewingOrderId);
@@ -344,7 +347,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
       <div className="usr-card">
         <div className="usr-empty">
           <div className="orm-spinner" style={{ marginBottom: "10px" }} />
-          <p>Loading your orders from database…</p>
+          <p>{t('orders.loadingOrders')}</p>
         </div>
       </div>
     );
@@ -354,7 +357,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
     <div className="usr-card">
       <div className="usr-section-head">
         <div>
-          <h2 className="usr-card-title">My Orders</h2>
+          <h2 className="usr-card-title">{t('profile.orders')}</h2>
           <p className="usr-muted">All your confirmed orders appear here live from server.</p>
         </div>
         <span className="usr-count-badge">{orders.length}</span>
@@ -363,7 +366,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
       {orders.length === 0 ? (
         <div className="usr-empty">
           <Package size={28} />
-          <p>No orders found yet.</p>
+          <p>{t('orders.noOrdersFound')}</p>
           <span style={{ fontSize: "11px", color: "#9ca3af", marginTop: "5px" }}>
             Check your browser console to see the backend response structure.
           </span>
@@ -381,7 +384,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
               <article className="usr-order-card" key={order.id}>
                 <div className="usr-order-top">
                   <div className="usr-order-top-left">
-                    <strong>Order #{order.id}</strong>
+                    <strong>{t('orders.orderNumber')}{order.id}</strong>
                     <span
                       className="usr-order-badge"
                       style={{
@@ -389,8 +392,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
                         color: isDelivered ? "#10b981" : isCancelled ? "#ef4444" : "#3b82f6",
                       }}
                     >
-                      {/* ── NEW: show "Order Cancelled" label for cancelled orders ── */}
-                      {isCancelled ? "Order Cancelled" : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
+                      {isCancelled ? t('orders.orderCancelled') : currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1)}
                     </span>
                   </div>
                   <strong>EGP {Number(order.total_amount || order.total || 0).toFixed(2)}</strong>
@@ -404,7 +406,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
                   </span>
                   <span>
                     {order.delivery_type === "delivery" || order.delivery_method === "delivery" ? <Truck size={13} /> : <ShoppingBag size={13} />}
-                    {order.delivery_type === "delivery" || order.delivery_method === "delivery" ? "Delivery" : "Pickup"}
+                    {order.delivery_type === "delivery" || order.delivery_method === "delivery" ? t('profile.delivery') : t('profile.pickup')}
                   </span>
                   <span><CreditCard size={13} /> {order.payment_method || "Cash On Delivery"}</span>
                 </div>
@@ -427,11 +429,10 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
                   )}
                 </div>
 
-                {/* ── NEW: Review section — only for delivered/completed ── */}
+                {/* Review section — only for delivered/completed */}
                 {isDelivered && (
                   <div style={{ marginTop: "10px", borderTop: "1px solid #f3f4f6", paddingTop: "10px" }}>
                     {submittedReview ? (
-                      /* show the submitted review inline */
                       <div style={{ background: "#fffbeb", borderRadius: "8px", padding: "10px 12px" }}>
                         <div style={{ display: "flex", gap: "3px", marginBottom: "4px" }}>
                           {Array.from({ length: submittedReview.rating || submittedReview.Rating || 5 }).map((_, i) => (
@@ -460,7 +461,7 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
                         }}
                       >
                         <Star size={14} fill="#fbbf24" color="#fbbf24" />
-                        Leave a Review
+                        {t('reviews.leaveReview')}
                       </button>
                     )}
                   </div>
@@ -490,12 +491,13 @@ function OrdersTab({ orders, isLoading, onReviewSubmitted }) {
    Reviews Tab
 ───────────────────────────────────────────── */
 function ReviewsTab({ reviews, isLoading, onDelete }) {
+  const { t } = useTranslation();
   const [confirmId, setConfirmId] = useState(null);
 
   if (isLoading) {
     return (
       <div className="usr-card">
-        <div className="usr-empty"><Star size={28} /><p>Loading reviews…</p></div>
+        <div className="usr-empty"><Star size={28} /><p>{t('common.loading')}</p></div>
       </div>
     );
   }
@@ -504,20 +506,19 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
     <div className="usr-card">
       <div className="usr-section-head">
         <div>
-          <h2 className="usr-card-title">My Reviews</h2>
+          <h2 className="usr-card-title">{t('common.reviews')}</h2>
           <p className="usr-muted">Reviews you've submitted for offers.</p>
         </div>
         <span className="usr-count-badge">{reviews.length}</span>
       </div>
 
       {reviews.length === 0 ? (
-        <div className="usr-empty"><Star size={28} /><p>No reviews yet</p></div>
+        <div className="usr-empty"><Star size={28} /><p>{t('reviews.noReviewsYet')}</p></div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
           {reviews.map((rev) => (
             <div className="usr-review-card" key={rev.id}>
               <div>
-                {/* ✅ اعرض offer_title */}
                 {(rev.offer_title || rev.offer?.title) && (
                   <h4 style={{ margin: "0 0 8px", fontSize: "13px", fontWeight: 600, color: "#111827" }}>
                     {rev.offer_title || rev.offer?.title}
@@ -554,9 +555,9 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
       {confirmId && (
         <ConfirmModal
           emoji="🗑️"
-          title="Delete Review?"
-          message="Are you sure you want to delete this review?"
-          confirmLabel="Delete"
+          title={t('reviews.deleteReviewTitle')}
+          message={t('reviews.deleteReviewMessage')}
+          confirmLabel={t('common.yes')}
           onConfirm={() => { onDelete(confirmId); setConfirmId(null); }}
           onCancel={() => setConfirmId(null)}
         />
@@ -571,6 +572,7 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
 export default function MyProfileUser() {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { t } = useTranslation();
 
   const [activeTab, setActiveTab] = useState("profile");
   const [isEditing, setIsEditing] = useState(false);
@@ -671,18 +673,16 @@ export default function MyProfileUser() {
     else if (tabId === "reviews") fetchReviews();
   };
 
-  // ── NEW: called after a review is submitted from OrdersTab ──
-  // refreshes the Reviews tab data so it's ready when the user navigates there
   const handleReviewSubmitted = () => {
     fetchReviews();
   };
 
   const handleSave = async () => {
     const e = {};
-    if (!editData.name.trim()) e.name = "Name is required";
-    if (!editData.email.trim()) e.email = "Email is required";
-    if (!editData.phone.trim()) e.phone = "Phone is required";
-    if (!editData.address.trim()) e.address = "Address is required";
+    if (!editData.name.trim()) e.name = t('auth.nameRequired');
+    if (!editData.email.trim()) e.email = t('auth.emailRequired');
+    if (!editData.phone.trim()) e.phone = t('auth.phoneRequired');
+    if (!editData.address.trim()) e.address = t('auth.addressRequired');
     setErrors(e);
     if (Object.keys(e).length > 0) return;
 
@@ -714,10 +714,10 @@ export default function MyProfileUser() {
         });
         setErrors(newErrors);
       } else {
-        setErrors({ general: data.message || "Failed to update profile." });
+        setErrors({ general: data.message || t('profile.failedUpdateProfile') });
       }
     } catch {
-      setErrors({ general: "Network error. Please check your connection." });
+      setErrors({ general: t('profile.networkError') });
     } finally {
       setIsLoading(false);
     }
@@ -767,17 +767,17 @@ export default function MyProfileUser() {
     : "?";
 
   const infoFields = [
-    { icon: <User size={17} />, label: "Full Name", key: "name", type: "text" },
-    { icon: <Mail size={17} />, label: "Email Address", key: "email", type: "email" },
-    { icon: <Phone size={17} />, label: "Phone Number", key: "phone", type: "tel" },
-    { icon: <MapPin size={17} />, label: "Address", key: "address", type: "text" },
+    { icon: <User size={17} />, label: t('profile.name'), key: "name", type: "text" },
+    { icon: <Mail size={17} />, label: t('profile.email'), key: "email", type: "email" },
+    { icon: <Phone size={17} />, label: t('profile.phone'), key: "phone", type: "tel" },
+    { icon: <MapPin size={17} />, label: t('profile.address'), key: "address", type: "text" },
   ];
 
   const tabs = [
-    { id: "profile", label: "Profile", icon: <User size={16} /> },
-    { id: "orders", label: "Orders", icon: <Package size={16} /> },
-    { id: "reviews", label: "Reviews", icon: <Star size={16} /> },
-    { id: "settings", label: "Settings", icon: <KeyRound size={16} /> },
+    { id: "profile", label: t('nav.profile'), icon: <User size={16} /> },
+    { id: "orders", label: t('profile.orders'), icon: <Package size={16} /> },
+    { id: "reviews", label: t('common.reviews'), icon: <Star size={16} /> },
+    { id: "settings", label: t('profile.accountSettings'), icon: <KeyRound size={16} /> },
   ];
 
   return (
@@ -788,7 +788,7 @@ export default function MyProfileUser() {
             <div className="usr-hero-left">
               <div className="usr-avatar">{initials}</div>
               <div>
-                <h1 className="usr-hero-title">{userData.name || "My Profile"}</h1>
+                <h1 className="usr-hero-title">{userData.name || t('nav.profile')}</h1>
                 <p className="usr-hero-sub">Manage your account, orders & reviews</p>
               </div>
             </div>
@@ -798,7 +798,7 @@ export default function MyProfileUser() {
                 onClick={() => { if (isEditing) handleCancel(); else setIsEditing(true); }}
               >
                 <Edit2 size={14} />
-                {isEditing ? "Cancel" : "Edit Profile"}
+                {isEditing ? t('profile.cancelEditing') : t('profile.editProfile')}
               </button>
             )}
           </div>
@@ -821,7 +821,7 @@ export default function MyProfileUser() {
 
           {activeTab === "profile" && (
             <div className="usr-card">
-              <h2 className="usr-card-title">Personal Information</h2>
+              <h2 className="usr-card-title">{t('profile.name')}</h2>
               <div className="usr-info-list">
                 {infoFields.map(({ icon, label, key, type }) => (
                   <div className="usr-info-row" key={key}>
@@ -854,10 +854,10 @@ export default function MyProfileUser() {
               {isEditing && (
                 <div className="usr-edit-actions">
                   <button className="usr-btn-save" onClick={handleSave} disabled={isLoading}>
-                    {isLoading ? "Saving…" : "Save Changes"}
+                    {isLoading ? t('profile.saving') : t('profile.saveChanges')}
                   </button>
                   <button className="usr-btn-cancel" onClick={handleCancel} disabled={isLoading}>
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               )}
@@ -878,12 +878,12 @@ export default function MyProfileUser() {
 
           {activeTab === "settings" && (
             <div className="usr-card">
-              <h2 className="usr-card-title">Account Settings</h2>
+              <h2 className="usr-card-title">{t('profile.accountSettings')}</h2>
               <div className="usr-settings-list">
                 {[
-                  { icon: <KeyRound size={16} />, label: "Change Password", onClick: () => setShowPassword(true), red: false, chevron: true },
-                  { icon: <LogOut size={16} />, label: "Log Out", onClick: () => setShowLogout(true), red: true, chevron: false },
-                  { icon: <Trash2 size={16} />, label: "Delete Account", onClick: () => setShowDelete(true), red: true, chevron: false },
+                  { icon: <KeyRound size={16} />, label: t('profile.changePassword'), onClick: () => setShowPassword(true), red: false, chevron: true },
+                  { icon: <LogOut size={16} />, label: t('profile.logOut'), onClick: () => setShowLogout(true), red: true, chevron: false },
+                  { icon: <Trash2 size={16} />, label: t('profile.deleteAccount'), onClick: () => setShowDelete(true), red: true, chevron: false },
                 ].map(({ icon, label, onClick, red, chevron }) => (
                   <button
                     key={label}
@@ -907,9 +907,9 @@ export default function MyProfileUser() {
       {showLogout && (
         <ConfirmModal
           emoji="👋"
-          title="Log Out?"
-          message="Are you sure you want to log out of your account?"
-          confirmLabel="Yes, Log Out"
+          title={t('profile.logoutTitle')}
+          message={t('profile.logoutMessage')}
+          confirmLabel={t('profile.yesLogout')}
           onConfirm={handleLogout}
           onCancel={() => setShowLogout(false)}
         />
@@ -918,9 +918,9 @@ export default function MyProfileUser() {
       {showDelete && (
         <ConfirmModal
           emoji="🗑️"
-          title="Delete Account?"
-          message="This is permanent and cannot be undone. All your data, orders, and reviews will be deleted."
-          confirmLabel="Yes, Delete"
+          title={t('profile.deleteAccountTitle')}
+          message={t('profile.deleteAccountMessage')}
+          confirmLabel={t('profile.yesDelete')}
           onConfirm={handleDelete}
           onCancel={() => setShowDelete(false)}
         />

@@ -65,9 +65,9 @@ function SignIn() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    if (!email)                     newErrors.email    = "Email is required";
-    else if (!validateEmail(email)) newErrors.email    = "Enter a valid email address";
-    if (!password)                  newErrors.password = "Password is required";
+    if (!email)                     newErrors.email = t("auth.emailRequired")
+    else if (!validateEmail(email)) newErrors.email = t("auth.invalidEmail")
+    if (!password)                  newErrors.password = t("auth.passwordRequired")
     if (Object.keys(newErrors).length) { setErrors(newErrors); return; }
 
     setIsLoading(true);
@@ -140,14 +140,14 @@ function SignIn() {
       } else {
         setErrors({
           general:
-            response.status === 401 ? "Invalid email or password. Please try again." :
-            response.status === 403 ? "Access denied. Please contact support." :
+            response.status === 401 ? t("auth.invalidCredentials") :
+            response.status === 403 ? t("auth.accessDenied") :
             data.message || "Login failed. Please try again.",
         });
       }
     } catch (err) {
       console.error("Login Error:", err);
-      setErrors({ general: "Login failed. Please check your connection and try again." });
+      setErrors({ general: t("auth.loginFailed") });
     } finally {
       clearTimeout(timeoutRef.current);
       setIsLoading(false);
@@ -161,19 +161,19 @@ function SignIn() {
     <main className="auth-page">
       <div className="auth-card">
         <div className="auth-card-header">
-          <h2>Welcome Back</h2>
-          <p>Sign in to continue your journey</p>
+          <h2>{t("auth.welcomeBack")}</h2>
+          <p>{t("auth.continueJourney")}</p>
         </div>
 
         <div className="auth-card-body">
           <form onSubmit={handleSubmit} noValidate>
             <div className="auth-field">
-              <label className="auth-label" htmlFor="si-email">Email</label>
+              <label className="auth-label" htmlFor="si-email">{t("auth.email")}</label>
               <input
                 id="si-email"
                 className="auth-input"
                 type="email"
-                placeholder="you@example.com"
+                placeholder={t("auth.emailPlaceholder")}
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setErrors((p) => ({ ...p, email: "" })); }}
               />
@@ -181,12 +181,12 @@ function SignIn() {
             </div>
 
             <div className="auth-field">
-              <label className="auth-label" htmlFor="si-password">Password</label>
+              <label className="auth-label" htmlFor="si-password">{t("auth.password")}</label>
               <input
                 id="si-password"
                 className="auth-input"
                 type="password"
-                placeholder="••••••••"
+                placeholder={t("auth.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: "" })); }}
               />
@@ -200,28 +200,28 @@ function SignIn() {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                <span>Remember me</span>
+                <span>{t("auth.rememberMe")}</span>
               </label>
               <a href="/forgot-password" className="auth-btn-ghost si-forgot">
-                Forgot password?
+                {t("auth.forgotPassword")}
               </a>
             </div>
 
             {slowWarning && isLoading && (
               <div className="si-timeout-banner">
-                ⏱ This is taking longer than expected — please wait or check your connection.
+                {t("auth.slowWarning")}
               </div>
             )}
 
             {errors.general && <div className="auth-error-box">{errors.general}</div>}
 
             <button type="submit" className="auth-btn-primary" disabled={isLoading}>
-              {isLoading ? "Signing In…" : "Sign In"}
+              {isLoading ? t("auth.signingIn") : t("auth.signIn")}
             </button>
           </form>
 
           <div className="auth-footer">
-            Don't have an account? <a href="/signup">Sign up</a>
+            {t("auth.dontHaveAccount")} <a href="/signup">{t("auth.signUp")}</a>
           </div>
         </div>
       </div>

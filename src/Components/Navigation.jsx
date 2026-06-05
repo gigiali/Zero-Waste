@@ -437,9 +437,7 @@ export default function Navigation({
             >
               <MapPin size={18} />
               <span style={{ fontSize: "0.9rem" }}>
-                {loadingLocation
-                  ? "Getting fee..."
-                  : locationName || "Location"}
+                {loadingLocation ? t("navigation.gettingFee") : locationName || t("navigation.location")}
               </span>
               {locationName && !loadingLocation && (
                 <button
@@ -651,7 +649,7 @@ export default function Navigation({
                     fontWeight: 600,
                   }}
                 >
-                  Log Out
+                  {t("navigation.logOut")}
                 </button>
               </div>
             ) : (
@@ -671,8 +669,8 @@ export default function Navigation({
                 onClick={() => navigate("/signin")}
               >
                 <LogIn size={18} />
-                <span>Sign In</span>
-              </div>
+                <span>{t("navigation.signIn")}</span>             
+                </div>
             )
           ) : (
             <div ref={profileMenuRef} style={{ position: "relative" }}>
@@ -723,7 +721,7 @@ export default function Navigation({
                 fontSize: "1.2rem",
               }}
             >
-              Log Out?
+              {t("navigation.logOutTitle")}
             </h3>
             <p
               style={{
@@ -732,7 +730,7 @@ export default function Navigation({
                 margin: "0 0 1.5rem",
               }}
             >
-              Are you sure you want to log out?
+              {t("navigation.logOutMessage")}
             </p>
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <button
@@ -748,7 +746,7 @@ export default function Navigation({
                   cursor: "pointer",
                 }}
               >
-                Cancel
+                {t("navigation.cancel")}
               </button>
               <button
                 onClick={handleLogoutConfirmed}
@@ -763,7 +761,7 @@ export default function Navigation({
                   cursor: "pointer",
                 }}
               >
-                Yes, Log Out
+               {t("navigation.yesLogOut")}
               </button>
             </div>
           </div>
@@ -812,7 +810,7 @@ export default function Navigation({
                 }}
               >
                 <h3 style={{ margin: 0, color: "#1f2937" }}>
-                  Set your location
+                  {t("navigation.setLocation")}
                 </h3>
                 <button
                   onClick={() => setShowMap(false)}
@@ -839,7 +837,7 @@ export default function Navigation({
                 />
                 <input
                   type="text"
-                  placeholder="Search for a city, area..."
+                  placeholder={t("navigation.searchPlaceholder")}
                   value={mapSearchQuery}
                   onChange={handleMapSearchInput}
                   onFocus={() =>
@@ -981,7 +979,7 @@ export default function Navigation({
                   whiteSpace: "nowrap",
                 }}
               >
-                We are not available in your area yet
+                {t("navigation.notAvailable")}
               </div>
             )}
             <div

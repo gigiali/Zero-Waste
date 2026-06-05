@@ -276,15 +276,15 @@ const response = await fetch(`${apiUrl}/api/register`, {
                   }
                 />
                 <span>
-                  {t("auth.termsAgreement")}{" "}
-                  <a href="/terms" className="su-link">
-                    Terms of Service
-                  </a>{" "}
-                  {t("common.and")}{" "}
-                  <a href="/privacy" className="su-link">
-                    Privacy Policy
-                  </a>
-                </span>
+  {t("auth.termsAgreement")}{" "}
+  <a href="/terms" className="su-link">
+    {t("auth.termsLink")}
+  </a>{" "}
+  {t("common.and")}{" "}
+  <a href="/privacy" className="su-link">
+    {t("auth.privacyLink")}
+  </a>
+</span>
               </label>
               {errors.accepted_terms && (
                 <span className="auth-error-text">{errors.accepted_terms}</span>

@@ -108,20 +108,20 @@ const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
   </button>
 );
 
-function DeleteConfirmModal({ offer, onConfirm, onCancel, isDeleting }) {
+function DeleteConfirmModal({ offer, onConfirm, onCancel, isDeleting, t }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 99999, display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "380px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}>
         <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🗑️</div>
-        <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.1rem", fontWeight: 700 }}>Delete Offer?</h3>
+        <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937", fontSize: "1.1rem", fontWeight: 700 }}>{t("admin.deleteOffer")}</h3>
         <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 0.25rem" }}>
           <strong style={{ color: "#111827" }}>{offer?.title}</strong>
         </p>
-        <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: "0 0 1.5rem" }}>This action is permanent and cannot be undone.</p>
+        <p style={{ color: "#6b7280", fontSize: "0.85rem", margin: "0 0 1.5rem" }}>{t("admin.deleteOfferMessage")}</p>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}>Cancel</button>
+          <button onClick={onCancel} disabled={isDeleting} style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}>{t("admin.cancel")}</button>
           <button onClick={onConfirm} disabled={isDeleting} style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#ff4d49", color: "white", fontWeight: 600, cursor: "pointer", fontSize: "0.9rem" }}>
-            {isDeleting ? "Deleting..." : "Yes, Delete"}
+            {isDeleting ? t("common.loading") : t("admin.yesDelete")}
           </button>
         </div>
       </div>
@@ -129,7 +129,7 @@ function DeleteConfirmModal({ offer, onConfirm, onCancel, isDeleting }) {
   );
 }
 
-function AllOffersSection({ token }) {
+function AllOffersSection({ token, t }) {
   const [offers, setOffers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -155,9 +155,9 @@ function AllOffersSection({ token }) {
   };
 
   useEffect(() => { 
-  if (!token) return;  // ✅ تحقق من token
-  fetchOffers(); 
-}, [token]);  // ✅ اضيف token هنا
+    if (!token) return;
+    fetchOffers(); 
+  }, [token]);
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -167,10 +167,10 @@ function AllOffersSection({ token }) {
         method: "DELETE",
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) { const data = await res.json(); throw new Error(data.message || "Failed to delete offer"); }
+      if (!res.ok) { const data = await res.json(); throw new Error(data.message || t("admin.deleteFailed")); }
       
       setOffers((prev) => prev.filter((o) => o.id !== deleteTarget.id));
-      setDeleteSuccess(`"${deleteTarget.title}" deleted successfully`);
+      setDeleteSuccess(t("admin.deletedSuccessfully", { title: deleteTarget.title }));
       setTimeout(() => setDeleteSuccess(""), 3000);
       window.dispatchEvent(new CustomEvent("admin-offer-deleted", { detail: { id: deleteTarget.id } }));
     } catch (err) { alert(err.message); }
@@ -199,22 +199,22 @@ function AllOffersSection({ token }) {
   return (
     <div className="orders-card">
       {deleteTarget && (
-        <DeleteConfirmModal offer={deleteTarget} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} isDeleting={isDeleting} />
+        <DeleteConfirmModal offer={deleteTarget} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} isDeleting={isDeleting} t={t} />
       )}
 
       <div className="orders-card__header">
         <div className="orders-card__title-row">
           <Package size={20} color="#696cff" />
-          <h3>All Offers</h3>
+          <h3>{t("admin.allOffers")}</h3>
           <span className="orders-count-badge">{filtered.length}</span>
         </div>
         <div className="orders-card__controls">
           <div className="search-box">
             <Search size={14} color="#8592a3" />
-            <input type="text" placeholder="Search title, vendor, status…" value={search}
+            <input type="text" placeholder={t("admin.searchPlaceholder")} value={search}
               onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
           </div>
-          <button type="button" className="refresh-btn" onClick={fetchOffers} title="Refresh"><RefreshCw size={14} /></button>
+          <button type="button" className="refresh-btn" onClick={fetchOffers} title={t("common.refresh")}><RefreshCw size={14} /></button>
         </div>
       </div>
 
@@ -225,11 +225,11 @@ function AllOffersSection({ token }) {
       )}
 
       {loading ? (
-        <div className="loading-state"><Loader2 size={18} className="spin" /> Loading offers…</div>
+        <div className="loading-state"><Loader2 size={18} className="spin" /> {t("admin.loadingOffers")}</div>
       ) : error ? (
         <div className="error-state"><AlertCircle size={16} /> {error}</div>
       ) : offers.length === 0 ? (
-        <div className="empty-state"><Package size={40} color="#cbd5e1" /><p>No offers found.</p></div>
+        <div className="empty-state"><Package size={40} color="#cbd5e1" /><p>{t("admin.noOffers")}</p></div>
       ) : (
         <>
           <div className="table-wrapper">
@@ -237,14 +237,14 @@ function AllOffersSection({ token }) {
               <thead>
                 <tr>
                   <th>#</th>
-                  <th>Title</th>
-                  <th>Vendor</th>
-                  <th>Branch</th>
-                  <th>Original (EGP)</th>
-                  <th>Discount (EGP)</th>
-                  <th>Qty Left</th>
-                  <th>Expires</th>
-                  <th>Action</th>
+                  <th>{t("admin.title")}</th>
+                  <th>{t("admin.vendor")}</th>
+                  <th>{t("admin.branch")}</th>
+                  <th>{t("admin.originalPrice")}</th>
+                  <th>{t("admin.discountPrice")}</th>
+                  <th>{t("admin.quantityLeft")}</th>
+                  <th>{t("admin.expiresIn")}</th>
+                  <th>{t("admin.action")}</th>
                 </tr>
               </thead>
               <tbody>
@@ -287,7 +287,7 @@ function AllOffersSection({ token }) {
                       <td>
                         <button
                           onClick={() => setDeleteTarget(offer)}
-                          title="Delete offer"
+                          title={t("admin.deleteOffer")}
                           style={{
                             background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px",
                             padding: "6px 10px", cursor: "pointer", color: "#ff4d49",
@@ -295,7 +295,7 @@ function AllOffersSection({ token }) {
                             fontSize: "0.78rem", fontWeight: 600,
                           }}
                         >
-                          <Trash2 size={14} /> Delete
+                          <Trash2 size={14} /> {t("admin.delete")}
                         </button>
                       </td>
                     </tr>
@@ -308,15 +308,15 @@ function AllOffersSection({ token }) {
           {totalPages > 1 && (
             <div className="pagination">
               <span className="pagination__info">
-                Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
+                {t("admin.showing")} {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} {t("admin.of")} {filtered.length}
               </span>
               <div className="pagination__controls">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="pagination__btn">‹ Prev</button>
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="pagination__btn">‹ {t("admin.prev")}</button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((pg) => (
                   <button key={pg} onClick={() => setPage(pg)} className={`pagination__btn ${pg === page ? "active" : ""}`}>{pg}</button>
                 ))}
                 {totalPages > 5 && <span className="pagination__ellipsis">…</span>}
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="pagination__btn">Next ›</button>
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="pagination__btn">{t("admin.next")} ›</button>
               </div>
             </div>
           )}
@@ -334,7 +334,11 @@ const Admin = () => {
     localStorage.getItem("auth_token") || localStorage.getItem("token") ||
     sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
 
-  const ROLE_LABEL = { super_admin: "Super Admin", manager: "Manager", support: "Support" };
+  const ROLE_LABEL = { 
+    super_admin: t("admin.superAdmin"), 
+    manager: t("admin.manager"), 
+    support: t("admin.support") 
+  };
 
   const [activeSection, setActiveSection] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -402,18 +406,18 @@ const Admin = () => {
         };
         setRawStats(parsedStats);
         setPieData([
-          { name: "Customers", value: parsedStats.total_customers },
-          { name: "Vendors", value: parsedStats.total_vendors },
-          { name: "Active Offers", value: parsedStats.total_active_offers },
-          { name: "Total Orders", value: parsedStats.total_orders },
+          { name: t("admin.customers"), value: parsedStats.total_customers },
+          { name: t("admin.vendors"), value: parsedStats.total_vendors },
+          { name: t("admin.activeOffers"), value: parsedStats.total_active_offers },
+          { name: t("admin.totalOrders"), value: parsedStats.total_orders },
         ]);
       } catch (err) { if (err.name !== "AbortError") console.error("Stats fetch error:", err); }
       finally { setStatsLoading(false); }
     })();
-  }, [isLoggedIn, token]);
+  }, [isLoggedIn, token, t]);
 
   useEffect(() => {
-    if (!isLoggedIn || !token || !canManage(role)) return; // ✅ SHELLE: Support ما يحمل earnings
+    if (!isLoggedIn || !token || !canManage(role)) return;
     (async () => {
       setEarningsLoading(true);
       try {
@@ -444,14 +448,14 @@ const Admin = () => {
         const users = data?.data?.latest_users ?? [];
         const offers = data?.data?.latest_offers ?? [];
         const merged = [
-          ...users.map((u, idx) => ({ uid: `u-${idx}`, description: `New ${u.role ?? "user"} registered: ${u.name ?? "Unknown"}`, created_at: u.created_at })),
-          ...offers.map((o, idx) => ({ uid: `o-${idx}`, description: `New offer: ${o.title ?? "Untitled"}`, created_at: o.created_at })),
+          ...users.map((u, idx) => ({ uid: `u-${idx}`, description: `${t("admin.newUser")} ${u.role ?? "user"}: ${u.name ?? "Unknown"}`, created_at: u.created_at })),
+          ...offers.map((o, idx) => ({ uid: `o-${idx}`, description: `${t("admin.newOffer")}: ${o.title ?? "Untitled"}`, created_at: o.created_at })),
         ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         setActivities(merged);
       } catch (err) { if (err.name !== "AbortError") console.error("Activity fetch error:", err); }
       finally { setActivityLoading(false); }
     })();
-  }, [isLoggedIn, token]);
+  }, [isLoggedIn, token, t]);
 
   useEffect(() => {
     if (!isLoggedIn || !token) return;
@@ -555,41 +559,39 @@ const Admin = () => {
     return (
       <div className="admin-auth-error">
         <AlertCircle size={40} />
-        <p>Please <a href="/login">log in</a> to access the admin panel.</p>
+        <p>{t("admin.notLoggedIn")} <a href="/login">{t("admin.login")}</a> {t("admin.accessDenied")}</p>
       </div>
     );
   }
 
-  // ✅ HODYA: Support nav - اضفنا reviews tab هنا
   const navItems = isSupport(role) 
   ? [
-      { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-      { id: "orders", icon: ShoppingBag, label: "Latest Orders", badge: (() => {
+      { id: "dashboard", icon: LayoutDashboard, label: t("admin.dashboard") },
+      { id: "orders", icon: ShoppingBag, label: t("admin.latestOrders"), badge: (() => {
         const yesterday = new Date(Date.now() - 86400000);
         const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
         return recent > 0 ? recent : null;
       })() },
-      { id: "activity", icon: Activity, label: "Activity" },
-      { id: "reviews", icon: Star, label: "Reviews", badge: null }, // ✅ HODYA: Support يشوف reviews
+      { id: "activity", icon: Activity, label: t("admin.recentActivity") },
+      { id: "reviews", icon: Star, label: t("admin.reviewModeration"), badge: null },
     ]
   : [
-      { id: "dashboard", icon: LayoutDashboard, label: "Dashboard" },
-      { id: "offers", icon: Package, label: "All Offers" },
-      { id: "orders", icon: ShoppingBag, label: "Latest Orders", badge: (() => {
+      { id: "dashboard", icon: LayoutDashboard, label: t("admin.dashboard") },
+      { id: "offers", icon: Package, label: t("admin.allOffers") },
+      { id: "orders", icon: ShoppingBag, label: t("admin.latestOrders"), badge: (() => {
         const yesterday = new Date(Date.now() - 86400000);
         const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
         return recent > 0 ? recent : null;
       })() },
-      { id: "activity", icon: Activity, label: "Activity" },
-      { id: "sustainability", icon: Leaf, label: "Sustainability Impact" },
+      { id: "activity", icon: Activity, label: t("admin.recentActivity") },
+      { id: "sustainability", icon: Leaf, label: t("admin.sustainabilityImpact") },
     ];
 
   const managementItems = canManage(role) ? [
-    { id: "users",      icon: Users,         label: "Users",      path: "/admin/users" },
-    { id: "businesses", icon: ClipboardList, label: "Businesses", path: "/admin/businesses" },
-    { id: "reviews",    icon: Star,          label: "Reviews",    path: "/admin/review-moderation" },
+    { id: "users",      icon: Users,         label: t("admin.users"),      path: "/admin/users" },
+    { id: "businesses", icon: ClipboardList, label: t("admin.businesses"), path: "/admin/businesses" },
+    { id: "reviews",    icon: Star,          label: t("admin.reviews"),    path: "/admin/review-moderation" },
   ] : isSupport(role) ? [
-    // ✅ SHELLE: Support ما عنده management items - بيشوف reviews من التاب العادي
   ] : [];
 
   return (
@@ -609,27 +611,27 @@ const Admin = () => {
         </button>
 
         <nav className="sidebar-nav">
-          {sidebarOpen && <p className="sidebar-nav-section-title">MENU</p>}
+          {sidebarOpen && <p className="sidebar-nav-section-title">{t("admin.menu")}</p>}
           {navItems.map((item) => (
             <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
               active={activeSection === item.id} badge={item.badge} onClick={() => setActiveSection(item.id)} />
           ))}
 
-          {sidebarOpen && managementItems.length > 0 && <p className="sidebar-nav-section-title">MANAGEMENT</p>}
+          {sidebarOpen && managementItems.length > 0 && <p className="sidebar-nav-section-title">{t("admin.management")}</p>}
           {managementItems.map((item) => (
             <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
               active={activeSection === item.id} onClick={() => navigate(item.path)} />
           ))}
 
           <div className="sidebar-nav-divider" />
-          <NavItem icon={Bell} label={sidebarOpen ? "Notifications" : ""}
+          <NavItem icon={Bell} label={sidebarOpen ? t("admin.notifications") : ""}
             active={activeSection === "notifications"} badge={notifUnread > 0 ? notifUnread : null}
             onClick={() => setActiveSection("notifications")} />
 
           <div className="sidebar-lang-wrapper">
             <button type="button" className="sidebar-nav-item" onClick={() => setLangDropdownOpen((v) => !v)}>
               <Languages size={18} />
-              {sidebarOpen && (<><span>Language</span><ChevronDown size={14} style={{ marginLeft: "auto" }} /></>)}
+              {sidebarOpen && (<><span>{t("admin.language")}</span><ChevronDown size={14} style={{ marginLeft: "auto" }} /></>)}
             </button>
             {langDropdownOpen && (
               <div className="lang-dropdown">
@@ -646,7 +648,7 @@ const Admin = () => {
           <div className="sidebar-profile" onClick={() => navigate("/admin/profile")} style={{ cursor: "pointer" }}>
             <div className="sidebar-profile__avatar">{(ROLE_LABEL[role] ?? "A")[0]}</div>
             <div className="sidebar-profile__info">
-              <p className="sidebar-profile__name">Admin</p>
+              <p className="sidebar-profile__name">{t("admin.admin")}</p>
               <p className="sidebar-profile__role">{ROLE_LABEL[role] ?? role}</p>
             </div>
           </div>
@@ -657,13 +659,13 @@ const Admin = () => {
         <header className="admin-topbar">
           <div className="admin-topbar__left">
             <h1 className="admin-topbar__title">
-              {activeSection === "dashboard"      && "Dashboard"}
-              {activeSection === "offers"         && "All Offers"}
-              {activeSection === "orders"         && "Latest Orders"}
-              {activeSection === "activity"       && "Recent Activity"}
-              {activeSection === "sustainability" && "Sustainability Impact"}
-              {activeSection === "notifications"  && "Notifications"}
-              {activeSection === "reviews"        && "Review Moderation"}
+              {activeSection === "dashboard"      && t("admin.dashboard")}
+              {activeSection === "offers"         && t("admin.allOffers")}
+              {activeSection === "orders"         && t("admin.latestOrders")}
+              {activeSection === "activity"       && t("admin.recentActivity")}
+              {activeSection === "sustainability" && t("admin.sustainabilityImpact")}
+              {activeSection === "notifications"  && t("admin.notifications")}
+              {activeSection === "reviews"        && t("admin.reviewModeration")}
             </h1>
             <div className="admin-topbar__breadcrumb">
               <span>Admin</span>
@@ -678,20 +680,19 @@ const Admin = () => {
           {activeSection === "dashboard" && !isSupport(role) && (
             <>
               {statsLoading ? (
-                <div className="loading-state"><Loader2 size={20} className="spin" /> Loading stats…</div>
+                <div className="loading-state"><Loader2 size={20} className="spin" /> {t("admin.loadingStats")}</div>
               ) : (
                 <div className="stats-grid">
-                  <StatCard title="Total Customers" value={Number(totalCustomers).toLocaleString()} icon={Users} color="#696cff" />
-                  <StatCard title="Total Vendors" value={Number(totalVendors).toLocaleString()} icon={ShoppingBag} color="#28c76f" />
-                  <StatCard title="Total Orders" value={Number(totalOrders).toLocaleString()} icon={Package} color="#ff9f43" trend={`Avg EGP ${avgOrder}`} />
-                  <StatCard title="Active Offers" value={Number(activeOffers).toLocaleString()} icon={Star} color="#ff4d49" />
-                  {/* ✅ SHELLE: Support ما يشوف financial cards */}
+                  <StatCard title={t("admin.totalCustomers")} value={Number(totalCustomers).toLocaleString()} icon={Users} color="#696cff" />
+                  <StatCard title={t("admin.totalVendors")} value={Number(totalVendors).toLocaleString()} icon={ShoppingBag} color="#28c76f" />
+                  <StatCard title={t("admin.totalOrders")} value={Number(totalOrders).toLocaleString()} icon={Package} color="#ff9f43" trend={`${t("admin.avgOrder")} EGP ${avgOrder}`} />
+                  <StatCard title={t("admin.activeOffers")} value={Number(activeOffers).toLocaleString()} icon={Star} color="#ff4d49" />
                   {canManage(role) && !isSupport(role) && (
                     <>
-                      <StatCard title="Gross Revenue" value={`EGP ${fmtCurrency(grossRev)}`} icon={DollarSign} color="#03c3ec" />
-                      <StatCard title="Platform Profit (Net)" value={`EGP ${fmtCurrency(netProfit)}`} icon={TrendingUp} color="#28c76f" />
-                      <StatCard title="Customer Fees (6%)" value={`EGP ${fmtCurrency(customerFees)}`} icon={Users} color="#ff6b6b" />
-                      <StatCard title="Vendor Fees (12%)" value={`EGP ${fmtCurrency(vendorFees)}`} icon={ShoppingBag} color="#ffa500" />
+                      <StatCard title={t("admin.grossRevenue")} value={`EGP ${fmtCurrency(grossRev)}`} icon={DollarSign} color="#03c3ec" />
+                      <StatCard title={t("admin.netProfit")} value={`EGP ${fmtCurrency(netProfit)}`} icon={TrendingUp} color="#28c76f" />
+                      <StatCard title={t("admin.customerFees")} value={`EGP ${fmtCurrency(customerFees)}`} icon={Users} color="#ff6b6b" />
+                      <StatCard title={t("admin.vendorFees")} value={`EGP ${fmtCurrency(vendorFees)}`} icon={ShoppingBag} color="#ffa500" />
                     </>
                   )}
                 </div>
@@ -700,13 +701,13 @@ const Admin = () => {
               <div className="charts-row">
                 <div className="chart-card chart-card--wide">
                   <div className="chart-card__header">
-                    <div><h3 className="chart-card__title">Weekly Performance</h3><p className="chart-card__sub">Orders & Revenue — last 7 days</p></div>
+                    <div><h3 className="chart-card__title">{t("admin.weeklyPerformance")}</h3><p className="chart-card__sub">{t("admin.ordersRevenue")}</p></div>
                     <BarChart2 size={18} color="#696cff" />
                   </div>
                   {ordersLoading ? (
-                    <div className="loading-state"><Loader2 size={16} className="spin" /> Loading chart…</div>
+                    <div className="loading-state"><Loader2 size={16} className="spin" /> {t("admin.loadingChart")}</div>
                   ) : weeklyData.length === 0 || weeklyData.every(d => d.orders === 0) ? (
-                    <div className="empty-state"><Package size={32} color="#cbd5e1" /><p>No order data available for the last 7 days.</p></div>
+                    <div className="empty-state"><Package size={32} color="#cbd5e1" /><p>{t("admin.noOrderData")}</p></div>
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
                       <AreaChart data={weeklyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -726,15 +727,15 @@ const Admin = () => {
                         {canManage(role) && !isSupport(role) && <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />}
                         <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }} labelStyle={{ color: "#566a7f", fontWeight: 600 }} />
                         <Legend iconType="circle" iconSize={8} />
-                        <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#696cff" strokeWidth={2} fill="url(#ordersGrad)" dot={{ r: 4, fill: "#696cff" }} name="Orders" />
-                        {canManage(role) && !isSupport(role) && <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#28c76f" strokeWidth={2} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#28c76f" }} name="Revenue (EGP)" />}
+                        <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#696cff" strokeWidth={2} fill="url(#ordersGrad)" dot={{ r: 4, fill: "#696cff" }} name={t("admin.orders")} />
+                        {canManage(role) && !isSupport(role) && <Area yAxisId="right" type="monotone" dataKey="revenue" stroke="#28c76f" strokeWidth={2} fill="url(#revenueGrad)" dot={{ r: 4, fill: "#28c76f" }} name={t("admin.revenue")} />}
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
                 </div>
 
                 <div className="chart-card">
-                  <div className="chart-card__header"><div><h3 className="chart-card__title">Distribution</h3><p className="chart-card__sub">Platform overview</p></div></div>
+                  <div className="chart-card__header"><div><h3 className="chart-card__title">{t("admin.distribution")}</h3><p className="chart-card__sub">{t("admin.platformOverview")}</p></div></div>
                   <ResponsiveContainer width="100%" height={220}>
                     <PieChart>
                       <Pie data={pieData} cx="50%" cy="50%" innerRadius={55} outerRadius={85} dataKey="value" paddingAngle={3}>
@@ -755,26 +756,25 @@ const Admin = () => {
                 </div>
               </div>
 
-              {/* ✅ SHELLE: Support ما يشوف earnings chart */}
               {canManage(role) && !isSupport(role) && (
                 <div className="chart-card" style={{ marginBottom: 24 }}>
                   <div className="chart-card__header">
-                    <div><h3 className="chart-card__title">Monthly Earnings</h3><p className="chart-card__sub">Net sales — last 12 months</p></div>
+                    <div><h3 className="chart-card__title">{t("admin.monthlyEarnings")}</h3><p className="chart-card__sub">{t("admin.netSales")}</p></div>
                     <TrendingUp size={18} color="#03c3ec" />
                   </div>
                   {earningsLoading ? (
-                    <div className="loading-state"><Loader2 size={16} className="spin" /> Loading earnings…</div>
+                    <div className="loading-state"><Loader2 size={16} className="spin" /> {t("admin.loadingEarnings")}</div>
                   ) : earningsData.length === 0 ? (
-                    <div className="empty-state"><DollarSign size={32} color="#cbd5e1" /><p>No earnings data available.</p></div>
+                    <div className="empty-state"><DollarSign size={32} color="#cbd5e1" /><p>{t("admin.noEarningsData")}</p></div>
                   ) : (
                     <ResponsiveContainer width="100%" height={260}>
                       <BarChart data={earningsData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                         <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
                         <YAxis tick={{ fontSize: 12, fill: "#8592a3" }} axisLine={false} tickLine={false} />
-                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }} labelStyle={{ color: "#566a7f", fontWeight: 600 }} formatter={(value) => [`EGP ${fmtCurrency(value)}`, "Net Sales"]} />
+                        <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }} labelStyle={{ color: "#566a7f", fontWeight: 600 }} formatter={(value) => [`EGP ${fmtCurrency(value)}`, t("admin.netSales")]} />
                         <Legend iconType="circle" iconSize={8} />
-                        <Bar dataKey="earnings" fill="#03c3ec" name="Net Sales (EGP)" radius={[8, 8, 0, 0]} />
+                        <Bar dataKey="earnings" fill="#03c3ec" name={t("admin.netSalesEGP")} radius={[8, 8, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   )}
@@ -783,21 +783,21 @@ const Admin = () => {
 
               {!isSupport(role) && (
                 <div className="quick-actions">
-                  <h3 className="section-heading">Quick Actions</h3>
+                  <h3 className="section-heading">{t("admin.quickActions")}</h3>
                   <div className="quick-actions-grid">
                     <button type="button" className="action-card" onClick={() => navigate("/admin/users")}>
                       <div className="action-card__icon" style={{ background: "#e7e7ff" }}><Users size={20} color="#696cff" /></div>
-                      <div><p className="action-card__title">User Management</p><p className="action-card__sub">Manage customers & vendors</p></div>
+                      <div><p className="action-card__title">{t("admin.userManagement")}</p><p className="action-card__sub">{t("admin.manageCustomersVendors")}</p></div>
                       <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
                     </button>
                     <button type="button" className="action-card" onClick={() => navigate("/admin/review-moderation")}>
                       <div className="action-card__icon" style={{ background: "#ffecd9" }}><CircleAlert size={20} color="#ff9f43" /></div>
-                      <div><p className="action-card__title">Review Moderation</p><p className="action-card__sub">Manage user reviews</p></div>
+                      <div><p className="action-card__title">{t("admin.reviewModeration")}</p><p className="action-card__sub">{t("admin.manageReviews")}</p></div>
                       <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
                     </button>
                     <button type="button" className="action-card" onClick={() => navigate("/admin/businesses")}>
                       <div className="action-card__icon" style={{ background: "#e8f8ee" }}><ClipboardList size={20} color="#28c76f" /></div>
-                      <div><p className="action-card__title">Business Management</p><p className="action-card__sub">Approve & manage vendors</p></div>
+                      <div><p className="action-card__title">{t("admin.businessManagement")}</p><p className="action-card__sub">{t("admin.approveManageVendors")}</p></div>
                       <ChevronRight size={16} color="#8592a3" className="action-card__arrow" />
                     </button>
                   </div>
@@ -811,43 +811,43 @@ const Admin = () => {
               <div className="orders-card__header">
                 <div className="orders-card__title-row">
                   <LayoutDashboard size={20} color="#696cff" />
-                  <h3>Dashboard Overview</h3>
+                  <h3>{t("admin.dashboardOverview")}</h3>
                 </div>
               </div>
               <div style={{ padding: "40px 20px", textAlign: "center", color: "#8592a3" }}>
-                <p style={{ fontSize: "0.95rem", marginBottom: "20px" }}>Welcome to Support Dashboard</p>
-                <p style={{ fontSize: "0.85rem" }}>Navigate using the menu to view Orders, Activity, and Reviews.</p>
+                <p style={{ fontSize: "0.95rem", marginBottom: "20px" }}>{t("admin.welcomeSupport")}</p>
+                <p style={{ fontSize: "0.85rem" }}>{t("admin.navigateMenu")}</p>
               </div>
             </div>
           )}
 
-          {activeSection === "offers" && <AllOffersSection token={token} />}
+          {activeSection === "offers" && <AllOffersSection token={token} t={t} />}
 
           {activeSection === "sustainability" && !isSupport(role) && (
             <div className="sustainability-section">
               <div className="sustainability-section__header">
                 <div>
-                  <h2 className="sustainability-section__title">🌍 Sustainability Impact</h2>
-                  <p className="sustainability-section__subtitle">Environmental impact metrics across the platform</p>
+                  <h2 className="sustainability-section__title">🌍 {t("admin.sustainabilityImpact")}</h2>
+                  <p className="sustainability-section__subtitle">{t("admin.environmentalImpact")}</p>
                 </div>
-                <button type="button" className="refresh-btn" onClick={() => window.location.reload()} title="Refresh"><RefreshCw size={16} /></button>
+                <button type="button" className="refresh-btn" onClick={() => window.location.reload()} title={t("admin.refresh")}><RefreshCw size={16} /></button>
               </div>
               {sustainabilityLoading ? (
-                <div className="loading-state"><Loader2 size={20} className="spin" /> Loading sustainability data…</div>
+                <div className="loading-state"><Loader2 size={20} className="spin" /> {t("admin.loadingSustainability")}</div>
               ) : sustainabilityError ? (
-                <div className="error-state"><AlertCircle size={16} /> Failed to load: {sustainabilityError}</div>
+                <div className="error-state"><AlertCircle size={16} /> {t("admin.failedLoad")}: {sustainabilityError}</div>
               ) : sustainabilityMetrics ? (
                 <>
                   <div className="sustainability-metrics-grid">
-                    <SustainabilityCard title="Meals Saved" value={Number(sustainabilityMetrics.meals_saved).toLocaleString()} subtitle="Food items rescued from waste" icon={Package} color="#28c76f" />
-                    <SustainabilityCard title="CO₂ Prevented" value={`${sustainabilityMetrics.co2_prevented_kg.toFixed(2)} kg`} subtitle="Carbon emissions avoided" icon={Leaf} color="#10b981" />
-                    <SustainabilityCard title="Recovered Revenue" value={`EGP ${Number(sustainabilityMetrics.recovered_revenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle="From rescued food items" icon={DollarSign} color="#3b82f6" />
-                    <SustainabilityCard title="Consumer Savings" value={`EGP ${Number(sustainabilityMetrics.consumer_savings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle="Amount saved by customers" icon={TrendingUp} color="#f59e0b" />
+                    <SustainabilityCard title={t("admin.mealsSaved")} value={Number(sustainabilityMetrics.meals_saved).toLocaleString()} subtitle={t("admin.foodRescued")} icon={Package} color="#28c76f" />
+                    <SustainabilityCard title={t("admin.co2Prevented")} value={`${sustainabilityMetrics.co2_prevented_kg.toFixed(2)} kg`} subtitle={t("admin.carbonAvoided")} icon={Leaf} color="#10b981" />
+                    <SustainabilityCard title={t("admin.recoveredRevenue")} value={`EGP ${Number(sustainabilityMetrics.recovered_revenue).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle={t("admin.rescuedFood")} icon={DollarSign} color="#3b82f6" />
+                    <SustainabilityCard title={t("admin.consumerSavings")} value={`EGP ${Number(sustainabilityMetrics.consumer_savings).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`} subtitle={t("admin.savedByCustomers")} icon={TrendingUp} color="#f59e0b" />
                   </div>
                   {sustainabilityChartData && sustainabilityChartData.length > 0 && (
                     <div className="chart-card sustainability-chart">
                       <div className="chart-card__header">
-                        <div><h3 className="chart-card__title">Monthly Sustainability Trends</h3><p className="chart-card__sub">Meals saved & CO₂ prevented — last 12 months</p></div>
+                        <div><h3 className="chart-card__title">{t("admin.monthlySustainability")}</h3><p className="chart-card__sub">{t("admin.sustainabilityTrends")}</p></div>
                         <BarChart2 size={18} color="#28c76f" />
                       </div>
                       <ResponsiveContainer width="100%" height={320}>
@@ -858,15 +858,15 @@ const Admin = () => {
                           <YAxis yAxisId="right" orientation="right" tick={{ fontSize: 12, fill: "#8592a3" }} />
                           <Tooltip contentStyle={{ borderRadius: 8, border: "1px solid #e7e7ff" }} labelStyle={{ color: "#566a7f", fontWeight: 600 }} />
                           <Legend iconType="circle" />
-                          <Line yAxisId="left" type="monotone" dataKey="meals_saved" stroke="#28c76f" dot={{ fill: "#28c76f", r: 4 }} name="Meals Saved" strokeWidth={2} />
-                          <Line yAxisId="right" type="monotone" dataKey="co2_prevented" stroke="#10b981" dot={{ fill: "#10b981", r: 4 }} name="CO₂ Prevented (kg)" strokeWidth={2} />
+                          <Line yAxisId="left" type="monotone" dataKey="meals_saved" stroke="#28c76f" dot={{ fill: "#28c76f", r: 4 }} name={t("admin.mealsSaved")} strokeWidth={2} />
+                          <Line yAxisId="right" type="monotone" dataKey="co2_prevented" stroke="#10b981" dot={{ fill: "#10b981", r: 4 }} name={t("admin.co2Prevented")} strokeWidth={2} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   )}
                 </>
               ) : (
-                <div className="empty-state"><Package size={40} color="#cbd5e1" /><p>No sustainability data available.</p></div>
+                <div className="empty-state"><Package size={40} color="#cbd5e1" /><p>{t("admin.noSustainabilityData")}</p></div>
               )}
             </div>
           )}
@@ -876,30 +876,29 @@ const Admin = () => {
               <div className="orders-card__header">
                 <div className="orders-card__title-row">
                   <ShoppingBag size={20} color="#696cff" />
-                  <h3>Latest Orders</h3>
+                  <h3>{t("admin.latestOrders")}</h3>
                   <span className="orders-count-badge">{filteredOrders.length}</span>
                 </div>
-                {/* ✅ HODYA: Support info message */}
                 {isSupport(role) && (
                   <div style={{ paddingLeft: "10px", fontSize: "0.85rem", color: "#4f46e5", fontWeight: 500 }}>
-                    ℹ️ Support: Viewing customer orders
+                    ℹ️ {t("admin.supportViewingOrders")}
                   </div>
                 )}
                 <div className="orders-card__controls">
                   <div className="search-box">
                     <Search size={14} color="#8592a3" />
-                    <input type="text" placeholder="Search ID, customer, status…" value={ordersSearch}
+                    <input type="text" placeholder={t("admin.searchOrders")} value={ordersSearch}
                       onChange={(e) => { setOrdersSearch(e.target.value); setOrdersPage(1); }} />
                   </div>
-                  <button type="button" className="refresh-btn" onClick={() => window.location.reload()} title="Refresh"><RefreshCw size={14} /></button>
+                  <button type="button" className="refresh-btn" onClick={() => window.location.reload()} title={t("admin.refresh")}><RefreshCw size={14} /></button>
                 </div>
               </div>
               {ordersLoading ? (
-                <div className="loading-state"><Loader2 size={18} className="spin" /> Loading orders…</div>
+                <div className="loading-state"><Loader2 size={18} className="spin" /> {t("admin.loadingOrders")}</div>
               ) : ordersError ? (
-                <div className="error-state"><AlertCircle size={16} /> Failed to load orders: {ordersError}</div>
+                <div className="error-state"><AlertCircle size={16} /> {t("admin.failedLoadOrders")}: {ordersError}</div>
               ) : allOrders.length === 0 ? (
-                <div className="empty-state"><ShoppingBag size={40} color="#cbd5e1" /><p>No orders found.</p></div>
+                <div className="empty-state"><ShoppingBag size={40} color="#cbd5e1" /><p>{t("admin.noOrders")}</p></div>
               ) : (
                 <>
                   <div className="table-wrapper">
@@ -908,11 +907,11 @@ const Admin = () => {
                         <tr>
                           {[
                             { label: "#", field: "id" },
-                            { label: "Customer", field: "customer_name" },
-                            { label: "Total (EGP)", field: "total_amount" },
-                            { label: "Delivery Type", field: "delivery_type" },
-                            { label: "Status", field: "status" },
-                            { label: "Date", field: "created_at" },
+                            { label: t("admin.customer"), field: "customer_name" },
+                            { label: `${t("admin.total")} (EGP)`, field: "total_amount" },
+                            { label: t("admin.deliveryType"), field: "delivery_type" },
+                            { label: t("admin.status"), field: "status" },
+                            { label: t("admin.date"), field: "created_at" },
                           ].map(({ label, field }) => (
                             <th key={field} onClick={() => handleSort(field)}>{label} <SortIcon field={field} /></th>
                           ))}
@@ -940,15 +939,15 @@ const Admin = () => {
                   {totalPages > 1 && (
                     <div className="pagination">
                       <span className="pagination__info">
-                        Showing {(ordersPage - 1) * ORDERS_PER_PAGE + 1}–{Math.min(ordersPage * ORDERS_PER_PAGE, filteredOrders.length)} of {filteredOrders.length}
+                        {t("admin.showing")} {(ordersPage - 1) * ORDERS_PER_PAGE + 1}–{Math.min(ordersPage * ORDERS_PER_PAGE, filteredOrders.length)} {t("admin.of")} {filteredOrders.length}
                       </span>
                       <div className="pagination__controls">
-                        <button onClick={() => setOrdersPage((p) => Math.max(1, p - 1))} disabled={ordersPage === 1} className="pagination__btn">‹ Prev</button>
+                        <button onClick={() => setOrdersPage((p) => Math.max(1, p - 1))} disabled={ordersPage === 1} className="pagination__btn">‹ {t("admin.prev")}</button>
                         {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((pg) => (
                           <button key={pg} onClick={() => setOrdersPage(pg)} className={`pagination__btn ${pg === ordersPage ? "active" : ""}`}>{pg}</button>
                         ))}
                         {totalPages > 5 && <span className="pagination__ellipsis">…</span>}
-                        <button onClick={() => setOrdersPage((p) => Math.min(totalPages, p + 1))} disabled={ordersPage === totalPages} className="pagination__btn">Next ›</button>
+                        <button onClick={() => setOrdersPage((p) => Math.min(totalPages, p + 1))} disabled={ordersPage === totalPages} className="pagination__btn">{t("admin.next")} ›</button>
                       </div>
                     </div>
                   )}
@@ -960,12 +959,12 @@ const Admin = () => {
           {activeSection === "activity" && (
             <div className="orders-card">
               <div className="orders-card__header">
-                <div className="orders-card__title-row"><Activity size={20} color="#696cff" /><h3>Recent Activity</h3></div>
+                <div className="orders-card__title-row"><Activity size={20} color="#696cff" /><h3>{t("admin.recentActivity")}</h3></div>
               </div>
               {activityLoading ? (
-                <div className="loading-state"><Loader2 size={18} className="spin" /> Loading activity…</div>
+                <div className="loading-state"><Loader2 size={18} className="spin" /> {t("admin.loadingActivity")}</div>
               ) : activities.length === 0 ? (
-                <div className="empty-state"><Activity size={36} color="#cbd5e1" /><p>No recent activity found.</p></div>
+                <div className="empty-state"><Activity size={36} color="#cbd5e1" /><p>{t("admin.noRecentActivity")}</p></div>
               ) : (
                 <div className="activity-list">
                   {activities.map((act) => (
@@ -982,19 +981,18 @@ const Admin = () => {
             </div>
           )}
 
-          {/* ✅ HODYA: Reviews section - يشتغل للـ Support و للمنagement */}
           {activeSection === "reviews" && (
             <div className="orders-card">
               <div className="orders-card__header">
                 <div className="orders-card__title-row">
-                  <Star size={20} color="#696cff" /><h3>Review Moderation</h3>
+                  <Star size={20} color="#696cff" /><h3>{t("admin.reviewModeration")}</h3>
                 </div>
               </div>
               <div style={{ padding: "20px", textAlign: "center", color: "#8592a3" }}>
-                <p>Navigate to the full Review Moderation page for detailed management.</p>
+                <p>{t("admin.reviewModerationMessage")}</p>
                 <button type="button" style={{ marginTop: "10px", padding: "8px 16px", background: "#696cff", color: "white", border: "none", borderRadius: "6px", cursor: "pointer", fontSize: "0.9rem" }}
                   onClick={() => navigate("/admin/review-moderation")}>
-                  Open Reviews
+                  {t("admin.openReviews")}
                 </button>
               </div>
             </div>
@@ -1004,14 +1002,14 @@ const Admin = () => {
             <div className="orders-card">
               <div className="orders-card__header">
                 <div className="orders-card__title-row">
-                  <Bell size={20} color="#696cff" /><h3>Notifications</h3>
-                  {notifUnread > 0 && <span className="orders-count-badge">{notifUnread} unread</span>}
+                  <Bell size={20} color="#696cff" /><h3>{t("admin.notifications")}</h3>
+                  {notifUnread > 0 && <span className="orders-count-badge">{notifUnread} {t("admin.unread")}</span>}
                 </div>
               </div>
               {notifLoading ? (
-                <div className="loading-state"><Loader2 size={18} className="spin" /> Loading notifications…</div>
+                <div className="loading-state"><Loader2 size={18} className="spin" /> {t("admin.loadingNotifications")}</div>
               ) : notifications.length === 0 ? (
-                <div className="empty-state"><Bell size={36} color="#cbd5e1" /><p>No notifications found.</p></div>
+                <div className="empty-state"><Bell size={36} color="#cbd5e1" /><p>{t("admin.noNotifications")}</p></div>
               ) : (
                 <div className="activity-list">
                   {notifications.map((n, idx) => (

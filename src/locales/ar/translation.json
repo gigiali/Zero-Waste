@@ -56,7 +56,7 @@
     "iAm": "أنا",
     "customer": "عميل",
     "business": "عمل تجاري",
-    "termsAgreement": "أوافق على شروط الخدمة وسياسة الخصوصية",
+    "termsAgreement": "أوافق على",
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
     "register": "تسجيل",
     "sendRecoveryCode": "إرسال رمز الاستعادة",
@@ -76,7 +76,14 @@
     "loginFailed": "فشل تسجيل الدخول. يرجى التحقق من الاتصال والمحاولة مرة أخرى.",
     "registrationFailed": "فشل التسجيل. يرجى المحاولة مرة أخرى لاحقًا.",
     "serverError": "حدث خطأ في الخادم. يرجى المحاولة لاحقًا.",
-    "changePassword": "تغيير كلمة المرور"
+    "changePassword": "تغيير كلمة المرور",
+    "invalidCredentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+    "accessDenied": "تم رفض الوصول. يرجى التواصل مع الدعم.",
+    "slowWarning": "⏱ هذا يستغرق وقتاً أطول من المعتاد — يرجى الانتظار أو التحقق من اتصالك.",
+    "signingIn": "جاري تسجيل الدخول…",
+    "emailPlaceholder": "you@example.com",
+    "termsLink": "شروط الخدمة",
+    "privacyLink": "سياسة الخصوصية"
   },
   "profile": {
     "name": "الاسم",
@@ -120,10 +127,10 @@
     "cancel": "إلغاء",
     "accountSettings": "إعدادات الحساب",
     "deleteAccountTitle": "حذف الحساب؟",
-    "deleteAccountMessage": "هذا الإجراء نهائي ولا يمكن التراجع عنه. سيتم حذف عملك التجاري وجميع بياناته بشكل نهائي.",
+    "deleteAccountMessage": "هذا الإجراء نهائي ولا يمكن التراجع عنه. سيتم حذف جميع بياناتك والطلبات والتقييمات.",
     "yesDelete": "نعم، احذف",
     "logoutTitle": "تسجيل الخروج؟",
-    "logoutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج من حساب عملك التجاري؟",
+    "logoutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟",
     "yesLogout": "نعم، سجل الخروج",
     "approved": "موافق عليه",
     "rejected": "مرفوض",
@@ -144,6 +151,15 @@
     "passwordsDoNotMatch": "كلمات المرور غير متطابقة",
     "goBack": "العودة",
     "pendingApprovalWarning": "حسابك لا يزال في انتظار موافقة الإدارة. لا يمكنك الوصول إلى لوحة التحكم بعد."
+  },
+  "orders": {
+    "title": "طلباتي",
+    "noOrders": "لم يتم العثور على طلبات",
+    "myOrders": "طلباتي",
+    "orderNumber": "الطلب #",
+    "orderCancelled": "تم إلغاء الطلب",
+    "noOrdersFound": "لم يتم العثور على طلبات",
+    "loadingOrders": "جاري تحميل طلباتك من قاعدة البيانات…"
   },
   "cart": {
     "title": "سلة التسوق",
@@ -170,16 +186,37 @@
     "subtitle": "تحكم في طريقة استلام الإشعارات",
     "channelsTitle": "قنوات الإشعارات",
     "channels": {
-      "email": { "name": "إشعارات البريد الإلكتروني", "description": "استلم الإشعارات عبر البريد الإلكتروني" },
-      "push": { "name": "إشعارات الدفع", "description": "احصل على تحديثات فورية على جهازك" },
-      "sms": { "name": "إشعارات الرسائل النصية", "description": "تنبيهات الرسائل النصية للتحديثات المهمة" }
+      "email": {
+        "name": "إشعارات البريد الإلكتروني",
+        "description": "استلم الإشعارات عبر البريد الإلكتروني"
+      },
+      "push": {
+        "name": "إشعارات الدفع",
+        "description": "احصل على تحديثات فورية على جهازك"
+      },
+      "sms": {
+        "name": "إشعارات الرسائل النصية",
+        "description": "تنبيهات الرسائل النصية للتحديثات المهمة"
+      }
     },
     "typesTitle": "أنواع الإشعارات",
     "types": {
-      "orderUpdates": { "name": "تحديثات الطلب", "description": "تغييرات حالة طلباتك" },
-      "newOffers": { "name": "عروض جديدة", "description": "تنبيهات عن عروض فائض الطعام الجديدة" },
-      "promotions": { "name": "العروض والتخفيضات", "description": "عروض خاصة وتخفيضات" },
-      "weeklyDigest": { "name": "التقرير الأسبوعي", "description": "ملخص أسبوعي للنشاط" }
+      "orderUpdates": {
+        "name": "تحديثات الطلب",
+        "description": "تغييرات حالة طلباتك"
+      },
+      "newOffers": {
+        "name": "عروض جديدة",
+        "description": "تنبيهات عن عروض فائض الطعام الجديدة"
+      },
+      "promotions": {
+        "name": "العروض والتخفيضات",
+        "description": "عروض خاصة وتخفيضات"
+      },
+      "weeklyDigest": {
+        "name": "التقرير الأسبوعي",
+        "description": "ملخص أسبوعي للنشاط"
+      }
     }
   },
   "businessSetup": {
@@ -189,7 +226,14 @@
     "businessNamePlaceholder": "أدخل اسم عملك التجاري",
     "businessType": "نوع العمل التجاري",
     "selectBusinessType": "اختر نوع العمل التجاري",
-    "type": { "restaurant": "مطعم", "supermarket": "سوبر ماركت", "coffeeShop": "مقهى", "hotel": "فندق", "bakery": "مخبز", "dessertShop": "محل حلويات" },
+    "type": {
+      "restaurant": "مطعم",
+      "supermarket": "سوبر ماركت",
+      "coffeeShop": "مقهى",
+      "hotel": "فندق",
+      "bakery": "مخبز",
+      "dessertShop": "محل حلويات"
+    },
     "taxNumber": "الرقم الضريبي",
     "taxNumberPlaceholder": "أدخل رقمك الضريبي",
     "commercialRegister": "السجل التجاري",
@@ -214,7 +258,9 @@
       "genericError": "حدث خطأ. يرجى المحاولة مرة أخرى.",
       "networkError": "خطأ في الشبكة."
     },
-    "success": { "vendorSetupCompleted": "تم إكمال إعداد البائع بنجاح!" }
+    "success": {
+      "vendorSetupCompleted": "تم إكمال إعداد البائع بنجاح!"
+    }
   },
   "addBranch": {
     "title": "إضافة فرع جديد",
@@ -224,7 +270,15 @@
     "branchNamePlaceholder": "أدخل اسم الفرع",
     "branchType": "نوع الفرع",
     "selectBranchType": "اختر نوع الفرع",
-    "type": { "restaurant": "مطعم", "supermarket": "سوبر ماركت", "hotel": "فندق", "bakery": "مخبز", "cafe": "مقهى", "dessertShop": "محل حلويات", "others": "أخرى" },
+    "type": {
+      "restaurant": "مطعم",
+      "supermarket": "سوبر ماركت",
+      "hotel": "فندق",
+      "bakery": "مخبز",
+      "cafe": "مقهى",
+      "dessertShop": "محل حلويات",
+      "others": "أخرى"
+    },
     "branchTypeOtherPlaceholder": "أدخل نوع الفرع",
     "contactEmail": "البريد الإلكتروني للتواصل",
     "contactEmailPlaceholder": "أدخل البريد الإلكتروني",
@@ -243,7 +297,9 @@
     "saving": "جاري الحفظ...",
     "mapModalTitle": "اختر موقع الفرع",
     "searchAddressPlaceholder": "ابحث عن عنوان في القاهرة",
-    "success": { "branchAdded": "تم إضافة الفرع بنجاح!" },
+    "success": {
+      "branchAdded": "تم إضافة الفرع بنجاح!"
+    },
     "errors": {
       "branchNameRequired": "اسم الفرع مطلوب",
       "branchTypeRequired": "نوع الفرع مطلوب",
@@ -264,126 +320,271 @@
     "subtitle": "كيف نحمي معلوماتك الشخصية ونستخدمها",
     "contentsHeader": "📑 المحتوى",
     "lastUpdated": "آخر تحديث:",
-    "sections": { "introduction": "مقدمة", "dataCollection": "جمع البيانات", "dataUsage": "استخدام البيانات", "dataProtection": "حماية البيانات", "dataSharing": "مشاركة البيانات", "yourRights": "حقوقك", "cookies": "ملفات تعريف الارتباط" },
-    "introduction": { "title": "مقدمة", "description": "تعد خصوصيتك مهمة بالنسبة لنا.", "highlight": "🔒 نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة." },
+    "sections": {
+      "introduction": "مقدمة",
+      "dataCollection": "جمع البيانات",
+      "dataUsage": "استخدام البيانات",
+      "dataProtection": "حماية البيانات",
+      "dataSharing": "مشاركة البيانات",
+      "yourRights": "حقوقك",
+      "cookies": "ملفات تعريف الارتباط"
+    },
+    "introduction": {
+      "title": "مقدمة",
+      "description": "تعد خصوصيتك مهمة بالنسبة لنا.",
+      "highlight": "🔒 نحن لا نبيع معلوماتك الشخصية لأطراف ثالثة."
+    },
     "dataCollection": {
       "title": "جمع البيانات",
       "description": "نقوم بجمع المعلومات بعدة طرق لتحسين تجربتك:",
-      "personalInformation": { "title": "المعلومات الشخصية", "items": { "fullName": "الاسم الكامل", "email": "البريد الإلكتروني", "phone": "رقم الهاتف", "businessDetails": "تفاصيل العمل" } },
-      "accountInformation": { "title": "معلومات الحساب", "items": { "username": "اسم المستخدم", "encryptedPassword": "كلمة مرور مشفرة", "preferences": "تفضيلات المستخدم", "profileSettings": "إعدادات الملف الشخصي" } },
-      "usageData": { "title": "بيانات الاستخدام", "items": { "interactions": "تفاعلات المنصة", "pagesVisited": "الصفحات التي تمت زيارتها", "featuresUsed": "الميزات المستخدمة", "timeSpent": "الوقت المستغرق" } },
-      "locationData": { "title": "بيانات الموقع", "items": { "businessAddress": "عنوان العمل", "generalLocation": "الموقع العام", "coverageArea": "منطقة التغطية" } }
+      "personalInformation": {
+        "title": "المعلومات الشخصية",
+        "items": {
+          "fullName": "الاسم الكامل",
+          "email": "البريد الإلكتروني",
+          "phone": "رقم الهاتف",
+          "businessDetails": "تفاصيل العمل"
+        }
+      },
+      "accountInformation": {
+        "title": "معلومات الحساب",
+        "items": {
+          "username": "اسم المستخدم",
+          "encryptedPassword": "كلمة مرور مشفرة",
+          "preferences": "تفضيلات المستخدم",
+          "profileSettings": "إعدادات الملف الشخصي"
+        }
+      },
+      "usageData": {
+        "title": "بيانات الاستخدام",
+        "items": {
+          "interactions": "تفاعلات المنصة",
+          "pagesVisited": "الصفحات التي تمت زيارتها",
+          "featuresUsed": "الميزات المستخدمة",
+          "timeSpent": "الوقت المستغرق"
+        }
+      },
+      "locationData": {
+        "title": "بيانات الموقع",
+        "items": {
+          "businessAddress": "عنوان العمل",
+          "generalLocation": "الموقع العام",
+          "coverageArea": "منطقة التغطية"
+        }
+      }
     },
     "dataUsage": {
       "title": "استخدام البيانات",
       "description": "نستخدم بياناتك للأغراض التالية:",
       "items": {
-        "serviceProvision": { "title": "توفير الخدمة", "description": "توفير خدمات المنصة وصيانتها" },
-        "transactions": { "title": "المعاملات", "description": "معالجة المعاملات وإدارة الحسابات" },
-        "communication": { "title": "الاتصال", "description": "التواصل مع المستخدمين حول الخدمات" },
-        "improvement": { "title": "التحسين", "description": "تحسين المنصة وتطوير ميزات جديدة" },
-        "analytics": { "title": "التحليلات", "description": "تحليل أنماط الاستخدام من أجل التحسين" },
-        "security": { "title": "الأمان", "description": "ضمان أمان المنصة ومنع الاحتيال" }
+        "serviceProvision": {
+          "title": "توفير الخدمة",
+          "description": "توفير خدمات المنصة وصيانتها"
+        },
+        "transactions": {
+          "title": "المعاملات",
+          "description": "معالجة المعاملات وإدارة الحسابات"
+        },
+        "communication": {
+          "title": "الاتصال",
+          "description": "التواصل مع المستخدمين حول الخدمات"
+        },
+        "improvement": {
+          "title": "التحسين",
+          "description": "تحسين المنصة وتطوير ميزات جديدة"
+        },
+        "analytics": {
+          "title": "التحليلات",
+          "description": "تحليل أنماط الاستخدام من أجل التحسين"
+        },
+        "security": {
+          "title": "الأمان",
+          "description": "ضمان أمان المنصة ومنع الاحتيال"
+        }
       }
     },
     "dataProtection": {
       "title": "حماية البيانات",
       "description": "أمان بياناتك هو أولويتنا القصوى.",
       "features": {
-        "encryption": { "title": "التشفير", "description": "تشفير end-to-end للبيانات الحساسة" },
-        "securityAudits": { "title": "تدقيقات الأمان", "description": "تدقيقات أمان منتظمة" },
-        "accessControl": { "title": "التحكم في الوصول", "description": "ضوابط وصول صارمة" },
-        "secureStorage": { "title": "التخزين الآمن", "description": "إجراءات تخزين بيانات آمنة" }
+        "encryption": {
+          "title": "التشفير",
+          "description": "تشفير end-to-end للبيانات الحساسة"
+        },
+        "securityAudits": {
+          "title": "تدقيقات الأمان",
+          "description": "تدقيقات أمان منتظمة"
+        },
+        "accessControl": {
+          "title": "التحكم في الوصول",
+          "description": "ضوابط وصول صارمة"
+        },
+        "secureStorage": {
+          "title": "التخزين الآمن",
+          "description": "إجراءات تخزين بيانات آمنة"
+        }
       }
     },
     "dataSharing": {
       "title": "مشاركة البيانات",
       "description": "نحن لا نبيع معلوماتك الشخصية.",
-      "labels": { "allowed": "مسموح" },
-      "items": { "providers": "مع مزودي خدمة موثوقين", "legalRequirements": "عند الحاجة بموجب القانون", "consent": "بموافقتك الصريحة", "businessTransfer": "بموجب نقل أو دمج الأعمال" }
+      "labels": {
+        "allowed": "مسموح"
+      },
+      "items": {
+        "providers": "مع مزودي خدمة موثوقين",
+        "legalRequirements": "عند الحاجة بموجب القانون",
+        "consent": "بموافقتك الصريحة",
+        "businessTransfer": "بموجب نقل أو دمج الأعمال"
+      }
     },
     "yourRights": {
       "title": "حقوقك",
       "description": "لديك الحقوق التالية بخصوص بياناتك الشخصية:",
       "items": {
-        "access": { "title": "👁️ الحق في الوصول", "description": "الوصول إلى معلوماتك الشخصية في أي وقت" },
-        "correct": { "title": "✏️ الحق في التصحيح", "description": "تحديث أو تصحيح المعلومات غير الدقيقة" },
-        "delete": { "title": "🗑️ الحق في الحذف", "description": "حذف حسابك وبياناتك الشخصية" },
-        "optOut": { "title": "✋ الحق في إلغاء الاشتراك", "description": "إلغاء الاشتراك من الاتصالات التسويقية" },
-        "export": { "title": "📥 الحق في التصدير", "description": "طلب نسخة من بياناتك" },
-        "restrict": { "title": "🚫 الحق في التقييد", "description": "تقييد معالجة بياناتك" }
+        "access": {
+          "title": "👁️ الحق في الوصول",
+          "description": "الوصول إلى معلوماتك الشخصية في أي وقت"
+        },
+        "correct": {
+          "title": "✏️ الحق في التصحيح",
+          "description": "تحديث أو تصحيح المعلومات غير الدقيقة"
+        },
+        "delete": {
+          "title": "🗑️ الحق في الحذف",
+          "description": "حذف حسابك وبياناتك الشخصية"
+        },
+        "optOut": {
+          "title": "✋ الحق في إلغاء الاشتراك",
+          "description": "إلغاء الاشتراك من الاتصالات التسويقية"
+        },
+        "export": {
+          "title": "📥 الحق في التصدير",
+          "description": "طلب نسخة من بياناتك"
+        },
+        "restrict": {
+          "title": "🚫 الحق في التقييد",
+          "description": "تقييد معالجة بياناتك"
+        }
       }
     },
     "cookies": {
       "title": "ملفات تعريف الارتباط",
       "description": "نستخدم ملفات تعريف الارتباط لتعزيز تجربتك.",
       "items": {
-        "essential": { "title": "🔧 ملفات أساسية", "description": "مطلوبة لوظائف المنصة والأمان" },
-        "analytics": { "title": "📈 ملفات تحليلية", "description": "تساعدنا على تحسين الميزات" },
-        "preference": { "title": "💾 ملفات التفضيلات", "description": "تتذكر إعداداتك وتفضيلاتك" }
+        "essential": {
+          "title": "🔧 ملفات أساسية",
+          "description": "مطلوبة لوظائف المنصة والأمان"
+        },
+        "analytics": {
+          "title": "📈 ملفات تحليلية",
+          "description": "تساعدنا على تحسين الميزات"
+        },
+        "preference": {
+          "title": "💾 ملفات التفضيلات",
+          "description": "تتذكر إعداداتك وتفضيلاتك"
+        }
       },
-      "labels": { "required": "مطلوب", "optional": "اختياري" },
+      "labels": {
+        "required": "مطلوب",
+        "optional": "اختياري"
+      },
       "note": "📌 يمكنك التحكم في ملفات تعريف الارتباط من خلال إعدادات المتصفح."
     },
-    "contact": { "title": "أسئلة حول الخصوصية؟", "description": "إذا كانت لديك مخاوف، يرجى الاتصال بنا:", "email": "📧 privacy@zerowaste.com", "chat": "💬 دردشة الدعم: متاحة 24/7" }
-  },
-  "admin": {
-    "title": "لوحة تحكم الإدارة",
-    "subtitle": "راقب أداء المنصة وأدر نظام ZeroWaste",
-    "notLoggedIn": "أنت غير مسجل الدخول. يرجى",
-    "login": "تسجيل الدخول",
-    "platformCommission": "عمولة المنصة",
-    "activeIssues": "المشاكل النشطة",
-    "platformAnalytics": "تحليلات المنصة",
-    "analyticsSubtitle": "رؤى فورية ومراقبة حالة النظام",
-    "cards": { "userManagement": "إدارة المستخدمين", "userManagementSubtitle": "عرض وإدارة العملاء", "reportsIssues": "التقارير والمشاكل", "reportsIssuesSubtitle": "التعامل مع المحتوى المبلغ عنه", "manageBusinesses": "إدارة الأعمال التجارية", "manageBusinessesSubtitle": "الموافقة أو رفض البائعين" },
-    "loadingStats": "جاري تحميل الإحصائيات…",
-    "stats": { "totalOrders": "إجمالي الطلبات", "totalRevenue": "إجمالي الإيرادات", "activeBusinesses": "الأعمال النشطة", "totalUsers": "إجمالي المستخدمين" },
-    "commissionRate": "سعر العمولة 15%",
-    "foodSaved": "الطعام الموفر",
-    "environmentalImpact": "التأثير البيئي",
-    "avgOrderValue": "متوسط قيمة الطلب",
-    "perTransaction": "لكل معاملة",
-    "weeklyPerformance": "أداء الأسبوع",
-    "chart": { "orders": "الطلبات", "revenue": "الإيرادات (EGP)" },
-    "recentActivityTitle": "سجل الأنشطة الأخير للنظام",
-    "updatingActivity": "جاري تحديث سجلات الأنشطة…",
-    "noRecentActivity": "لا توجد أنشطة حديثة مسجلة.",
-    "activity": { "by": "بواسطة", "system": "النظام", "justNow": "الآن" },
-    "roles": { "superAdmin": "المشرف العام — تحكم كامل", "manager": "مدير", "support": "الدعم" }
+    "contact": {
+      "title": "أسئلة حول الخصوصية؟",
+      "description": "إذا كانت لديك مخاوف، يرجى الاتصال بنا:",
+      "email": "📧 privacy@zerowaste.com",
+      "chat": "💬 دردشة الدعم: متاحة 24/7"
+    }
   },
   "terms": {
     "title": "شروط الخدمة",
     "subtitle": "التزامنا بشروط خدمة عادلة وشفافة.",
     "contentsHeader": "📑 المحتويات",
     "lastUpdated": "آخر تحديث:",
-    "sections": { "introduction": "المقدمة", "userResponsibilities": "مسؤوليات المستخدم", "prohibitedActivities": "الأنشطة المحظورة", "accountSecurity": "أمان الحساب", "limitationOfLiability": "تحديد المسؤولية", "changesToTerms": "التغييرات في الشروط" },
-    "introduction": { "title": "المقدمة", "description": "تحكم شروط الخدمة هذه استخدامك لمنصة Zero Waste.", "warning": "⚖️ إذا كنت لا توافق على أي جزء من هذه الشروط، فيرجى عدم استخدام منصتنا.", "missionTitle": "🎯 مهمتنا", "missionText": "تربط Zero Waste بين الشركات والعملاء لتقليل هدر الطعام." },
+    "sections": {
+      "introduction": "المقدمة",
+      "userResponsibilities": "مسؤوليات المستخدم",
+      "prohibitedActivities": "الأنشطة المحظورة",
+      "accountSecurity": "أمان الحساب",
+      "limitationOfLiability": "تحديد المسؤولية",
+      "changesToTerms": "التغييرات في الشروط"
+    },
+    "introduction": {
+      "title": "المقدمة",
+      "description": "تحكم شروط الخدمة هذه استخدامك لمنصة Zero Waste.",
+      "warning": "⚖️ إذا كنت لا توافق على أي جزء من هذه الشروط، فيرجى عدم استخدام منصتنا.",
+      "missionTitle": "🎯 مهمتنا",
+      "missionText": "تربط Zero Waste بين الشركات والعملاء لتقليل هدر الطعام."
+    },
     "userResponsibilities": {
       "title": "مسؤوليات المستخدم",
       "description": "بصفتك مستخدمًا لمنصتنا، فإنك توافق على:",
-      "accurateInformation": { "title": "معلومات دقيقة", "text": "تقديم معلومات دقيقة عند إنشاء حساب" },
-      "legitimateUse": { "title": "استخدام مشروع", "text": "استخدام المنصة لأغراض مشروعة فقط" },
-      "respectOthers": { "title": "احترام الآخرين", "text": "احترام حقوق المستخدمين والشركات الأخرى" },
-      "securePassword": { "title": "كلمة مرور آمنة", "text": "حفظ بيانات حسابك آمنة وسرية" }
+      "accurateInformation": {
+        "title": "معلومات دقيقة",
+        "text": "تقديم معلومات دقيقة عند إنشاء حساب"
+      },
+      "legitimateUse": {
+        "title": "استخدام مشروع",
+        "text": "استخدام المنصة لأغراض مشروعة فقط"
+      },
+      "respectOthers": {
+        "title": "احترام الآخرين",
+        "text": "احترام حقوق المستخدمين والشركات الأخرى"
+      },
+      "securePassword": {
+        "title": "كلمة مرور آمنة",
+        "text": "حفظ بيانات حسابك آمنة وسرية"
+      }
     },
     "prohibitedActivities": {
       "title": "الأنشطة المحظورة",
       "description": "لا يجوز لك الانخراط في الأنشطة التالية:",
-      "falseInformation": { "title": "معلومات كاذبة", "text": "نشر معلومات خاطئة أو مضللة" },
-      "illegalActivities": { "title": "أنشطة غير قانونية", "text": "انتهاك القوانين أو اللوائح" },
-      "platformInterference": { "title": "التدخل في المنصة", "text": "التدخل في عمليات المنصة أو تعطيلها" },
-      "harmfulUse": { "title": "استخدام ضار", "text": "استخدام المنصة لأغراض ضارة أو مسيئة" },
-      "fraud": { "title": "احتيال", "text": "الانخراط في أنشطة احتيالية أو غير أخلاقية" },
-      "ipViolations": { "title": "انتهاكات حقوق الملكية الفكرية", "text": "التعدي على حقوق الملكية الفكرية" }
+      "falseInformation": {
+        "title": "معلومات كاذبة",
+        "text": "نشر معلومات خاطئة أو مضللة"
+      },
+      "illegalActivities": {
+        "title": "أنشطة غير قانونية",
+        "text": "انتهاك القوانين أو اللوائح"
+      },
+      "platformInterference": {
+        "title": "التدخل في المنصة",
+        "text": "التدخل في عمليات المنصة أو تعطيلها"
+      },
+      "harmfulUse": {
+        "title": "استخدام ضار",
+        "text": "استخدام المنصة لأغراض ضارة أو مسيئة"
+      },
+      "fraud": {
+        "title": "احتيال",
+        "text": "الانخراط في أنشطة احتيالية أو غير أخلاقية"
+      },
+      "ipViolations": {
+        "title": "انتهاكات حقوق الملكية الفكرية",
+        "text": "التعدي على حقوق الملكية الفكرية"
+      }
     },
     "accountSecurity": {
       "title": "أمان الحساب",
       "description": "أنت المسؤول الوحيد عن الحفاظ على سرية بيانات حسابك.",
-      "immediateNotification": { "title": "🔔 الإخطار الفوري", "text": "أبلغنا فورًا عن أي وصول غير مصرح به" },
-      "accountProtection": { "title": "💻 حماية الحساب", "text": "استخدم كلمات مرور قوية وفريدة" },
-      "deviceSecurity": { "title": "📱 أمان الجهاز", "text": "حافظ على تحديث أجهزتك وبرامجك" },
-      "unauthorizedAccess": { "title": "🚫 الوصول غير المصرح به", "text": "لا تشارك حسابك مع الآخرين" },
+      "immediateNotification": {
+        "title": "🔔 الإخطار الفوري",
+        "text": "أبلغنا فورًا عن أي وصول غير مصرح به"
+      },
+      "accountProtection": {
+        "title": "💻 حماية الحساب",
+        "text": "استخدم كلمات مرور قوية وفريدة"
+      },
+      "deviceSecurity": {
+        "title": "📱 أمان الجهاز",
+        "text": "حافظ على تحديث أجهزتك وبرامجك"
+      },
+      "unauthorizedAccess": {
+        "title": "🚫 الوصول غير المصرح به",
+        "text": "لا تشارك حسابك مع الآخرين"
+      },
       "warning": "⚠️ لسنا مسؤولين عن الوصول غير المصرح به إذا فشلت في الحفاظ على أمان الحساب."
     },
     "limitationOfLiability": {
@@ -410,12 +611,30 @@
     },
     "additionalTerms": {
       "title": "شروط إضافية هامة",
-      "intellectualProperty": { "title": "📋 الملكية الفكرية", "text": "جميع المحتوى على منصتنا هو ملكنا أو محتوى مرخَّص." },
-      "governingLaw": { "title": "🌍 القانون الواجب التطبيق", "text": "تخضع هذه الشروط للقوانين المعمول بها." },
-      "thirdPartyServices": { "title": "🤝 خدمات طرف ثالث", "text": "لسنا مسؤولين عن خدمات أو روابط طرف ثالث." },
-      "contactSupport": { "title": "📞 الاتصال والدعم", "text": "هل لديك أسئلة؟ اتصل بنا على support@zerowaste.com" }
+      "intellectualProperty": {
+        "title": "📋 الملكية الفكرية",
+        "text": "جميع المحتوى على منصتنا هو ملكنا أو محتوى مرخَّص."
+      },
+      "governingLaw": {
+        "title": "🌍 القانون الواجب التطبيق",
+        "text": "تخضع هذه الشروط للقوانين المعمول بها."
+      },
+      "thirdPartyServices": {
+        "title": "🤝 خدمات طرف ثالث",
+        "text": "لسنا مسؤولين عن خدمات أو روابط طرف ثالث."
+      },
+      "contactSupport": {
+        "title": "📞 الاتصال والدعم",
+        "text": "هل لديك أسئلة؟ اتصل بنا على support@zerowaste.com"
+      }
     },
-    "contact": { "title": "أسئلة حول هذه الشروط؟", "description": "إذا كانت لديك أي أسئلة، يرجى التواصل:", "email": "📧 legal@zerowaste.com", "chat": "💬 دردشة الدعم: متاحة 24/7", "phone": "📞 دعم الهاتف: قادم قريبًا" }
+    "contact": {
+      "title": "أسئلة حول هذه الشروط؟",
+      "description": "إذا كانت لديك أي أسئلة، يرجى التواصل:",
+      "email": "📧 legal@zerowaste.com",
+      "chat": "💬 دردشة الدعم: متاحة 24/7",
+      "phone": "📞 دعم الهاتف: قادم قريبًا"
+    }
   },
   "offerDetail": {
     "loadingOffer": "جاري تحميل العرض...",
@@ -435,7 +654,6 @@
     "tabDetails": "تفاصيل العرض",
     "tabRestaurant": "معلومات المطعم",
     "tabReviews": "التعليقات",
-"reviewsCount": "التعليقات ({{count}})",
     "aboutOffer": "حول هذا العرض",
     "offerInformation": "معلومات العرض",
     "viewFullRestaurant": "عرض صفحة المطعم كاملة",
@@ -451,17 +669,19 @@
     "reviewPickup": "🏪 استلام",
     "addToCart": "أضف إلى السلة",
     "addedToCart": "أضيف إلى السلة!",
-    "quantityLeft":"{{count}} متبقي",
-"locationRequiredTitle": "الموقع مطلوب",
-"locationRequiredMessage": "يرجى تحديد موقعك أولاً قبل إضافة العناصر إلى السلة.",
-"ok": "حسناً",
-"signInRequiredTitle": "تسجيل الدخول مطلوب",
-"signInRequiredMessage": "يجب تسجيل الدخول أولاً لإضافة عناصر إلى السلة."
+    "quantityLeft": "{{count}} متبقي",
+    "locationRequiredTitle": "الموقع مطلوب",
+    "locationRequiredMessage": "يرجى تحديد موقعك أولاً قبل إضافة العناصر إلى السلة.",
+    "ok": "حسناً",
+    "signInRequiredTitle": "تسجيل الدخول مطلوب",
+    "signInRequiredMessage": "يجب تسجيل الدخول أولاً لإضافة عناصر إلى السلة.",
+    "cancel": "إلغاء",
+    "reviewsCount": "التعليقات ({{count}})"
   },
   "restaurantDetail": {
     "loading": "جاري التحميل...",
     "notFound": "المطعم غير موجود",
-    "backToHome": "→ العودة للرئيسية",
+    "backToHome": "← العودة للرئيسية",
     "back": "عودة",
     "openHours": "ساعات العمل",
     "phone": "الهاتف",
@@ -474,6 +694,37 @@
     "otherBranches": "الفروع الأخرى ({{count}})",
     "getDirections": "احصل على الاتجاهات",
     "branches": "فروعنا ({{count}})"
+  },
+  "branchDetail": {
+    "loading": "جاري تحميل تفاصيل الفرع...",
+    "notFound": "الفرع غير موجود",
+    "notAvailable": "الفرع الذي تبحث عنه غير موجود أو غير متاح.",
+    "back": "عودة",
+    "address": "العنوان غير متاح",
+    "openingHours": "ساعات العمل",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "about": "عن {{name}}",
+    "vendorDescription": "{{type}} • يقع في {{address}}",
+    "availableOffers": "العروض المتاحة ({{count}})",
+    "noOffers": "لا توجد عروض متاحة في هذا الفرع الآن.",
+    "left": "{{count}} متبقي",
+    "getDirections": "احصل على الاتجاهات",
+    "failedLoad": "فشل تحميل تفاصيل الفرع",
+    "detailsNotFound": "تفاصيل الفرع غير موجودة"
+  },
+  "navigation": {
+    "location": "الموقع",
+    "gettingFee": "جاري التحديد...",
+    "setLocation": "حدد موقعك",
+    "searchPlaceholder": "ابحث عن مدينة أو منطقة...",
+    "notAvailable": "نحن غير متاحين في منطقتك بعد",
+    "logOut": "تسجيل الخروج",
+    "logOutTitle": "تسجيل الخروج؟",
+    "logOutMessage": "هل أنت متأكد أنك تريد تسجيل الخروج؟",
+    "cancel": "إلغاء",
+    "yesLogOut": "نعم، سجل الخروج",
+    "signIn": "تسجيل الدخول"
   },
   "reports": {
     "reviewTitle": "مراجعة التقرير",
@@ -492,33 +743,305 @@
     "backendMissingMessage": "المسار {{endpoint}} غير موجود بعد.",
     "reportFallback": "تقرير",
     "unknown": "غير معروف",
-    "stats": { "criticalIssues": "المشاكل الحرجة", "pendingReview": "في انتظار المراجعة", "totalReports": "إجمالي البلاغات", "resolutionRate": "نسبة الحل" },
+    "stats": {
+      "criticalIssues": "المشاكل الحرجة",
+      "pendingReview": "في انتظار المراجعة",
+      "totalReports": "إجمالي البلاغات",
+      "resolutionRate": "نسبة الحل"
+    },
     "filterType": "نوع البلاغ",
     "filterAllTypes": "كل الأنواع",
     "filterSeverity": "الأولوية",
     "filterAllSeverities": "كل الأولويات",
-    "type": { "general": "عام", "content": "محتوى", "verification": "التحقق", "quality": "الجودة", "system": "النظام" },
-    "severity": { "high": "عالية", "medium": "متوسطة", "low": "منخفضة", "unknown": "غير معروف" },
+    "type": {
+      "general": "عام",
+      "content": "محتوى",
+      "verification": "التحقق",
+      "quality": "الجودة",
+      "system": "النظام"
+    },
+    "severity": {
+      "high": "عالية",
+      "medium": "متوسطة",
+      "low": "منخفضة",
+      "unknown": "غير معروف"
+    },
     "loadingReports": "جاري تحميل البلاغات…",
     "resolved": "مُعالَج",
     "reviewAction": "مراجعة",
     "noDataBackendMissing": "⚠️ لا توجد بيانات — مسار الخلفية مفقود",
     "noIssuesFound": "✓ لم يتم العثور على مشاكل"
   },
+  "businessDashboard": {
+    "notifications": "الإشعارات",
+    "languageEnglish": "English",
+    "languageArabic": "العربية",
+    "myProfile": "ملفي الشخصي",
+    "branches": "الفروع",
+    "branchLocations": {
+      "maadi": "المعادي",
+      "nasrCity": "مدينة نصر"
+    },
+    "orders": "الطلبات",
+    "locationLabel": "موقع الفرع",
+    "location": {
+      "maadi": "المعادي",
+      "nasrCity": "مدينة نصر"
+    },
+    "goToProfile": "الذهاب إلى الملف الشخصي",
+    "yourBusiness": "عملك التجاري",
+    "businessAccount": "حساب العمل التجاري",
+    "welcomeBack": "مرحبًا بعودتك، {{business}}",
+    "manageOffersSubtitle": "إدارة عروضك الفائضة من مكان واحد",
+    "impactTitle": "تأثيرك هذا الشهر",
+    "foodSaved": "{{count}} كغ طعام تم إنقاذه",
+    "kpis": {
+      "activeOffers": "العروض النشطة",
+      "totalOrders": "إجمالي الطلبات",
+      "todaysRevenue": "إيرادات اليوم"
+    },
+    "charts": {
+      "salesOverview": "نظرة عامة على المبيعات",
+      "salesLabel": "المبيعات",
+      "ordersOverview": "نظرة عامة على الطلبات",
+      "ordersLabel": "الطلبات"
+    },
+    "myOffers": "عروضي",
+    "showLess": "عرض أقل",
+    "viewAllOffers": "عرض الكل ({{count}})",
+    "addOffer": "+ إضافة عرض",
+    "editOffer": "تعديل العرض",
+    "newOffer": "عرض جديد",
+    "previewImageAlt": "صورة معاينة العرض",
+    "form": {
+      "title": "العنوان",
+      "titlePlaceholder": "أدخل عنوان العرض",
+      "description": "الوصف",
+      "descriptionPlaceholder": "اكتب وصف قصير للعرض",
+      "offerPhoto": "صورة العرض",
+      "originalPrice": "السعر الأصلي",
+      "discountPrice": "السعر المخفض",
+      "quantityAvailable": "الكمية المتاحة",
+      "quantityPlaceholder": "أدخل الكمية المتاحة",
+      "expiresIn": "ينتهي في",
+      "expiresInPlaceholder": "أدخل عدد الأيام حتى الانتهاء",
+      "expirationDate": "تاريخ الانتهاء",
+      "status": "الحالة",
+      "pricePlaceholder": "أدخل السعر"
+    },
+    "currency": "جنيه مصري",
+    "status": {
+      "active": "نشط",
+      "expired": "منتهي",
+      "disabled": "معطل"
+    },
+    "orderStatus": {
+      "processing": "قيد المعالجة",
+      "completed": "مكتمل",
+      "delivered": "تم التسليم",
+      "cancelled": "ملغى"
+    },
+    "offerStatus": {
+      "active": "نشط",
+      "expired": "منتهي",
+      "disabled": "معطل"
+    },
+    "cancel": "إلغاء",
+    "saving": "جاري الحفظ...",
+    "saveChanges": "حفظ التغييرات",
+    "createOffer": "إنشاء عرض",
+    "noOffers": "لا توجد عروض لهذا الفرع بعد",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "moreOffers": "{{count}} عروض إضافية",
+    "moreOrders": "{{count}} طلبات إضافية",
+    "recentOrders": "الطلبات الأخيرة",
+    "viewAllOrders": "عرض الكل ({{count}})",
+    "orderTable": {
+      "id": "الرقم",
+      "offer": "العرض",
+      "customer": "العميل",
+      "amount": "المبلغ",
+      "status": "الحالة"
+    },
+    "errors": {
+      "fillTitleDescription": "يرجى تقديم عنوان ووصف العرض.",
+      "loginToContinue": "يرجى تسجيل الدخول للمتابعة.",
+      "selectValidBranch": "يرجى اختيار فرع صالح.",
+      "network": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
+      "failedUpdateOrderStatus": "فشل في تحديث حالة الطلب. يرجى المحاولة مرة أخرى."
+    }
+  },
   "manageBusinesses": {
     "title": "إدارة الأعمال",
     "subtitle": "راجع سير تسجيل البائعين",
     "backToAdmin": "العودة إلى لوحة الإدارة",
-    "stats": { "totalRegistered": "إجمالي المسجلين", "activeState": "الحسابات النشطة", "awaitingVerification": "في انتظار التحقق", "grossVolume": "إجمالي الحجم المالي" },
-    "controls": { "searchPlaceholder": "تصفية البائعين...", "allStates": "كل الحالات", "allSectors": "كل القطاعات" },
+    "stats": {
+      "totalRegistered": "إجمالي المسجلين",
+      "activeState": "الحسابات النشطة",
+      "awaitingVerification": "في انتظار التحقق",
+      "grossVolume": "إجمالي الحجم المالي"
+    },
+    "controls": {
+      "searchPlaceholder": "تصفية البائعين...",
+      "allStates": "كل الحالات",
+      "allSectors": "كل القطاعات"
+    },
     "loading": "جاري مزامنة سجلات قاعدة البيانات...",
-    "table": { "businessEntity": "الجهة التجارية", "sector": "القطاع", "state": "الحالة", "performance": "الأداء", "userBase": "قاعدة المستخدمين", "timestamp": "الوقت", "volumeValuation": "تقييم الحجم", "managementActions": "إجراءات الإدارة" },
+    "table": {
+      "businessEntity": "الجهة التجارية",
+      "sector": "القطاع",
+      "state": "الحالة",
+      "performance": "الأداء",
+      "userBase": "قاعدة المستخدمين",
+      "timestamp": "الوقت",
+      "volumeValuation": "تقييم الحجم",
+      "managementActions": "إجراءات الإدارة"
+    },
     "unknownBusiness": "عمل تجاري غير معروف",
-    "actions": { "manageDetails": "إدارة تفاصيل العمل", "approve": "قبول", "reject": "رفض", "delete": "حذف" },
-    "alerts": { "vendorView": "عرض البائع: {{name}}" },
-    "confirm": { "rejectVendor": "رفض {{name}}؟", "deleteVendor": "حذف {{name}} بشكل دائم؟" },
-    "errors": { "approveFailed": "خطأ في الخادم: لم يتم قبول البائع.", "rejectFailed": "خطأ في الخادم: لم يتم رفض البائع.", "deleteFailed": "خطأ في الخادم: لم يتم حذف البائع." },
-    "status": { "approved": "مقبول", "active": "نشط", "pending": "قيد الانتظار", "underReview": "قيد المراجعة", "rejected": "مرفوض", "unknown": "غير معروف" }
+    "actions": {
+      "manageDetails": "إدارة تفاصيل العمل",
+      "approve": "قبول",
+      "reject": "رفض",
+      "delete": "حذف"
+    },
+    "alerts": {
+      "vendorView": "عرض البائع: {{name}}"
+    },
+    "confirm": {
+      "rejectVendor": "رفض {{name}}؟",
+      "deleteVendor": "حذف {{name}} بشكل دائم؟"
+    },
+    "errors": {
+      "approveFailed": "خطأ في الخادم: لم يتم قبول البائع.",
+      "rejectFailed": "خطأ في الخادم: لم يتم رفض البائع.",
+      "deleteFailed": "خطأ في الخادم: لم يتم حذف البائع."
+    },
+    "status": {
+      "approved": "مقبول",
+      "active": "نشط",
+      "pending": "قيد الانتظار",
+      "underReview": "قيد المراجعة",
+      "rejected": "مرفوض",
+      "unknown": "غير معروف"
+    }
+  },
+  "userManagement": {
+    "title": "إدارة المستخدمين",
+    "subtitle": "عرض وإدارة جميع مستخدمي المنصة",
+    "backToDashboard": "← العودة إلى لوحة الإدارة",
+    "loading": "جاري تحميل المستخدمين...",
+    "na": "غير متاح",
+    "stats": {
+      "totalRegistries": "إجمالي المستخدمين",
+      "activeAccounts": "الحسابات النشطة",
+      "activeVendors": "البائعون النشطون"
+    },
+    "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني...",
+    "filters": {
+      "allAccessStates": "كل الحالات",
+      "allClearanceTiers": "كل الأدوار"
+    },
+    "table": {
+      "identityLabel": "الاسم",
+      "emailRoute": "البريد الإلكتروني",
+      "tierClassification": "الدور",
+      "stateStatus": "الحالة",
+      "joined": "تاريخ الانضمام",
+      "actions": "الإجراءات",
+      "empty": "لا يوجد مستخدمون"
+    },
+    "status": {
+      "active": "نشط",
+      "inactive": "غير نشط",
+      "blocked": "محظور",
+      "suspended": "موقوف",
+      "unknown": "غير معروف"
+    },
+    "type": {
+      "vendor": "بائع",
+      "customer": "عميل",
+      "admin": "مسؤول",
+      "unknown": "غير معروف"
+    },
+    "actions": {
+      "viewRecord": "عرض التفاصيل",
+      "blockAccess": "حظر المستخدم",
+      "unblockAccess": "رفع الحظر",
+      "deleteRecord": "حذف المستخدم"
+    },
+    "alert": {
+      "blockError": "فشل في حظر المستخدم",
+      "unblockError": "فشل في رفع الحظر",
+      "deleteError": "فشل في حذف المستخدم",
+      "viewUser": "عرض: {{name}}"
+    },
+    "confirm": {
+      "deleteUser": "حذف \"{{name}}\" بشكل دائم؟"
+    }
+  },
+  "faq": {
+    "title": "الأسئلة الشائعة",
+    "subtitle": "كل ما تحتاج معرفته عن ZeroWaste",
+    "back": "عودة",
+    "stillHaveQuestions": "لا تزال لديك أسئلة؟",
+    "teamHelp": "فريقنا سعيد بمساعدتك.",
+    "contactUs": "📧 تواصل معنا",
+    "all": "الكل",
+    "categories": {
+      "general": "عام",
+      "orders": "الطلبات والتوصيل",
+      "payments": "المدفوعات",
+      "accounts": "الحسابات والملف الشخصي",
+      "sustainability": "الاستدامة",
+      "businesses": "للشركات"
+    },
+    "general": {
+      "q1": "ما هو ZeroWaste؟",
+      "a1": "ZeroWaste منصة تربط العملاء بالمطاعم والمخابز والمقاهي والسوبر ماركت المحلية لشراء الطعام الفائض بأسعار مخفضة.",
+      "q2": "كيف يعمل ZeroWaste؟",
+      "a2": "تقوم الشركات بإدراج طعامها الفائض كعروض مخفضة. يتصفح العملاء العروض المتاحة ويضيفونها إلى سلتهم.",
+      "q3": "هل ZeroWaste متاح في منطقتي؟",
+      "a3": "يعمل ZeroWaste حاليًا في منطقة القاهرة الكبرى. نحن نتوسع باستمرار في مناطق جديدة."
+    },
+    "orders": {
+      "q1": "هل يمكنني الاختيار بين الاستلام والتوصيل؟",
+      "a1": "نعم! يمكنك اختيار استلام طلبك مباشرة أو توصيله إلى موقعك مقابل رسوم بسيطة.",
+      "q2": "كيف أتتبع طلبي؟",
+      "a2": "بعد تقديم طلب، سيظهر شريط تتبع على الصفحة الرئيسية يعرض حالة طلبك في الوقت الفعلي.",
+      "q3": "هل يمكنني إلغاء طلبي؟",
+      "a3": "يمكنك إلغاء طلبك قبل قبوله من قبل البائع.",
+      "q4": "ماذا لو ألغى البائع طلبي؟",
+      "a4": "ستتلقى إشعارًا فوريًا وسيعكس شريط الطلب الإلغاء."
+    },
+    "payments": {
+      "q1": "ما طرق الدفع المقبولة؟",
+      "a1": "نقبل الدفع نقدًا عند التوصيل والاستلام. الدفع بالبطاقة متاح أيضًا.",
+      "q2": "هل الأسعار نهائية أم توجد رسوم إضافية؟",
+      "a2": "السعر المعروض يشمل سعر العرض المخفض. قد تُطبق رسوم توصيل. لا توجد رسوم مخفية."
+    },
+    "accounts": {
+      "q1": "هل أحتاج إلى حساب لتصفح العروض؟",
+      "a1": "يمكنك تصفح العروض بدون حساب. لتقديم الطلبات تحتاج إلى تسجيل الدخول.",
+      "q2": "كيف أحدّث معلومات ملفي الشخصي؟",
+      "a2": "انتقل إلى صفحة ملفك الشخصي من شريط التنقل وقم بتحديث بياناتك.",
+      "q3": "كيف أحذف حسابي؟",
+      "a3": "يمكنك حذف حسابك من صفحة إعدادات الملف الشخصي. هذا الإجراء نهائي."
+    },
+    "sustainability": {
+      "q1": "كيف يساعد ZeroWaste البيئة؟",
+      "a1": "كل طلب ينقذ طعامًا كان سيُهدر، مما يقلل انبعاثات ثاني أكسيد الكربون.",
+      "q2": "ما هو قسم أثر الاستدامة؟",
+      "a2": "يعرض عدد الوجبات التي أنقذتها وكمية ثاني أكسيد الكربون التي ساعدت في منعها والمبلغ الذي وفرته."
+    },
+    "businesses": {
+      "q1": "كيف يمكن لعملي الانضمام إلى ZeroWaste؟",
+      "a1": "سجل كبائع وأكمل إعداد عملك وقدّم مستنداتك للتحقق. بعد الموافقة يمكنك إدراج عروضك.",
+      "q2": "ما أنواع الشركات التي يمكنها الانضمام؟",
+      "a2": "المطاعم والمخابز والمقاهي والسوبر ماركت والفنادق وأي شركة غذائية لديها طعام فائض.",
+      "q3": "كيف أدير عروضي وطلباتي؟",
+      "a3": "من خلال لوحة تحكم البائع يمكنك إضافة عروضك وتعديلها وتتبع الطلبات الواردة."
+    }
   },
   "common": {
     "save": "حفظ",
@@ -532,128 +1055,10 @@
     "newOffers": "عروض جديدة بالقرب منك",
     "paymentConfirmations": "تأكيدات الدفع",
     "newsPromotions": "الأخبار والعروض",
-"reviews": "التقييمات",
-"noReviews": "لا توجد تقييمات بعد",
-"loading": "جاري التحميل...",
-"showLess": "عرض أقل",
-"viewAll": "عرض الكل"
-  },
-  "userManagement": {
-    "title": "إدارة المستخدمين",
-    "subtitle": "عرض وإدارة جميع مستخدمي المنصة",
-    "backToDashboard": "→ العودة إلى لوحة الإدارة",
-    "loading": "جاري تحميل المستخدمين...",
-    "na": "غير متاح",
-    "stats": { "totalRegistries": "إجمالي المستخدمين", "activeAccounts": "الحسابات النشطة", "activeVendors": "البائعون النشطون" },
-    "searchPlaceholder": "ابحث بالاسم أو البريد الإلكتروني...",
-    "filters": { "allAccessStates": "كل الحالات", "allClearanceTiers": "كل الأدوار" },
-    "table": { "identityLabel": "الاسم", "emailRoute": "البريد الإلكتروني", "tierClassification": "الدور", "stateStatus": "الحالة", "joined": "تاريخ الانضمام", "actions": "الإجراءات", "empty": "لا يوجد مستخدمون" },
-    "status": { "active": "نشط", "inactive": "غير نشط", "blocked": "محظور", "suspended": "موقوف", "unknown": "غير معروف" },
-    "type": { "vendor": "بائع", "customer": "عميل", "admin": "مسؤول", "unknown": "غير معروف" },
-    "actions": { "viewRecord": "عرض التفاصيل", "blockAccess": "حظر المستخدم", "unblockAccess": "رفع الحظر", "deleteRecord": "حذف المستخدم" },
-    "alert": { "blockError": "فشل في حظر المستخدم", "unblockError": "فشل في رفع الحظر", "deleteError": "فشل في حذف المستخدم", "viewUser": "عرض: {{name}}" },
-    "confirm": { "deleteUser": "حذف \"{{name}}\" بشكل دائم؟" }
-  },
-  "welcomeBack": "مرحبًا بعودتك،",
-  "yourBusiness": "عملك التجاري",
-  "manageOffers": "أدر عروض فائض الطعام من مكان واحد",
-  "impact": "تأثيرك",
-  "orders": "طلبات",
-  "salesCharts": "مخططات المبيعات",
-  "sustainabilityImpact": "الأثر البيئي",
-  "myOffers": "عروضي",
-  "recentOrders": "الطلبات الأخيرة",
-  "salesHistory": "سجل المبيعات",
-  "branches": "الفروع",
-  "allBranches": "كل الفروع",
-  "goToProfile": "الذهاب إلى الملف الشخصي",
-  "businessAccount": "حساب الأعمال",
-  "activeOffers": "العروض النشطة",
-  "totalOrders": "إجمالي الطلبات",
-  "unitsSold": "الوحدات المباعة",
-  "netRevenue": "صافي الإيرادات",
-  "netRevenueMonth": "صافي الإيرادات / الشهر",
-  "ordersOverview": "نظرة عامة على الطلبات",
-  "platformDeduction": "خصم المنصة",
-  "grossRevenueWas": "إجمالي الإيرادات كان",
-  "mealsSaved": "وجبات تم إنقاذها",
-  "co2Prevented": "ثاني أكسيد الكربون الممنوع",
-  "revenueRecovered": "الإيرادات المستردة",
-  "contributionToReducing": "مساهمتك في تقليل هدر الطعام",
-  "topSellingOffers": "العروض الأكثر مبيعًا",
-  "bestPerforming": "أفضل العروض أداءً",
-  "sold": "مُباع",
-  "addOffer": "إضافة عرض",
-  "editOffer": "تعديل العرض",
-  "newOffer": "عرض جديد",
-  "title": "العنوان",
-  "description": "الوصف",
-  "photo": "الصورة",
-  "originalPrice": "السعر الأصلي",
-  "discountPrice": "سعر الخصم",
-  "quantityAvailable": "الكمية المتاحة",
-  "expiresInHours": "ينتهي خلال (ساعات)",
-  "expirationDate": "تاريخ الانتهاء",
-  "status": "الحالة",
-  "active": "نشط",
-  "expired": "منتهي",
-  "disabled": "معطل",
-  "pending": "قيد الانتظار",
-  "processing": "قيد المعالجة",
-  "completed": "مكتمل",
-  "cancelled": "ملغي",
-  "delivered": "تم التسليم",
-  "stock": "المخزون",
-  "expires": "ينتهي",
-  "save": "حفظ",
-  "cancel": "إلغاء",
-  "saving": "جاري الحفظ",
-  "saveChanges": "حفظ التغييرات",
-  "createOffer": "إنشاء عرض",
-  "noOffers": "لا توجد عروض بعد",
-  "edit": "تعديل",
-  "delete": "حذف",
-  "orderID": "رقم الطلب",
-  "offer": "العرض",
-  "customer": "العميل",
-  "amount": "المبلغ",
-  "noOrders": "لا توجد طلبات بعد",
-  "viewAll": "عرض الكل",
-  "showLess": "عرض أقل",
-  "saleID": "رقم البيع",
-  "qty": "الكمية",
-  "price": "السعر",
-  "orderStatus": "حالة الطلب",
-  "date": "التاريخ",
-  "viewDetails": "عرض التفاصيل",
-  "sale": "بيع",
-  "offerDetails": "تفاصيل العرض",
-  "orderDetails": "تفاصيل الطلب",
-  "quantitySold": "الكمية المباعة",
-  "totalPrice": "السعر الإجمالي",
-  "email": "البريد الإلكتروني",
-  "phone": "الهاتف",
-  "deliveryType": "نوع التوصيل",
-  "orderDate": "تاريخ الطلب",
-  "editBranch": "تعديل الفرع",
-  "deleteOffer": "حذف العرض",
-  "deleteBranch": "حذف الفرع",
-  "confirmDelete": "هل أنت متأكد أنك تريد الحذف؟",
-  "freshPasta": "مثال: صندوق معكرونة طازجة",
-  "fillRequired": "يرجى ملء جميع الحقول المطلوبة",
-  "selectBranch": "يرجى اختيار فرع أولاً",
-  "discountError": "يجب أن يكون سعر الخصم أقل من السعر الأصلي",
-  "offerUpdated": "تم تحديث العرض بنجاح",
-  "offerCreated": "تم إنشاء العرض بنجاح",
-  "offerDeleted": "تم حذف العرض بنجاح",
-  "failedSaveOffer": "فشل في حفظ العرض",
-  "failedDeleteOffer": "فشل في حذف العرض",
-  "failedUpdateBranch": "فشل في تحديث الفرع",
-  "failedDeleteBranch": "فشل في حذف الفرع",
-  "failedUpdateStatus": "فشل في تحديث الحالة",
-  "failedLoadBranches": "فشل في تحميل الفروع",
-  "failedLoadSaleDetails": "فشل في تحميل تفاصيل البيع",
-  "loadingTakingLonger": "هذا يستغرق وقتًا أطول من المعتاد...",
-  "networkError": "خطأ في الشبكة. يرجى المحاولة مرة أخرى.",
-  "takingLonger": "يستغرق وقتًا أطول من المعتاد..."
+    "reviews": "التقييمات",
+    "noReviews": "لا توجد تقييمات بعد",
+    "loading": "جاري التحميل...",
+    "showLess": "عرض أقل",
+    "viewAll": "عرض الكل"
+  }
 }

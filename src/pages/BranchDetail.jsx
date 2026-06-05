@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -6,7 +7,7 @@ import './BranchDetail.css';
 export default function BranchDetail() {
   const { id, vendorId } = useParams();
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const [branch, setBranch] = useState(null);
   const [vendor, setVendor] = useState(null);
   const [branchOffers, setBranchOffers] = useState([]);
@@ -75,7 +76,8 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
       <div className="branch-detail-container">
         <div className="not-found">
           <div className="rd-spinner" />
-          <p>Loading branch details...</p>
+          <p>{t("branchDetail.loading")}</p>
+
         </div>
       </div>
     );
@@ -85,13 +87,13 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
     return (
       <div className="branch-detail-container">
         <div className="not-found">
-          <h2>{error || 'Branch not found'}</h2>
+          <h2>{error || t("branchDetail.notFound")}</h2>
           <p style={{ color: '#666', marginTop: '10px' }}>
-            The branch you're looking for doesn't exist or is not available.
+            {t("branchDetail.notAvailable")}
           </p>
           <button onClick={() => navigate(-1)} className="back-btn" style={{ marginTop: '20px' }}>
-            ← Back
-          </button>
+  <ArrowLeft size={18} /> {t("branchDetail.back")}
+</button>
         </div>
       </div>
     );
@@ -106,7 +108,7 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
 
       <div className="detail-header">
         <button onClick={() => navigate(-1)} className="back-btn">
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t("branchDetail.back")}
         </button>
       </div>
 
@@ -122,7 +124,7 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
     <div className="branch-hero-text">
       <h1>{branch.branch_name}</h1>
       <div className="branch-hero-meta">
-        <span><MapPin size={14} /> {branch.store_address || "Address not available"}</span>
+        <span><MapPin size={14} /> {branch.store_address || t("branchDetail.address")}</span>
       </div>
     </div>
   </div>
@@ -132,21 +134,21 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
           <div className="branch-info-item">
             <div className="branch-info-icon"><Clock size={18} /></div>
             <div>
-              <div className="branch-info-label">Opening Hours</div>
+              <div className="branch-info-label">{t("branchDetail.openingHours")}</div>
               <div className="branch-info-value">{branch.opening_hours || "N/A"}</div>
             </div>
           </div>
           <div className="branch-info-item">
             <div className="branch-info-icon"><Phone size={18} /></div>
             <div>
-              <div className="branch-info-label">Phone</div>
+              <div className="branch-info-label">{t("branchDetail.phone")}</div>
               <div className="branch-info-value">{branch.contact_phone || "N/A"}</div>
             </div>
           </div>
           <div className="branch-info-item">
             <div className="branch-info-icon"><Mail size={18} /></div>
             <div>
-              <div className="branch-info-label">Email</div>
+              <div className="branch-info-label">{t("branchDetail.email")}</div>
               <div className="branch-info-value">{branch.contact_email || "N/A"}</div>
             </div>
           </div>
@@ -155,15 +157,14 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
 
       {vendor && (
         <div className="vendor-info-section">
-          <h2>About {vendor.business_name}</h2>
-          <p className="vendor-description">
+          <p>{t("branchDetail.vendorDescription", { type: vendor.vendor_type || "Restaurant", address: branch.store_address })}</p>          <p className="vendor-description">
             {vendor.vendor_type || "Restaurant"} • Located at {branch.store_address}
           </p>
         </div>
       )}
 
       <div className="branch-offers-section">
-        <h2>Available Offers ({branchOffers.length})</h2>
+        <h2>{t("branchDetail.availableOffers", { count: branchOffers.length })}</h2>
         {branchOffers.length === 0 ? (
           <p style={{ color: "#9ca3af", textAlign: "center", padding: "2rem" }}>
             No offers available at this branch right now.
@@ -208,7 +209,7 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
                       </div>
                       <div className="branch-offer-meta">
                         <span className="branch-offer-quantity">
-                          <Package size={12} /> {offer.quantity_available} left
+                          <Package size={12} /> {t("branchDetail.left", { count: offer.quantity_available })}
                         </span>
                         <span className="branch-offer-time">
                           <Clock size={12} /> {expTime}
@@ -229,7 +230,7 @@ const branchRes = await fetch(`${apiUrl}/api/branches/${id}/details`, { headers 
             className="directions-btn"
             onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')}
           >
-            <NavigationIcon size={18} /> Get Directions
+            <NavigationIcon size={18} /> {t("branchDetail.getDirections")}
           </button>
         </div>
       )}
