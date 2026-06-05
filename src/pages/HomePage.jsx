@@ -69,7 +69,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
   const [showReview, setShowReview] = useState(false);
   const [isCancelled, setIsCancelled] = useState(false);
 
-  const handleCancelOrder = async () => {
+ const handleCancelOrder = async () => {
     const token =
       localStorage.getItem("auth_token") ||
       localStorage.getItem("token") ||
@@ -81,7 +81,12 @@ function OrderTrackingStrip({ order, onDismiss }) {
       return;
     }
     try {
-      const orderId = order.id || order.orderId;
+      const orderId = 
+        order.orderId || 
+        order.order_id || 
+        order.orderNumber || 
+        order.database_id || 
+        order.id;
       
       if (!orderId) {
         console.error("❌ No order ID found", order);
@@ -101,6 +106,10 @@ function OrderTrackingStrip({ order, onDismiss }) {
       if (res.ok) {
         console.log("✅ Cancel successful:", data);
         setIsCancelled(true);
+        
+        // 🔄 رجّع الستوك في الـ home page
+        window.dispatchEvent(new Event('ordercancelled'));
+        
         setTimeout(() => onDismiss(), 2000);
       } else {
         console.error("❌ Cancel failed:", data);
@@ -424,7 +433,7 @@ function OrderTrackingStrip({ order, onDismiss }) {
             padding: "0 4px",
           }}
         >
-          This order was cancelled by the vendor.
+          This order has been cancelled.
         </p>
       </div>
     );
