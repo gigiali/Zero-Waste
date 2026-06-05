@@ -284,7 +284,7 @@ export default function OfferDetail() {
       <div className="od-offer-header">
         <div className="od-offer-title-row">
           <span className="od-quantity-badge">
-            <Package size={14} /> {offer.quantity} left
+            <Package size={14} /> {t("offerDetail.quantityLeft", { count: offer.quantity })}
           </span>
         </div>
         <div className="od-price-row">
@@ -301,13 +301,15 @@ export default function OfferDetail() {
       {/* ── Tabs ── */}
       <div className="od-tabs">
         {["details", "restaurant", "reviews"].map((tab) => (
-          <button key={tab} className={`od-tab ${activeTab === tab ? "active" : ""}`}
-            onClick={() => setActiveTab(tab)}>
-            {tab === "details" ? "Offer Details"
-              : tab === "restaurant" ? "Restaurant Info"
-                : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
-          </button>
-        ))}
+  <button key={tab} className={`od-tab ${activeTab === tab ? "active" : ""}`}
+    onClick={() => setActiveTab(tab)}>
+    {tab === "details" ? t("offerDetail.tabDetails")
+      : tab === "restaurant" ? t("offerDetail.tabRestaurant")
+        : offerReviews.length > 0
+          ? t("offerDetail.reviewsCount", { count: offerReviews.length })
+          : t("offerDetail.tabReviews")}
+  </button>
+))}
       </div>
 
       {/* ── Tab Content ── */}
@@ -550,11 +552,11 @@ export default function OfferDetail() {
           <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>📍</div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Location Required</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>Please set your location first before adding items to your cart.</p>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>{t("offerDetail.locationRequiredTitle")}</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>{t("offerDetail.locationRequiredMessage")}</p>
             <button onClick={() => setShowLocationPopup(false)}
               style={{ width: "100%", padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
-              OK
+              {t("offerDetail.ok")}
             </button>
           </div>
         </div>
@@ -567,16 +569,16 @@ export default function OfferDetail() {
           <div style={{ background: "white", borderRadius: "14px", padding: "2rem", maxWidth: "360px", width: "90%", textAlign: "center", boxShadow: "0 20px 60px rgba(0,0,0,0.2)" }}
             onClick={(e) => e.stopPropagation()}>
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🛒</div>
-            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>Sign In Required</h3>
-            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>You need to sign in first to add items to your cart.</p>
+            <h3 style={{ margin: "0 0 0.5rem", color: "#1f2937" }}>{t("offerDetail.signInRequiredTitle")}</h3>
+            <p style={{ color: "#6b7280", fontSize: "0.9rem", margin: "0 0 1.5rem" }}>{t("offerDetail.signInRequiredMessage")}</p>
             <div style={{ display: "flex", gap: "0.75rem" }}>
               <button onClick={() => setShowSignInPopup(false)}
                 style={{ flex: 1, padding: "0.65rem", border: "1.5px solid #e5e7eb", borderRadius: "8px", background: "white", color: "#374151", fontWeight: 600, cursor: "pointer" }}>
-                Cancel
+                {t("offerDetail.cancel")}
               </button>
               <button onClick={() => { setShowSignInPopup(false); navigate("/signin"); }}
                 style={{ flex: 1, padding: "0.65rem", border: "none", borderRadius: "8px", background: "#10b981", color: "white", fontWeight: 600, cursor: "pointer" }}>
-                Sign In
+                {t("offerDetail.signIn")}
               </button>
             </div>
           </div>

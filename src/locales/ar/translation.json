@@ -435,6 +435,7 @@
     "tabDetails": "تفاصيل العرض",
     "tabRestaurant": "معلومات المطعم",
     "tabReviews": "التعليقات",
+"reviewsCount": "التعليقات ({{count}})",
     "aboutOffer": "حول هذا العرض",
     "offerInformation": "معلومات العرض",
     "viewFullRestaurant": "عرض صفحة المطعم كاملة",
@@ -449,7 +450,13 @@
     "reviewDelivery": "🚚 توصيل",
     "reviewPickup": "🏪 استلام",
     "addToCart": "أضف إلى السلة",
-    "addedToCart": "أضيف إلى السلة!"
+    "addedToCart": "أضيف إلى السلة!",
+    "quantityLeft":"{{count}} متبقي",
+"locationRequiredTitle": "الموقع مطلوب",
+"locationRequiredMessage": "يرجى تحديد موقعك أولاً قبل إضافة العناصر إلى السلة.",
+"ok": "حسناً",
+"signInRequiredTitle": "تسجيل الدخول مطلوب",
+"signInRequiredMessage": "يجب تسجيل الدخول أولاً لإضافة عناصر إلى السلة."
   },
   "reports": {
     "reviewTitle": "مراجعة التقرير",

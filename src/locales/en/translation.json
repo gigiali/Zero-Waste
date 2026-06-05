@@ -701,7 +701,14 @@
     "reviewDelivery": "🚚 Delivery",
     "reviewPickup": "🏪 Pickup",
     "addToCart": "Add to Cart",
-    "addedToCart": "Added to Cart!"
+    "addedToCart": "Added to Cart!",
+    "quantityLeft": "{{count}} left",
+    "locationRequiredTitle": "Location Required",
+    "locationRequiredMessage": "Please set your location first before adding items to your cart.",
+    "ok": "OK",
+    "signInRequiredTitle": "Sign In Required",
+    "signInRequiredMessage": "You need to sign in first to add items to your cart.",
+    "reviewsCount": "Reviews ({{count}})"
   },
   "reports": {
     "reviewTitle": "Review Report",
