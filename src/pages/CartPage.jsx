@@ -10,7 +10,14 @@ export default function CartPage() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { cartItems, removeFromCart, updateQuantity } = useCart();
-  const { locationName, deliveryFee: ctxFee, loadingLocation, userLat, userLng, calculateDeliveryFee } = useLocationContext();
+  const {
+    locationName,
+    deliveryFee: ctxFee,
+    loadingLocation,
+    userLat,
+    userLng,
+    calculateDeliveryFee,
+  } = useLocationContext();
   const [selectedDelivery, setSelectedDelivery] = useState(null);
 
   const deliveryFee = selectedDelivery === "delivery" ? (ctxFee ?? 0) : 0;
@@ -18,7 +25,7 @@ export default function CartPage() {
   const subtotal = cartItems.reduce(
     (sum, item) =>
       sum +
-      Number(item.discountedPrice ?? item.discountPrice ?? 0) *
+      Number(item.discountedPrice ?? item.discount_price ?? item.discountPrice ?? 0) *
         Number(item.quantity || 0),
     0,
   );
@@ -33,6 +40,7 @@ export default function CartPage() {
 
   return (
     <div className="cart-container">
+      {/* ── Header ── */}
       <div className="cart-header">
         <div className="cart-header-inner">
           <div className="cart-header-title">
@@ -44,6 +52,7 @@ export default function CartPage() {
       </div>
 
       <div className="cart-content">
+        {/* ── Items list ── */}
         <div className="cart-items">
           {cartItems.length === 0 ? (
             <div className="cart-empty">
@@ -52,52 +61,75 @@ export default function CartPage() {
               <p>{t("cart.emptyMessage")}</p>
             </div>
           ) : (
-            cartItems.map((item) => (
-              <div key={item.id} className="cart-item">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="cart-item-image"
-                  onError={(e) => {
-                    e.target.style.display = "none";
-                    e.target.nextSibling.style.display = "flex";
-                  }}
-                />
-                <div className="cart-item-placeholder" style={{ display: "none" }}>
-                  🍽️
-                </div>
-                <div className="cart-item-info">
-                  <h3>{item.title}</h3>
-                  <p className="cart-item-location">{item.location}</p>
-                  <div className="cart-item-prices">
-                    <span className="cart-item-price">
-                      EGP {Number(item.discountedPrice ?? item.discountPrice ?? 0).toFixed(2)}
-                    </span>
-                    <span className="cart-item-original-price">
-                      EGP {Number(item.originalPrice ?? item.original_price ?? 0).toFixed(2)}
-                    </span>
+            cartItems.map((item) => {
+              const maxQty = item.quantity_available ?? item.stock ?? 999;
+              return (
+                <div key={item.id} className="cart-item">
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="cart-item-image"
+                    onError={(e) => {
+                      e.target.style.display = "none";
+                      e.target.nextSibling.style.display = "flex";
+                    }}
+                  />
+                  <div
+                    className="cart-item-placeholder"
+                    style={{ display: "none" }}
+                  >
+                    🍽️
+                  </div>
+
+                  <div className="cart-item-info">
+                    <h3>{item.title}</h3>
+                    <p className="cart-item-location">{item.location}</p>
+                    <div className="cart-item-prices">
+                      <span className="cart-item-price">
+                        EGP{" "}
+                        {Number(
+                          item.discountedPrice ??
+                            item.discount_price ??
+                            item.discountPrice ??
+                            0,
+                        ).toFixed(2)}
+                      </span>
+                      <span className="cart-item-original-price">
+                        EGP{" "}
+                        {Number(
+                          item.originalPrice ?? item.original_price ?? 0,
+                        ).toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* ── Quantity controls ── */}
+                  <div className="cart-item-quantity">
+                    <button
+                      className="qty-btn"
+                      onClick={() => updateQuantity(item.id, -1)}
+                    >
+                      −
+                    </button>
+                    <span className="qty-number">{item.quantity}</span>
+                    <button
+                      className="qty-btn"
+                      disabled={item.quantity >= maxQty}
+                      onClick={() => {
+                        if (item.quantity >= maxQty) return;
+                        updateQuantity(item.id, 1);
+                      }}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
-                <button
-                  className="cart-item-delete"
-                  onClick={() => removeFromCart(item.id)}
-                >
-                  <Trash2 size={20} />
-                </button>
-                <div className="cart-item-quantity">
-                  <button className="qty-btn" onClick={() => updateQuantity(item.id, -1)}>
-                    −
-                  </button>
-                  <span className="qty-number">{item.quantity}</span>
-                  <button className="qty-btn" onClick={() => updateQuantity(item.id, 1)}>
-                    +
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 
+        {/* ── Order summary (outside the map) ── */}
         <div className="order-summary">
           <h2>{t("cart.summaryTitle")}</h2>
           <div className="summary-rows">
@@ -109,7 +141,9 @@ export default function CartPage() {
               <div className="summary-row">
                 <span>{t("cart.deliveryFee")}</span>
                 <span>
-                  {loadingLocation ? "Calculating..." : `EGP ${deliveryFee.toFixed(2)}`}
+                  {loadingLocation
+                    ? "Calculating..."
+                    : `EGP ${deliveryFee.toFixed(2)}`}
                 </span>
               </div>
             )}
@@ -119,6 +153,7 @@ export default function CartPage() {
             <span>EGP {total.toFixed(2)}</span>
           </div>
 
+          {/* ── Delivery options ── */}
           <div className="delivery-options">
             <h3>{t("cart.chooseDeliveryMethod")}</h3>
             <div className="delivery-buttons">
@@ -130,7 +165,9 @@ export default function CartPage() {
               >
                 <span className="delivery-icon">🏪</span>
                 <div className="delivery-info">
-                  <span className="delivery-title">{t("cart.pickupTitle")}</span>
+                  <span className="delivery-title">
+                    {t("cart.pickupTitle")}
+                  </span>
                   <span className="delivery-desc">
                     {t("cart.pickupDescription")}
                   </span>
@@ -159,8 +196,8 @@ export default function CartPage() {
                   {loadingLocation
                     ? "..."
                     : ctxFee !== null
-                    ? `+${ctxFee} EGP`
-                    : "+? EGP"}
+                      ? `+${ctxFee} EGP`
+                      : "+? EGP"}
                 </span>
                 {selectedDelivery === "delivery" && (
                   <span className="selected-indicator">✓</span>
@@ -199,11 +236,13 @@ export default function CartPage() {
                   disabled={loadingLocation}
                   onClick={() =>
                     navigate(
-                      `/payment?method=${selectedDelivery}&fee=${deliveryFee}`
+                      `/payment?method=${selectedDelivery}&fee=${deliveryFee}`,
                     )
                   }
                 >
-                  {loadingLocation ? "Calculating fee..." : t("cart.continueToPayment")}
+                  {loadingLocation
+                    ? "Calculating fee..."
+                    : t("cart.continueToPayment")}
                 </button>
               </div>
             )}

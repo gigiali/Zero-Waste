@@ -60,33 +60,46 @@ export function CartProvider({ children }) {
 
   const [conflictDialog, setConflictDialog] = useState(null);
 
+  // ✅ الدالة اللي بتضيف فعلاً مع التحقق من الـ quantity
   const _doAdd = (item, quantity, itemId) => {
-    const maxQuantity = item.stock ?? item.quantity_available ?? 999;
+    // ✅ الـ field اسمه quantity_available من الـ API
+    const maxQuantity = item.quantity_available ?? 999;
     let result = { success: false, message: "" };
 
     setCartItems((prev) => {
       const existing = prev.find((i) => String(i.id) === itemId);
+      
       if (existing) {
         const newQuantity = existing.quantity + quantity;
+        
+        // ❌ لو الإجمالي أكبر من المتاح - منع الإضافة
         if (newQuantity > maxQuantity) {
+          const canAdd = maxQuantity - existing.quantity;
           result = {
             success: false,
-            message: `❌ Only ${maxQuantity} available! You already have ${existing.quantity} in cart.`,
+            message: `❌ Only ${maxQuantity} available! You have ${existing.quantity} in cart. Can add ${canAdd} more.`,
           };
           return prev;
         }
+        
         result = { success: true, message: "✅ Added to Cart!" };
         return prev.map((i) =>
           String(i.id) === itemId ? { ...i, quantity: newQuantity } : i
         );
       }
+      
+      // لو الكمية المطلوبة أكثر من المتاح
       if (quantity > maxQuantity) {
-        result = { success: false, message: `❌ Only ${maxQuantity} item(s) available!` };
+        result = { 
+          success: false, 
+          message: `❌ Only ${maxQuantity} item(s) available!` 
+        };
         return prev;
       }
+      
       result = { success: true, message: "✅ Added to Cart!" };
-      return [...prev, { ...item, id: itemId, quantity }];
-    });
+const maxQty = item.quantity_available ?? item.stock ?? 999;
+return [...prev, { ...item, id: itemId, quantity, quantity_available: maxQty, stock: maxQty }];    });
 
     setCartVendorId(item.vendor_id ?? item.branch?.vendor_id ?? null);
     setCartBranchId(item.branch_id ?? item.branch?.id ?? null);
@@ -146,10 +159,24 @@ export function CartProvider({ children }) {
 
   const handleConflictCancel = () => setConflictDialog(null);
 
+  // ✅ تحديث الكمية مع التحقق من الحد الأقصى
   const updateQuantity = (id, delta) => {
     setCartItems((prev) =>
       prev
-        .map((i) => (i.id === id ? { ...i, quantity: i.quantity + delta } : i))
+        .map((i) => {
+          if (i.id === id) {
+const maxQuantity = i.quantity_available ?? i.stock ?? 999;
+            const newQuantity = i.quantity + delta;
+            
+            // ❌ لو تجاوز الحد الأقصى - ما تغيش
+            if (newQuantity > maxQuantity) {
+              return i;
+            }
+            
+            return { ...i, quantity: newQuantity };
+          }
+          return i;
+        })
         .filter((i) => i.quantity > 0)
     );
   };
