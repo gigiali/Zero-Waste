@@ -710,6 +710,23 @@
     "signInRequiredMessage": "You need to sign in first to add items to your cart.",
     "reviewsCount": "Reviews ({{count}})"
   },
+  "restaurantDetail": {
+    "loading": "Loading...",
+    "notFound": "Restaurant not found",
+    "backToHome": "← Back to Home",
+    "back": "Back",
+    "openHours": "Open Hours",
+    "phone": "Phone",
+    "email": "Email",
+    "about": "About {{name}}",
+    "availableOffers": "Available Offers ({{count}})",
+    "noOffers": "No offers available right now.",
+    "left": "{{count}} left",
+    "currentBranch": "Current Branch",
+    "otherBranches": "Other Branches ({{count}})",
+    "getDirections": "Get Directions",
+    "branches": "Our Branches ({{count}})"
+  },
   "reports": {
     "reviewTitle": "Review Report",
     "reviewId": "ID #{{id}}",

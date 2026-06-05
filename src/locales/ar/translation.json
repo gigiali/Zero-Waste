@@ -458,6 +458,23 @@
 "signInRequiredTitle": "تسجيل الدخول مطلوب",
 "signInRequiredMessage": "يجب تسجيل الدخول أولاً لإضافة عناصر إلى السلة."
   },
+  "restaurantDetail": {
+    "loading": "جاري التحميل...",
+    "notFound": "المطعم غير موجود",
+    "backToHome": "→ العودة للرئيسية",
+    "back": "عودة",
+    "openHours": "ساعات العمل",
+    "phone": "الهاتف",
+    "email": "البريد الإلكتروني",
+    "about": "عن {{name}}",
+    "availableOffers": "العروض المتاحة ({{count}})",
+    "noOffers": "لا توجد عروض متاحة الآن.",
+    "left": "{{count}} متبقي",
+    "currentBranch": "الفرع الحالي",
+    "otherBranches": "الفروع الأخرى ({{count}})",
+    "getDirections": "احصل على الاتجاهات",
+    "branches": "فروعنا ({{count}})"
+  },
   "reports": {
     "reviewTitle": "مراجعة التقرير",
     "reviewId": "الرقم #{{id}}",

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package, Heart } from 'lucide-react';
 import { useState, useEffect, useCallback } from 'react';
@@ -6,7 +7,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || "https://zero-waste-production.
 export default function RestaurantDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const { t } = useTranslation();
   const [offer, setOffer]               = useState(null);
   const [vendorOffers, setVendorOffers] = useState([]);
   const [branches, setBranches]         = useState([]);
@@ -119,7 +120,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
       <div className="rd-container">
         <div className="rd-not-found">
           <div className="rd-spinner" />
-          <p>Loading...</p>
+          <p>{t("restaurantDetail.loading")}</p>
         </div>
       </div>
     );
@@ -129,8 +130,8 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
     return (
       <div className="rd-container">
         <div className="rd-not-found">
-          <h2>Restaurant not found</h2>
-          <button onClick={() => navigate('/')} className="rd-back-btn">← Back to Home</button>
+          <h2>{t("restaurantDetail.notFound")}</h2>
+          <button onClick={() => navigate('/')} className="rd-back-btn">← {t("restaurantDetail.backToHome")}</button>
         </div>
       </div>
     );
@@ -147,7 +148,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
       {/* ── Top Bar ── */}
       <div className="rd-topbar">
         <button onClick={() => navigate(-1)} className="rd-back-btn">
-          <ArrowLeft size={18} /> Back
+          <ArrowLeft size={18} /> {t("restaurantDetail.back")}
         </button>
       </div>
 
@@ -192,7 +193,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
         <div className="rd-info-item">
           <div className="rd-info-icon rd-info-icon--green"><Clock size={16} /></div>
           <div>
-            <div className="rd-info-label">Open Hours</div>
+            <div className="rd-info-label">{t("restaurantDetail.openHours")}</div>
             <div className="rd-info-value">{branch.opening_hours || "N/A"}</div>
           </div>
         </div>
@@ -200,7 +201,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
         <div className="rd-info-item">
           <div className="rd-info-icon rd-info-icon--blue"><Phone size={16} /></div>
           <div>
-            <div className="rd-info-label">Phone</div>
+            <div className="rd-info-label">{t("restaurantDetail.phone")}</div>
             <div className="rd-info-value">{branch.contact_phone || "N/A"}</div>
           </div>
         </div>
@@ -208,7 +209,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
         <div className="rd-info-item">
           <div className="rd-info-icon rd-info-icon--purple"><Mail size={16} /></div>
           <div>
-            <div className="rd-info-label">Email</div>
+            <div className="rd-info-label">{t("restaurantDetail.email")}</div>
             <div className="rd-info-value">{branch.contact_email || "N/A"}</div>
           </div>
         </div>
@@ -218,7 +219,7 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
 
         {/* ── About ── */}
         <div className="rd-section">
-          <h2 className="rd-section-title">About {vendor.business_name}</h2>
+          <h2 className="rd-section-title">{t("restaurantDetail.about", { name: vendor.business_name })}</h2>
           <div className="rd-about-card">
             <p>{branch.branch_name} — {branch.store_address}</p>
           </div>
@@ -226,9 +227,9 @@ setVendorOffers(all.filter(o => o.branch_id === source.branch_id));          }
 
         {/* ── Offers ── */}
         <div className="rd-section">
-          <h2 className="rd-section-title">Available Offers ({vendorOffers.length})</h2>
+          <h2 className="rd-section-title">{t("restaurantDetail.availableOffers", { count: vendorOffers.length })}</h2>
           {vendorOffers.length === 0 ? (
-            <p className="rd-empty">No offers available right now.</p>
+            <p className="rd-empty">{t("restaurantDetail.noOffers")}</p>
           ) : (
             <div className="rd-offers-grid">
               {vendorOffers.map((o) => {
@@ -258,7 +259,7 @@ console.log("offer data:", o);                const discount = o.original
                           <span className="rd-offer-new">EGP {o.discount_price}</span>
                         </div>
                         <div className="rd-offer-meta">
-<span className="rd-offer-qty"><Package size={12} /> {o.quantity_available} left</span>                          <span className="rd-offer-time"><Clock size={12} /> {expTime}</span>
+<span className="rd-offer-qty"><Package size={12} /> {t("restaurantDetail.left", { count: o.quantity_available })}</span>                          <span className="rd-offer-time"><Clock size={12} /> {expTime}</span>
                         </div>
                       </div>
                     </div>
@@ -272,10 +273,10 @@ console.log("offer data:", o);                const discount = o.original
         {/* ── Branches ── */}
         {branches.length > 0 && (
           <div className="rd-section">
-            <h2 className="rd-section-title">Our Branches ({branches.length})</h2>
+            <h2 className="rd-section-title">{t("restaurantDetail.branches", { count: branches.length })}</h2>
 
             {/* Current Branch */}
-            <h3 className="rd-subsection-title">Current Branch</h3>
+            <h3 className="rd-subsection-title">{t("restaurantDetail.currentBranch")}</h3>
             <div className="rd-branch-card rd-branch-card--current">
               <div className="rd-branch-header">
                 <MapPin size={15} color="#10b981" />
@@ -294,7 +295,7 @@ console.log("offer data:", o);                const discount = o.original
             {/* Other Branches */}
             {branches.length > 1 && (
               <>
-                <h3 className="rd-subsection-title" style={{ marginTop: "20px" }}>Other Branches ({branches.length - 1})</h3>
+                <h3 className="rd-subsection-title" style={{ marginTop: "20px" }}>{t("restaurantDetail.otherBranches", { count: branches.length - 1 })}</h3>
                 <div className="rd-branches-scroll">
                   {branches.filter(b => b.id !== branch.id).map((b) => (
                     <div key={b.id} className="rd-branch-card rd-branch-card--other" onClick={() => navigate(`/branch/${b.id}`)}>
@@ -328,7 +329,7 @@ console.log("offer data:", o);                const discount = o.original
         {lat && lng && (
           <button className="rd-navigate-btn"
             onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`, '_blank')}>
-            <NavigationIcon size={18} /> Get Directions
+            <NavigationIcon size={18} /> {t("restaurantDetail.getDirections")}
           </button>
         )}
 
