@@ -67,7 +67,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete }) {
   const handleToggleVisibility = async () => {
     setBusy(true);
     try {
-      const res = await fetch(`${BASE_URL}/reviews/${report.id}/toggle-visibility`, {
+      const res = await fetch(`${BASE_URL}/admin/reviews/${report.id}/toggle-visibility`, {
         method: "PATCH",
         headers: {
           Accept: "application/json",
@@ -166,14 +166,15 @@ export default function ReviewModeration() {
 
         const reviewsData = await reviewsRes.json();
         
-        // ✅ HODYA: handle different response structures
-        const raw = Array.isArray(reviewsData?.data) 
-          ? reviewsData.data 
-          : Array.isArray(reviewsData?.reviews)
-          ? reviewsData.reviews
-          : Array.isArray(reviewsData) 
-          ? reviewsData 
-          : [];
+    const raw = Array.isArray(reviewsData?.data?.data)
+  ? reviewsData.data.data
+  : Array.isArray(reviewsData?.data)
+  ? reviewsData.data
+  : Array.isArray(reviewsData?.reviews)
+  ? reviewsData.reviews
+  : Array.isArray(reviewsData)
+  ? reviewsData
+  : [];
 
         setReviews(
           raw.map((r) => ({

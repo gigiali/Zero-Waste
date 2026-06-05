@@ -80,7 +80,7 @@ export default function Navigation({
         const list = Array.isArray(raw) ? raw : [];
         localStorage.setItem("zw_favorites_count", list.length);
         setFavCount(list.length);
-      } catch {}
+      } catch { }
     };
 
     syncFromAPI();
@@ -320,11 +320,12 @@ export default function Navigation({
   }, [showMap]);
 
   const handleLogoutConfirmed = () => {
-    logout();
-    clearLocation();
-    setShowLogoutConfirm(false);
-    navigate("/home");
-  };
+  logout();
+  clearLocation();
+  setShowLogoutConfirm(false);
+  setFavCount(0);
+  window.location.href = "/home";
+};
 
   const pillStyle = {
     display: "flex",
@@ -383,30 +384,30 @@ export default function Navigation({
           zIndex: 200,
         }}
       >
-<div
-  style={{
-    cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-  }}
-  onClick={() => navigate("/home")}
->
-  <img
-    src="/images/zerowaste-logo.png"
-    alt="Zero Waste logo"
-    onError={(e) => {
-      e.currentTarget.src = "/images/e.png";
-    }}
-    style={{
-      width: "160px",
-      height: "140px",
-      objectFit: "contain",
-      marginTop: "-60px",
-      marginBottom: "-60px",
-      filter: "drop-shadow(0 2px 8px rgba(16,185,129,0.08))",
-    }}
-  />
-</div>
+        <div
+          style={{
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+          }}
+          onClick={() => navigate("/home")}
+        >
+          <img
+            src="/images/zerowaste-logo.png"
+            alt="Zero Waste logo"
+            onError={(e) => {
+              e.currentTarget.src = "/images/e.png";
+            }}
+            style={{
+              width: "160px",
+              height: "140px",
+              objectFit: "contain",
+              marginTop: "-60px",
+              marginBottom: "-60px",
+              filter: "drop-shadow(0 2px 8px rgba(16,185,129,0.08))",
+            }}
+          />
+        </div>
         <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
           {!hideLocation && (
             <div

@@ -32,10 +32,6 @@ function ChangePassword({ onCancel, role }) {
 
 if (!form.next) {
   e.password = "New password is required";
-}
-
-if (!form.next) {
-  e.password = "New password is required";
 } else if (form.next.length < 8) {
   e.password = "Password must be at least 8 characters";
 }
