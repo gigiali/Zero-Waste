@@ -380,7 +380,17 @@ const Admin = () => {
         clearTimeout(timeout);
         if (!res.ok) throw new Error(`Sustainability ${res.status}`);
         const data = await res.json();
-        if (data.success) { setSustainabilityMetrics(data.metrics); setSustainabilityChartData(data.chart_data || []); }
+        const metrics = data?.metrics ?? data?.data?.metrics ?? data?.data ?? data;
+        const chartData = data?.chart_data ?? data?.data?.chart_data ?? data?.chartData ?? [];
+        if (metrics) {
+          setSustainabilityMetrics({
+            meals_saved: metrics.meals_saved ?? metrics?.mealsSaved ?? metrics?.meals_saved_count ?? 0,
+            co2_prevented_kg: metrics.co2_prevented_kg ?? metrics?.co2PreventedKg ?? metrics?.co2_prevented ?? 0,
+            recovered_revenue: metrics.recovered_revenue ?? metrics?.recoveredRevenue ?? metrics?.revenue_recovered ?? 0,
+            consumer_savings: metrics.consumer_savings ?? metrics?.consumerSavings ?? metrics?.savings ?? 0,
+          });
+          setSustainabilityChartData(Array.isArray(chartData) ? chartData : []);
+        }
       } catch (err) { if (err.name !== "AbortError") setSustainabilityError(err.message); }
       finally { setSustainabilityLoading(false); }
     })();
@@ -399,10 +409,14 @@ const Admin = () => {
         const data = await res.json();
         const s = data?.data ?? data;
         const parsedStats = {
-          total_customers: s?.total_customers ?? 0, total_vendors: s?.total_vendors ?? 0,
-          total_orders: s?.total_orders ?? 0, total_active_offers: s?.total_active_offers ?? 0,
-          gross_revenue: s?.financials?.total_market_sales ?? 0, customer_fees: s?.financials?.customer_fees_6_pct ?? 0,
-          vendor_fees: s?.financials?.vendor_fees_12_pct ?? 0, net_profit: s?.financials?.net_platform_profit ?? 0,
+          total_customers: s?.total_customers ?? s?.customers_count ?? s?.customer_count ?? 0,
+          total_vendors: s?.total_vendors ?? s?.vendors_count ?? s?.vendor_count ?? 0,
+          total_orders: s?.total_orders ?? s?.orders_count ?? 0,
+          total_active_offers: s?.total_active_offers ?? s?.active_offers ?? s?.active_offers_count ?? 0,
+          gross_revenue: s?.gross_revenue ?? s?.financials?.total_market_sales ?? s?.financials?.gross_sales ?? s?.total_market_sales ?? s?.market_sales ?? 0,
+          customer_fees: s?.customer_fees ?? s?.financials?.customer_fees_6_pct ?? s?.customer_fees_6_pct ?? 0,
+          vendor_fees: s?.vendor_fees ?? s?.financials?.vendor_fees_12_pct ?? s?.vendor_fees_12_pct ?? 0,
+          net_profit: s?.net_profit ?? s?.financials?.net_platform_profit ?? s?.net_platform_profit ?? 0,
         };
         setRawStats(parsedStats);
         setPieData([
@@ -417,7 +431,7 @@ const Admin = () => {
   }, [isLoggedIn, token, t]);
 
   useEffect(() => {
-    if (!isLoggedIn || !token || !canManage(role)) return;
+    if (!isLoggedIn || !token) return;
     (async () => {
       setEarningsLoading(true);
       try {
@@ -427,12 +441,15 @@ const Admin = () => {
         clearTimeout(timeout);
         if (!res.ok) throw new Error(`Earnings ${res.status}`);
         const data = await res.json();
-        const arr = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
-        setEarningsData(arr.map(item => ({ month: item.month, earnings: item.pure_profit || item.net_sales || 0 })));
+        const arr = Array.isArray(data?.data) ? data.data : Array.isArray(data?.earnings) ? data.earnings : Array.isArray(data?.chart_data) ? data.chart_data : Array.isArray(data) ? data : [];
+        setEarningsData(arr.map((item) => ({
+          month: item.month || item.month_name || item.label || "Unknown",
+          earnings: item.pure_profit ?? item.net_sales ?? item.earnings ?? item.profit ?? item.value ?? 0,
+        })));
       } catch (err) { if (err.name !== "AbortError") console.error("Earnings fetch error:", err); }
       finally { setEarningsLoading(false); }
     })();
-  }, [isLoggedIn, token, role]);
+  }, [isLoggedIn, token]);
 
   useEffect(() => {
     if (!isLoggedIn || !token) return;
@@ -573,7 +590,7 @@ const Admin = () => {
         return recent > 0 ? recent : null;
       })() },
       { id: "activity", icon: Activity, label: t("admin.recentActivity") },
-      { id: "reviews", icon: Star, label: t("admin.reviewModeration"), badge: null },
+      { id: "sustainability", icon: Leaf, label: t("admin.sustainabilityImpact") },
     ]
   : [
       { id: "dashboard", icon: LayoutDashboard, label: t("admin.dashboard") },
@@ -614,7 +631,7 @@ const Admin = () => {
           {sidebarOpen && <p className="sidebar-nav-section-title">{t("admin.menu")}</p>}
           {navItems.map((item) => (
             <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
-              active={activeSection === item.id} badge={item.badge} onClick={() => setActiveSection(item.id)} />
+              active={activeSection === item.id} badge={item.badge} onClick={() => item.path ? navigate(item.path) : setActiveSection(item.id)} />
           ))}
 
           {sidebarOpen && managementItems.length > 0 && <p className="sidebar-nav-section-title">{t("admin.management")}</p>}
@@ -677,7 +694,7 @@ const Admin = () => {
 
         <div className="admin-page-content">
 
-          {activeSection === "dashboard" && !isSupport(role) && (
+          {activeSection === "dashboard" && (
             <>
               {statsLoading ? (
                 <div className="loading-state"><Loader2 size={20} className="spin" /> {t("admin.loadingStats")}</div>
@@ -687,14 +704,10 @@ const Admin = () => {
                   <StatCard title={t("admin.totalVendors")} value={Number(totalVendors).toLocaleString()} icon={ShoppingBag} color="#28c76f" />
                   <StatCard title={t("admin.totalOrders")} value={Number(totalOrders).toLocaleString()} icon={Package} color="#ff9f43" trend={`${t("admin.avgOrder")} EGP ${avgOrder}`} />
                   <StatCard title={t("admin.activeOffers")} value={Number(activeOffers).toLocaleString()} icon={Star} color="#ff4d49" />
-                  {canManage(role) && !isSupport(role) && (
-                    <>
-                      <StatCard title={t("admin.grossRevenue")} value={`EGP ${fmtCurrency(grossRev)}`} icon={DollarSign} color="#03c3ec" />
-                      <StatCard title={t("admin.netProfit")} value={`EGP ${fmtCurrency(netProfit)}`} icon={TrendingUp} color="#28c76f" />
-                      <StatCard title={t("admin.customerFees")} value={`EGP ${fmtCurrency(customerFees)}`} icon={Users} color="#ff6b6b" />
-                      <StatCard title={t("admin.vendorFees")} value={`EGP ${fmtCurrency(vendorFees)}`} icon={ShoppingBag} color="#ffa500" />
-                    </>
-                  )}
+                  <StatCard title={t("admin.grossRevenue")} value={`EGP ${fmtCurrency(grossRev)}`} icon={DollarSign} color="#03c3ec" />
+                  <StatCard title={t("admin.netProfit")} value={`EGP ${fmtCurrency(netProfit)}`} icon={TrendingUp} color="#28c76f" />
+                  <StatCard title={t("admin.customerFees")} value={`EGP ${fmtCurrency(customerFees)}`} icon={Users} color="#ff6b6b" />
+                  <StatCard title={t("admin.vendorFees")} value={`EGP ${fmtCurrency(vendorFees)}`} icon={ShoppingBag} color="#ffa500" />
                 </div>
               )}
 
@@ -756,13 +769,12 @@ const Admin = () => {
                 </div>
               </div>
 
-              {canManage(role) && !isSupport(role) && (
-                <div className="chart-card" style={{ marginBottom: 24 }}>
-                  <div className="chart-card__header">
-                    <div><h3 className="chart-card__title">{t("admin.monthlyEarnings")}</h3><p className="chart-card__sub">{t("admin.netSales")}</p></div>
-                    <TrendingUp size={18} color="#03c3ec" />
-                  </div>
-                  {earningsLoading ? (
+              <div className="chart-card" style={{ marginBottom: 24 }}>
+                <div className="chart-card__header">
+                  <div><h3 className="chart-card__title">{t("admin.monthlyEarnings")}</h3><p className="chart-card__sub">{t("admin.netSales")}</p></div>
+                  <TrendingUp size={18} color="#03c3ec" />
+                </div>
+                {earningsLoading ? (
                     <div className="loading-state"><Loader2 size={16} className="spin" /> {t("admin.loadingEarnings")}</div>
                   ) : earningsData.length === 0 ? (
                     <div className="empty-state"><DollarSign size={32} color="#cbd5e1" /><p>{t("admin.noEarningsData")}</p></div>
@@ -779,7 +791,6 @@ const Admin = () => {
                     </ResponsiveContainer>
                   )}
                 </div>
-              )}
 
               {!isSupport(role) && (
                 <div className="quick-actions">
@@ -806,24 +817,9 @@ const Admin = () => {
             </>
           )}
 
-          {activeSection === "dashboard" && isSupport(role) && (
-            <div className="orders-card">
-              <div className="orders-card__header">
-                <div className="orders-card__title-row">
-                  <LayoutDashboard size={20} color="#696cff" />
-                  <h3>{t("admin.dashboardOverview")}</h3>
-                </div>
-              </div>
-              <div style={{ padding: "40px 20px", textAlign: "center", color: "#8592a3" }}>
-                <p style={{ fontSize: "0.95rem", marginBottom: "20px" }}>{t("admin.welcomeSupport")}</p>
-                <p style={{ fontSize: "0.85rem" }}>{t("admin.navigateMenu")}</p>
-              </div>
-            </div>
-          )}
-
           {activeSection === "offers" && <AllOffersSection token={token} t={t} />}
 
-          {activeSection === "sustainability" && !isSupport(role) && (
+          {activeSection === "sustainability" && (
             <div className="sustainability-section">
               <div className="sustainability-section__header">
                 <div>

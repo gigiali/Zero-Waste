@@ -310,7 +310,7 @@ const Avatar = ({ name, role }) => {
 export default function UserManagement() {
   const navigate = useNavigate();
   const { role, token: contextToken } = useAuth();
-  const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
+  const token = contextToken || localStorage.getItem("token") || localStorage.getItem("auth_token") || sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
 
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(false);

@@ -180,12 +180,18 @@ export default function UserProfile() {
   const token =
     contextToken ||
     localStorage.getItem("token") ||
-    sessionStorage.getItem("token");
+    localStorage.getItem("auth_token") ||
+    sessionStorage.getItem("token") ||
+    sessionStorage.getItem("auth_token");
 
   useEffect(() => {
-    if (role && role !== "super_admin" && role !== "manager") {
-      if (role === "vendor") navigate("/business/profile");
-      else navigate("/profile");
+    if (!role) return;
+    if (role === "vendor") {
+      navigate("/business/profile");
+      return;
+    }
+    if (role !== "super_admin" && role !== "manager" && role !== "support") {
+      navigate("/profile");
     }
   }, [role, navigate]);
 

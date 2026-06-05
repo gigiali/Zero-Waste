@@ -607,13 +607,20 @@ export default function ManageBusinesses() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { role, token: contextToken } = useAuth();
-  const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
+  const token = contextToken || localStorage.getItem("token") || localStorage.getItem("auth_token") || sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
 
   const [businesses, setBusinesses] = useState([]);
   const [dataLoading, setDataLoading] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+
+  useEffect(() => {
+    if (!role) return;
+    if (!canManage(role)) {
+      navigate("/admin");
+    }
+  }, [role, navigate]);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 

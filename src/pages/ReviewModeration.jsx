@@ -143,13 +143,21 @@ export default function ReviewModeration() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { role, token: contextToken } = useAuth();
-  const token = contextToken || localStorage.getItem("token") || sessionStorage.getItem("token");
+  const token = contextToken || localStorage.getItem("token") || localStorage.getItem("auth_token") || sessionStorage.getItem("token") || sessionStorage.getItem("auth_token");
 
   const [reviews,     setReviews]     = useState([]);
   const [loading,     setLoading]     = useState(false);
   const [slowWarning, setSlowWarning] = useState(false);
   const [searchTerm,  setSearchTerm]  = useState("");
   const [filterStatus,setFilterStatus]= useState("all");
+
+  useEffect(() => {
+    if (!role) return;
+    if (!canViewReviews(role)) {
+      navigate("/admin");
+      return;
+    }
+  }, [role, navigate]);
 
   useEffect(() => {
     if (!role || !token || !canViewReviews(role)) return;
