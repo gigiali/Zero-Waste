@@ -6,12 +6,12 @@ import {
   Phone,
   Mail,
   ShoppingCart,
+  Check,
   Star,
   Store,
   Package,
   Tag,
   User,
-  AlertCircle,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,50 +20,31 @@ import { useAuth } from "../Context/AuthContext";
 import { useLocationContext } from "../Context/LocationContext";
 import "./OfferDetail.css";
 
-const handleAddToCart = (offer, qty, isLoggedIn, locationName, addToCart, setShowSignInPopup, setShowLocationPopup, setError) => {
-  if (!offer) return;
-  
-  // Check if quantity is enough FIRST
-  if (qty > offer.quantity) {
-    setError(`فقط ${offer.quantity} متاح`);
-    setTimeout(() => setError(""), 3000);
-    return; // Don't proceed further
-  }
-  
-  if (!isLoggedIn) { 
-    setShowSignInPopup(true); 
-    return; 
-  }
-  if (!locationName) { 
-    setShowLocationPopup(true); 
-    return; 
-  }
-  
-  // Only add to cart if all validations pass
-  addToCart(offer, qty, true, locationName);
-};
-
-// Keep other functions...
 const normalizeOffer = (payload) => {
   const source = payload?.data || payload?.offer || payload;
   if (!source) return null;
 
-  const originalPrice = Number(source.original_price ?? source.originalPrice ?? 0);
-  const discountedPrice = Number(source.discount_price ?? source.discountedPrice ?? 0);
+  const originalPrice = Number(
+    source.original_price ?? source.originalPrice ?? 0,
+  );
+  const discountedPrice = Number(
+    source.discount_price ?? source.discountedPrice ?? 0,
+  );
   const quantity = Number(source.quantity_available ?? source.quantity ?? 0);
-  const discount = originalPrice > 0 && discountedPrice > 0
-    ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
-    : (source.discount ?? 0);
+  const discount =
+    originalPrice > 0 && discountedPrice > 0
+      ? Math.round(((originalPrice - discountedPrice) / originalPrice) * 100)
+      : (source.discount ?? 0);
 
   const branch = source.branch || {};
   const vendor = branch.vendor || source.vendor || {};
 
   const expirationTime = source.expiration_time
     ? new Date(source.expiration_time).toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    })
     : "Today";
 
   return {
@@ -84,7 +65,11 @@ const normalizeOffer = (payload) => {
     quantity,
     pickupTime: expirationTime,
     expirationRaw: source.expiration_time,
-    location: branch.branch_name || branch.store_address || vendor.business_name || "Restaurant",
+    location:
+      branch.branch_name ||
+      branch.store_address ||
+      vendor.business_name ||
+      "Restaurant",
     distance: source.distance || "",
     category: vendor.vendor_type || branch.vendor_type || branch.type || source.category || "Restaurant",
     restaurantName: vendor.business_name || branch.branch_name || "Restaurant",
@@ -160,7 +145,7 @@ export default function OfferDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [qty, setQty] = useState(1);
-  const [error, setError] = useState("");
+  const [added, setAdded] = useState(false);
   const { addToCart, showSignInPopup, setShowSignInPopup, showLocationPopup, setShowLocationPopup } = useCart();
   const { isLoggedIn } = useAuth();
   const { locationName } = useLocationContext();
@@ -174,11 +159,12 @@ export default function OfferDetail() {
     let mounted = true;
     (async () => {
       try {
-        const token = localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token") ||
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const apiUrl = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const res = await fetch(`${apiUrl}/api/offers/${id}`, { headers });
         if (!mounted) return;
         if (res.ok) {
@@ -201,11 +187,12 @@ export default function OfferDetail() {
     setLoadingReviews(true);
     (async () => {
       try {
-        const token = localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+        const token =
+          localStorage.getItem("auth_token") || localStorage.getItem("token") ||
           sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
-        const apiUrl = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
+        const apiUrl = import.meta.env.VITE_API_URL || "";
         const res = await fetch(`${apiUrl}/api/offers/${id}/reviews`, { headers });
         if (!mounted) return;
         if (res.ok) {
@@ -221,15 +208,19 @@ export default function OfferDetail() {
     return () => { mounted = false; };
   }, [id]);
 
-  const handleAddToCartClick = () => {
-    handleAddToCart(offer, qty, isLoggedIn, locationName, addToCart, setShowSignInPopup, setShowLocationPopup, setError);
+  const handleAddToCart = () => {
+    if (!offer) return;
+    if (!isLoggedIn) { setShowSignInPopup(true); return; }
+    if (!locationName) { setShowLocationPopup(true); return; }
+    addToCart(offer, qty, true, locationName);
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
   };
 
-  const avgRating = offerReviews.length > 0
-    ? (offerReviews.reduce((a, r) => a + (r.rating || 0), 0) / offerReviews.length).toFixed(1)
-    : null;
-
-  const isQtyExceeded = offer && qty > offer.quantity;
+  const avgRating =
+    offerReviews.length > 0
+      ? (offerReviews.reduce((a, r) => a + (r.rating || 0), 0) / offerReviews.length).toFixed(1)
+      : null;
 
   if (loadingOffer) {
     return (
@@ -314,7 +305,7 @@ export default function OfferDetail() {
             onClick={() => setActiveTab(tab)}>
             {tab === "details" ? "Offer Details"
               : tab === "restaurant" ? "Restaurant Info"
-              : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
+                : `Reviews ${offerReviews.length > 0 ? `(${offerReviews.length})` : ""}`}
           </button>
         ))}
       </div>
@@ -333,6 +324,7 @@ export default function OfferDetail() {
             <div className="od-section-card">
               <h3 className="od-section-title">{t("offerDetail.offerInformation")}</h3>
 
+              {/* ── New Info Pills Design ── */}
               <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "4px" }}>
 
                 {/* Available */}
@@ -418,12 +410,6 @@ export default function OfferDetail() {
                   {t("offerDetail.total")}: <strong>EGP {(offer.discountedPrice * qty).toFixed(2)}</strong>
                 </div>
               </div>
-              {isQtyExceeded && (
-                <div style={{ marginTop: "12px", padding: "10px 12px", background: "#fee2e2", border: "1px solid #fecaca", borderRadius: "8px", display: "flex", gap: "8px", alignItems: "center", color: "#991b1b", fontSize: "0.9rem" }}>
-                  <AlertCircle size={16} />
-                  فقط {offer.quantity} متاح
-                </div>
-              )}
             </div>
           </div>
         )}
@@ -534,8 +520,13 @@ export default function OfferDetail() {
                           </span>
                         </div>
                         {review.comment && <p className="od-review-comment">"{review.comment}"</p>}
-                        {review.image_url && <img src={review.image_url} alt="Review" className="od-review-img" />}
-                        <div className="od-review-footer">
+                        {(review.image_url || review.image) && (
+                          <img
+                            src={review.image}
+                            alt="Review"
+                            className="od-review-img"
+                          />
+                        )}                      <div className="od-review-footer">
                           <span className="od-review-method">
                             {review.delivery_method === "delivery"
                               ? t("offerDetail.reviewDelivery")
@@ -592,36 +583,15 @@ export default function OfferDetail() {
         </div>
       )}
 
-      {/* ── Error Message ── */}
-      {error && (
-        <div style={{
-          position: "fixed", bottom: "80px", left: "50%", transform: "translateX(-50%)",
-          background: "#fee2e2", color: "#991b1b", padding: "12px 16px",
-          borderRadius: "8px", border: "1px solid #fecaca", zIndex: 99998,
-          display: "flex", gap: "8px", alignItems: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
-        }}>
-          <AlertCircle size={16} />
-          {error}
-        </div>
-      )}
-
       {/* ── Sticky Add to Cart ── */}
       <div className="od-sticky-bar">
         <div className="od-sticky-price">
           <span className="od-sticky-label">{t("offerDetail.total")}</span>
           <span className="od-sticky-total">EGP {(offer.discountedPrice * qty).toFixed(2)}</span>
         </div>
-        <button 
-          className={`od-add-btn ${isQtyExceeded ? "disabled" : ""}`} 
-          onClick={handleAddToCartClick}
-          disabled={isQtyExceeded}
-          style={{
-            opacity: isQtyExceeded ? 0.6 : 1,
-            cursor: isQtyExceeded ? "not-allowed" : "pointer"
-          }}
-        >
-          {isQtyExceeded ? (
-            <><AlertCircle size={18} /> Not Enough Stock</>
+        <button className={`od-add-btn ${added ? "added" : ""}`} onClick={handleAddToCart}>
+          {added ? (
+            <><Check size={18} /> {t("offerDetail.addedToCart")}</>
           ) : (
             <><ShoppingCart size={18} /> {t("offerDetail.addToCart")}</>
           )}

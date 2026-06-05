@@ -43,11 +43,11 @@ function ChangePasswordDrawer({ onClose }) {
 
     setIsLoading(true);
     setSuccess("");
-    
+
     try {
       const token = getToken();
       console.log("TOKEN:", token);
-      
+
       const res = await fetch(`${BASE_URL}/profile/change-password`, {
         method: "PUT",
         headers: {
@@ -61,10 +61,10 @@ function ChangePasswordDrawer({ onClose }) {
           password_confirmation: form.confirm,
         })
       });
-      
+
       const data = await res.json();
       console.log("Response:", data);
-      
+
       if (res.ok) {
         setSuccess("✅ Password changed successfully!");
         setForm({ current: "", next: "", confirm: "" });
@@ -97,26 +97,26 @@ function ChangePasswordDrawer({ onClose }) {
         </div>
 
         {[
-  ["current", "Current password"],
-  ["next", "New password"],
-  ["confirm", "Confirm new password"],
-].map(([fk, label]) => (
-  <div key={fk} className="usr-pw-wrap">
-    <input
-      type="password"
-      placeholder={label}
-      value={form[fk]}
-      className={errors[fk] ? "has-error" : ""}
-      onChange={(e) =>
-        setForm((p) => ({ ...p, [fk]: e.target.value }))
-      }
-    />
+          ["current", "Current password"],
+          ["next", "New password"],
+          ["confirm", "Confirm new password"],
+        ].map(([fk, label]) => (
+          <div key={fk} className="usr-pw-wrap">
+            <input
+              type="password"
+              placeholder={label}
+              value={form[fk]}
+              className={errors[fk] ? "has-error" : ""}
+              onChange={(e) =>
+                setForm((p) => ({ ...p, [fk]: e.target.value }))
+              }
+            />
 
-    {errors[fk] && (
-      <span className="usr-pw-error">{errors[fk]}</span>
-    )}
-  </div>
-))}
+            {errors[fk] && (
+              <span className="usr-pw-error">{errors[fk]}</span>
+            )}
+          </div>
+        ))}
 
         {errors.general && <span className="usr-pw-error">{errors.general}</span>}
         {success && <span className="usr-pw-success">{success}</span>}
@@ -531,6 +531,13 @@ function ReviewsTab({ reviews, isLoading, onDelete }) {
                 <p className="usr-review-comment">
                   {rev.comment || rev.Comment || "No comment provided."}
                 </p>
+                {rev.image && (
+                  <img
+                    src={`https://zero-waste-production.up.railway.app/${rev.image}`}
+                    alt="Review"
+                    style={{ marginTop: "8px", maxWidth: "100%", borderRadius: "8px", maxHeight: "200px", objectFit: "cover" }}
+                  />
+                )}
               </div>
               <button
                 className="usr-review-delete"
