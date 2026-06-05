@@ -5,6 +5,8 @@ import { RecoveryFrame } from "./ForgotPassword";
 import "../auth-theme.css";
 import "./ForgotPassword.css";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export default function VerifyCode() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export default function VerifyCode() {
   const handleResend = async () => {
     const email = sessionStorage.getItem("passwordResetEmail");
     try {
-      const response = await fetch("/api/forgot-password", {
+      const response = await fetch(`${API_URL}/api/forgot-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -67,7 +69,7 @@ export default function VerifyCode() {
       const email = sessionStorage.getItem("passwordResetEmail");
       const verificationCode = code.join("");
 
-      const response = await fetch("/api/verify-reset-code", {
+      const response = await fetch(`${API_URL}/api/verify-reset-code`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
