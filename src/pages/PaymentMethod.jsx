@@ -283,13 +283,13 @@ function OrderReviewModal({ cartItems, deliveryMethod, cartTotal, deliveryFee, c
                 <span className="orm-detail-label">Items</span>
 
                 <span className="orm-detail-value">
-  {cartItems.map((item, idx) => (
-    <span key={idx}>
-      {item.title || item.name || "Item"} × {item.quantity}
-      {idx < cartItems.length - 1 ? ", " : ""}
-    </span>
-  ))}
-</span>
+                  {cartItems.map((item, idx) => (
+                    <span key={idx}>
+                      {item.title || item.name || "Item"} × {item.quantity}
+                      {idx < cartItems.length - 1 ? ", " : ""}
+                    </span>
+                  ))}
+                </span>
               </div>
 
             </div>
@@ -444,8 +444,8 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
   const deliveryMethod = searchParams.get("method") || "pickup";
 
   const subtotal = cartItems.reduce(
-  (sum, item) => sum + Number(item.discount_price ?? item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0
-);
+    (sum, item) => sum + Number(item.discount_price ?? item.discountedPrice ?? item.discountPrice ?? 0) * Number(item.quantity || 0), 0
+  );
 
   const deliveryFee = deliveryMethod === "delivery" ? (parseFloat(searchParams.get("fee")) || 25) : 0;
 
@@ -461,19 +461,19 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
     ? [
 
-        { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment",     desc: "Pay securely with your credit or debit card" },
+      { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
 
-        { id: "cash", icon: <Banknote   size={24} color="#6b7280" />, title: "Cash on Delivery", desc: "Pay with cash when your order is delivered" },
+      { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Delivery", desc: "Pay with cash when your order is delivered" },
 
-      ]
+    ]
 
     : [
 
-        { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment",   desc: "Pay securely with your credit or debit card" },
+      { id: "card", icon: <CreditCard size={24} color="#6b7280" />, title: "Card Payment", desc: "Pay securely with your credit or debit card" },
 
-        { id: "cash", icon: <Banknote   size={24} color="#6b7280" />, title: "Cash on Pickup", desc: "Pay with cash when you collect your order" },
+      { id: "cash", icon: <Banknote size={24} color="#6b7280" />, title: "Cash on Pickup", desc: "Pay with cash when you collect your order" },
 
-      ];
+    ];
 
 
 
@@ -509,7 +509,7 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
     const items = cartItems.map((item) => {
       // ✅ تأكد من استخدام الـ ID الصحيح (سواء id أو offer_id)
       const offerId = item.id || item.offer_id;
-      
+
       if (!offerId || !item.quantity || item.quantity <= 0) {
         throw new Error("Invalid cart item");
       }
@@ -525,125 +525,125 @@ export default function PaymentMethodPage({ onBack, cartTotal: propCartTotal }) 
 
 
 
-const handleCardSubmit = async (paymentMethodId) => {
-  setIsSubmitting(true);
-  setSubmitError("");
+  const handleCardSubmit = async (paymentMethodId) => {
+    setIsSubmitting(true);
+    setSubmitError("");
 
-  let items;
-  try {
-    items = validateAndPrepareItems();
-  } catch (err) {
-    setSubmitError(err.message || "Invalid cart items");
-    setIsSubmitting(false);
-    return;
-  }
-  if (!items) {
-    setIsSubmitting(false);
-    return;
-  }
-  try {
-
-    const token =
-      localStorage.getItem("auth_token") || localStorage.getItem("token") ||
-      sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
-
-    if (!token) { 
-      setSubmitError("Please login to continue"); 
-      setIsSubmitting(false); 
-      return; 
+    let items;
+    try {
+      items = validateAndPrepareItems();
+    } catch (err) {
+      setSubmitError(err.message || "Invalid cart items");
+      setIsSubmitting(false);
+      return;
     }
+    if (!items) {
+      setIsSubmitting(false);
+      return;
+    }
+    try {
 
-    // Fetch user address for delivery orders
-    let userAddress = "";
-    if (deliveryMethod === "delivery") {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL || "";
-        const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
-          headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        });
-        const profileData = await profileRes.json();
-        userAddress = profileData.user?.address || profileData.data?.address || "";
-        console.log("✅ User address fetched:", userAddress);
-      } catch (err) {
-        console.log("⚠️ Could not fetch user address:", err);
+      const token =
+        localStorage.getItem("auth_token") || localStorage.getItem("token") ||
+        sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+
+      if (!token) {
+        setSubmitError("Please login to continue");
+        setIsSubmitting(false);
+        return;
       }
-    }
 
-    // ✅ تصليح: استخدام البيانات المتحقق منها
-    const submitBody = {
-      items: items, // ✅ البيانات المتحقق منها
-      payment_method: "card",
-      payment_method_id: paymentMethodId,
-      delivery_type: deliveryMethod,
-      delivery_address: userAddress || null,
-      ...(deliveryMethod === "delivery" && { customer_lat: userLat, customer_long: userLng }),
-    };
+      // Fetch user address for delivery orders
+      let userAddress = "";
+      if (deliveryMethod === "delivery") {
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL || "";
+          const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
+            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+          });
+          const profileData = await profileRes.json();
+          userAddress = profileData.user?.address || profileData.data?.address || "";
+          console.log("✅ User address fetched:", userAddress);
+        } catch (err) {
+          console.log("⚠️ Could not fetch user address:", err);
+        }
+      }
 
-    console.log("📤 Sending order body:", JSON.stringify(submitBody, null, 2));
+      // ✅ تصليح: استخدام البيانات المتحقق منها
+      const submitBody = {
+        items: items, // ✅ البيانات المتحقق منها
+        payment_method: "card",
+        payment_method_id: paymentMethodId,
+        delivery_type: deliveryMethod,
+        delivery_address: userAddress || null,
+        ...(deliveryMethod === "delivery" && { customer_lat: userLat, customer_long: userLng }),
+      };
 
-    const apiUrl = import.meta.env.VITE_API_URL || "";
-const response = await fetch(`${apiUrl}/api/orders`, {
-      method: "POST",
-      headers: { 
-        Accept: "application/json", 
-        Authorization: `Bearer ${token}`, 
-        "Content-Type": "application/json" 
-      },
-      body: JSON.stringify(submitBody),
-    });
+      console.log("📤 Sending order body:", JSON.stringify(submitBody, null, 2));
 
-    const data = await response.json();
+      const apiUrl = import.meta.env.VITE_API_URL || "";
+      const response = await fetch(`${apiUrl}/api/orders`, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(submitBody),
+      });
 
-    console.log("📥 Response status:", response.status);
-    console.log("📥 Response data:", JSON.stringify(data, null, 2));
+      const data = await response.json();
 
-    if (response.ok) {
-      
-      console.log("✅ Order created successfully!");
-      serverOrderRef.current = data.order ?? data;
-      console.log("🆔 Reservation ID:", extractReservationId(data.order ?? data));
-      const firstItem = cartItems[0];
-      const businessPhone = 
-        data.order?.vendor?.phone ||
-        data.order?.vendor_phone ||
-        data.vendor?.phone ||
-        data.phone ||
-        firstItem?.vendor_phone ||
-        firstItem?.phone ||
-        "";
-      orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
-      frozenCartItemsRef.current = [...cartItems];
-      clearCart();
-      setOrderSuccess(true);
-      window.dispatchEvent(new Event("order-placed"));
-    } else {
-      console.error("❌ Order creation failed!");
-      
-      // ✅ تصليح: معالجة أفضل للـ errors
-      let errorMsg = "Failed to create order";
-      
-      if (response.status === 422 && data.errors) {
-        errorMsg = Object.entries(data.errors)
-          .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
-          .join("\n");
-        console.error("📋 Validation errors:", errorMsg);
-      } else if (response.status === 401) {
-        errorMsg = "Authentication failed - Please login again";
-      } else if (response.status === 404) {
-        errorMsg = "Offer or vendor not found";
+      console.log("📥 Response status:", response.status);
+      console.log("📥 Response data:", JSON.stringify(data, null, 2));
+
+      if (response.ok) {
+
+        console.log("✅ Order created successfully!");
+        serverOrderRef.current = data.order ?? data;
+        console.log("🆔 Reservation ID:", extractReservationId(data.order ?? data));
+        const firstItem = cartItems[0];
+        const businessPhone =
+          data.order?.vendor?.phone ||
+          data.order?.vendor_phone ||
+          data.vendor?.phone ||
+          data.phone ||
+          firstItem?.vendor_phone ||
+          firstItem?.phone ||
+          "";
+        orderDataRef.current = { deliveryMethod, cartTotal, deliveryFee, commission, total, businessPhone };
+        frozenCartItemsRef.current = [...cartItems];
+        clearCart();
+        setOrderSuccess(true);
+        window.dispatchEvent(new Event("order-placed"));
       } else {
-        errorMsg = data.message || data.error_debug || "Failed to create order";
+        console.error("❌ Order creation failed!");
+
+        // ✅ تصليح: معالجة أفضل للـ errors
+        let errorMsg = "Failed to create order";
+
+        if (response.status === 422 && data.errors) {
+          errorMsg = Object.entries(data.errors)
+            .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
+            .join("\n");
+          console.error("📋 Validation errors:", errorMsg);
+        } else if (response.status === 401) {
+          errorMsg = "Authentication failed - Please login again";
+        } else if (response.status === 404) {
+          errorMsg = "Offer or vendor not found";
+        } else {
+          errorMsg = data.message || data.error_debug || "Failed to create order";
+        }
+
+        setSubmitError(errorMsg);
+        setIsSubmitting(false);
       }
-      
-      setSubmitError(errorMsg);
+    } catch (error) {
+      console.error("🔴 Network error:", error);
+      setSubmitError("Network error: " + error.message);
       setIsSubmitting(false);
     }
-  } catch (error) {
-    console.error("🔴 Network error:", error);
-    setSubmitError("Network error: " + error.message);
-    setIsSubmitting(false);
-  }
-};
+  };
 
 
 
@@ -668,7 +668,7 @@ const response = await fetch(`${apiUrl}/api/orders`, {
     try {
 
       const token = localStorage.getItem("auth_token") || localStorage.getItem("token") ||
-              sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
+        sessionStorage.getItem("auth_token") || sessionStorage.getItem("token");
 
       if (!token) { setSubmitError("Please login to continue"); setIsSubmitting(false); return; }
 
@@ -677,9 +677,9 @@ const response = await fetch(`${apiUrl}/api/orders`, {
       let userAddress = "";
 
       if (deliveryMethod === "delivery") {
-  try {
-    const apiUrl = import.meta.env.VITE_API_URL || "";
-    const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL || "";
+          const profileRes = await fetch(`${apiUrl}/api/myprofile`, {
             headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
 
           });
@@ -716,7 +716,7 @@ const response = await fetch(`${apiUrl}/api/orders`, {
 
 
       const apiUrl = import.meta.env.VITE_API_URL || "";
-const response = await fetch(`${apiUrl}/api/orders`, {
+      const response = await fetch(`${apiUrl}/api/orders`, {
 
         method: "POST",
 
@@ -757,7 +757,7 @@ const response = await fetch(`${apiUrl}/api/orders`, {
 
         // ✅ تصليح: معالجة أفضل للـ errors
         let errorMsg = "Failed to create order";
-        
+
         if (response.status === 422 && data.errors) {
           errorMsg = Object.entries(data.errors)
             .map(([field, msgs]) => `${field}: ${Array.isArray(msgs) ? msgs.join(", ") : msgs}`)
@@ -938,15 +938,14 @@ const response = await fetch(`${apiUrl}/api/orders`, {
                 trackingActive: true,
 
                 reservationId: reservationId,
+                orderId: serverOrderRef.current?.id || serverOrderRef.current?.order?.id,
+                offerId: serverOrderRef.current?.items?.[0]?.offer_id, 
 
                 deliveryMethod,
 
                 total: orderDataRef.current?.total ?? total,
 
                 orderTime: new Date().toISOString(),
-
-                offerId: serverOrderRef.current?.id || serverOrderRef.current?.order?.id || 1,
-orderId: serverOrderRef.current?.id || serverOrderRef.current?.order?.id,
 
                 items: frozenCartItemsRef.current,
 

@@ -154,7 +154,10 @@ function AllOffersSection({ token }) {
     finally { setLoading(false); }
   };
 
-  useEffect(() => { fetchOffers(); }, []);
+  useEffect(() => { 
+  if (!token) return;  // ✅ تحقق من token
+  fetchOffers(); 
+}, [token]);  // ✅ اضيف token هنا
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -165,6 +168,7 @@ function AllOffersSection({ token }) {
         headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
       });
       if (!res.ok) { const data = await res.json(); throw new Error(data.message || "Failed to delete offer"); }
+      
       setOffers((prev) => prev.filter((o) => o.id !== deleteTarget.id));
       setDeleteSuccess(`"${deleteTarget.title}" deleted successfully`);
       setTimeout(() => setDeleteSuccess(""), 3000);

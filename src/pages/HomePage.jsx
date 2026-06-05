@@ -241,7 +241,8 @@ function OrderTrackingStrip({ order, onDismiss }) {
         sessionStorage.getItem("token");
       if (!token || !order.orderNumber) return;
       try {
-        const res = await fetch(BASE_URL + "/api/orders/" + order.orderNumber, {
+        const orderId = order.orderId || order.id || order.orderNumber;
+        const res = await fetch(BASE_URL + "/api/orders/" + orderId, {
           headers: {
             Accept: "application/json",
             Authorization: "Bearer " + token,
@@ -292,7 +293,9 @@ function OrderTrackingStrip({ order, onDismiss }) {
       alert("Please sign in to submit a review.");
       return;
     }
-    let offerId = order.offerId || order.id;
+    let offerId = order.offerId || (order.items && order.items[0]?.offer_id) || (order.items && order.items[0]?.id);
+    console.log("🎯 offerId:", offerId);
+    console.log("📋 order full:", JSON.stringify(order));
     if (!offerId && order.items && order.items.length > 0) {
       offerId = order.items[0].offer_id || order.items[0].id;
     }
@@ -309,8 +312,8 @@ function OrderTrackingStrip({ order, onDismiss }) {
     formData.append(
       "offer_title",
       (order.items && order.items[0] && order.items[0].title) ||
-        order.title ||
-        "Food Item",
+      order.title ||
+      "Food Item",
     );
     if (reviewImage) formData.append("image", reviewImage);
     try {
@@ -585,10 +588,10 @@ function RecommendedCard({
   const discount =
     offer.original_price && offer.discount_price
       ? Math.round(
-          ((offer.original_price - offer.discount_price) /
-            offer.original_price) *
-            100,
-        )
+        ((offer.original_price - offer.discount_price) /
+          offer.original_price) *
+        100,
+      )
       : 0;
 
   const imageUrl =
@@ -967,6 +970,7 @@ const categoryIcons = {
 };
 
 const sortOptions = [
+  { label: "Default", value: "" },
   { label: "Highest Discount", value: "highest_discount" },
   { label: "Distance", value: "nearest" },
   { label: "Rating", value: "rating" },
@@ -980,9 +984,9 @@ function calculateDistance(lat1, lng1, lat2, lng2) {
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
     Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLng / 2) *
-      Math.sin(dLng / 2);
+    Math.cos((lat2 * Math.PI) / 180) *
+    Math.sin(dLng / 2) *
+    Math.sin(dLng / 2);
   return parseFloat(
     (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1),
   );
@@ -1009,7 +1013,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortOption, setSortOption] = useState("highest_discount");
+  const [sortOption, setSortOption] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [activeOrder, setActiveOrder] = useState(null);
 
@@ -1127,10 +1131,17 @@ export default function HomePage() {
           sessionStorage.getItem("auth_token") ||
           sessionStorage.getItem("token");
         const vendorType = selectedCategory === "All" ? "" : selectedCategory;
-        const endpoint =
-          BASE_URL +
-          "/api/offers" +
-          (vendorType ? "?vendor_type=" + vendorType : "");
+        const params = new URLSearchParams();
+        if (vendorType) params.append("vendor_type", vendorType);
+        if (userLat && userLng) {
+          params.append("lat", userLat);
+          params.append("long", userLng);
+        }
+        if (sortOption === "rating") params.append("sort_by", "rating");
+        if (sortOption === "highest_discount") params.append("sort_by", "highest_discount");
+        if (sortOption === "nearest") params.append("sort_by", "distance");
+
+        const endpoint = BASE_URL + "/api/offers?" + params.toString();
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = "Bearer " + token;
         const response = await fetch(endpoint, { method: "GET", headers });
@@ -1151,7 +1162,7 @@ export default function HomePage() {
               }
               const qty =
                 source.quantity_available !== undefined &&
-                source.quantity_available !== null
+                  source.quantity_available !== null
                   ? source.quantity_available
                   : 0;
               return {
@@ -1162,10 +1173,10 @@ export default function HomePage() {
                 image: imageUrl,
                 discount: source.discount_price
                   ? Math.round(
-                      ((source.original_price - source.discount_price) /
-                        source.original_price) *
-                        100,
-                    )
+                    ((source.original_price - source.discount_price) /
+                      source.original_price) *
+                    100,
+                  )
                   : 0,
                 originalPrice: source.original_price || 0,
                 discountedPrice: source.discount_price || 0,
@@ -1222,7 +1233,7 @@ export default function HomePage() {
     fetchOffers();
     const interval = setInterval(fetchOffers, 30000);
     return () => clearInterval(interval);
-  }, [selectedCategory]);
+  }, [selectedCategory, sortOption, userLat, userLng]);
 
   const filteredOffers = offers
     .filter((offer) => {
@@ -1243,21 +1254,6 @@ export default function HomePage() {
         offer.branchLng,
       ),
     }))
-    .sort((a, b) => {
-      switch (sortOption) {
-        case "highest_discount":
-          return b.discount - a.discount;
-        case "nearest":
-          if (a.distance === null && b.distance === null) return 0;
-          if (a.distance === null) return 1;
-          if (b.distance === null) return -1;
-          return a.distance - b.distance;
-        case "rating":
-          return (b.rating || 0) - (a.rating || 0);
-        default:
-          return 0;
-      }
-    });
 
   const currentSortLabel =
     (sortOptions.find((o) => o.value === sortOption) || {}).label || "Sort";
