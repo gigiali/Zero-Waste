@@ -45,51 +45,78 @@
   margin-bottom: 20px;
 }
 
+/* ── Hero ── */
 .branch-hero {
   position: relative;
-  height: 300px;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  margin-bottom: 20px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  margin-bottom: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+  height: 160px;
+  display: flex;
+  align-items: flex-end;
 }
 
-.branch-hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.branch-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(18px) brightness(0.55);
+  transform: scale(1.1);
 }
 
 .branch-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  background: linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.2) 100%);
 }
 
 .branch-hero-content {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  padding: 24px;
-  color: white;
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 20px;
+  width: 100%;
+}
+
+.branch-hero-logo-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2.5px solid rgba(255,255,255,0.8);
+  flex-shrink: 0;
+  background: #f3f4f6;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.branch-hero-logo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .branch-hero-text h1 {
-  font-size: 2rem;
+  font-size: 1.3rem;
   font-weight: 700;
-  margin: 0 0 8px 0;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  color: white;
+  margin: 0 0 6px;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 
 .branch-hero-meta {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 0.9rem;
-  opacity: 0.9;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.88);
 }
 
+/* ── Info Strip ── */
 .branch-info-strip {
   background: white;
   border-radius: 12px;
@@ -137,6 +164,7 @@
   word-break: break-all;
 }
 
+/* ── Vendor Info ── */
 .vendor-info-section {
   background: white;
   border-radius: 12px;
@@ -159,6 +187,7 @@
   margin: 0;
 }
 
+/* ── Offers ── */
 .branch-offers-section {
   margin-bottom: 24px;
 }
@@ -290,6 +319,7 @@
   gap: 4px;
 }
 
+/* ── Navigation ── */
 .navigation-section {
   margin-bottom: 30px;
 }
@@ -316,6 +346,7 @@
   transform: translateY(-1px);
 }
 
+/* ── Spinner ── */
 .rd-spinner {
   width: 36px;
   height: 36px;
@@ -330,84 +361,31 @@
   to { transform: rotate(360deg); }
 }
 
+/* ── Mobile ── */
 @media (max-width: 768px) {
   .branch-detail-container { padding: 12px; }
-
-  .branch-hero {
-    height: 200px;
-    margin-bottom: 16px;
-  }
-
-  .branch-hero-text h1 { font-size: 1.5rem; }
-
-  .branch-info-strip {
-    padding: 16px;
-    margin-bottom: 16px;
-  }
-
-  .branch-info-strip-inner {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .branch-info-item {
-    min-width: unset;
-  }
-
-  .offers-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
-  .branch-offer-card {
-    display: flex;
-    gap: 12px;
-  }
-
-  .branch-offer-image {
-    width: 120px;
-    height: 120px;
-    min-width: 120px;
-    border-radius: 8px;
-  }
-
+  .branch-hero { height: 140px; }
+  .branch-hero-text h1 { font-size: 1.1rem; }
+  .branch-info-strip { padding: 16px; margin-bottom: 16px; }
+  .branch-info-strip-inner { grid-template-columns: 1fr; gap: 12px; }
+  .branch-info-item { min-width: unset; }
+  .offers-grid { grid-template-columns: 1fr; gap: 12px; }
+  .branch-offer-card { display: flex; gap: 12px; }
+  .branch-offer-image { width: 120px; height: 120px; min-width: 120px; border-radius: 8px; }
   .branch-offer-body { padding: 12px; flex: 1; }
-
-  .branch-offer-bottom {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding-top: 8px;
-  }
+  .branch-offer-bottom { flex-direction: column; align-items: flex-start; gap: 8px; padding-top: 8px; }
 }
 
 @media (max-width: 480px) {
   .branch-detail-container { padding: 8px; }
-
-  .branch-hero {
-    height: 150px;
-    margin-bottom: 12px;
-    border-radius: 12px;
-  }
-
-  .branch-hero-text h1 { font-size: 1.25rem; }
-  .branch-hero-content { padding: 16px; }
+  .branch-hero { height: 130px; margin-bottom: 12px; border-radius: 12px; }
+  .branch-hero-text h1 { font-size: 1rem; }
+  .branch-hero-content { padding: 12px; }
   .branch-info-strip { padding: 12px; }
   .branch-info-icon { width: 36px; height: 36px; }
-
-  .branch-info-strip-inner {
-    grid-template-columns: 1fr;
-    gap: 12px;
-  }
-
+  .branch-info-strip-inner { grid-template-columns: 1fr; gap: 12px; }
   .branch-offer-card { flex-direction: column; }
-
-  .branch-offer-image {
-    width: 100%;
-    height: 150px;
-    min-width: unset;
-  }
-
+  .branch-offer-image { width: 100%; height: 150px; min-width: unset; }
   .back-btn { font-size: 0.9rem; padding: 0.4rem 0.8rem; }
   .directions-btn { font-size: 0.9rem; padding: 12px; }
   .branch-offers-section h2 { font-size: 1.1rem; }

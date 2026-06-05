@@ -2,7 +2,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Clock, MapPin, Phone, Mail, Navigation as NavigationIcon, Package } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import './BranchDetail.css';
-const BASE_URL = import.meta.env.VITE_API_URL || "https://zero-waste-production.up.railway.app";
+
 export default function BranchDetail() {
   const { id, vendorId } = useParams();
   const navigate = useNavigate();
@@ -27,7 +27,7 @@ export default function BranchDetail() {
         const headers = { Accept: "application/json" };
         if (token) headers["Authorization"] = `Bearer ${token}`;
 
-        const branchRes = await fetch(`${BASE_URL}/api/branches/${id}/details`, { headers });
+        const branchRes = await fetch(`/api/branches/${id}/details`, { headers });
 
         if (!mounted) return;
 
@@ -51,7 +51,7 @@ export default function BranchDetail() {
 
         const actualVendorId = vendorId || branchDetails.vendor_id;
         if (actualVendorId) {
-          const vendorRes = await fetch(`${BASE_URL}/api/vendor/${actualVendorId}`, { headers });
+          const vendorRes = await fetch(`/api/vendor/${actualVendorId}`, { headers });
           if (!mounted) return;
           if (vendorRes.ok) {
             const vendorDataResponse = await vendorRes.json();
@@ -110,23 +110,22 @@ export default function BranchDetail() {
       </div>
 
       <div className="branch-hero">
-        <img
-          src={vendorLogo}
-          alt={branch.branch_name}
-          className="branch-hero-image"
-          onError={(e) => { e.target.src = "/images/e.png"; }}
-        />
-        <div className="branch-hero-overlay" />
-        <div className="branch-hero-content">
-          <div className="branch-hero-text">
-            <h1>{branch.branch_name}</h1>
-            <div className="branch-hero-meta">
-              <span><MapPin size={14} /> {branch.store_address || "Address not available"}</span>
-            </div>
-          </div>
-        </div>
+  <div className="branch-hero-bg"
+    style={{ backgroundImage: `url(${vendorLogo})` }} />
+  <div className="branch-hero-overlay" />
+  <div className="branch-hero-content">
+    <div className="branch-hero-logo-wrap">
+      <img src={vendorLogo} alt={branch.branch_name} className="branch-hero-logo"
+        onError={(e) => { e.target.src = "/images/e.png"; }} />
+    </div>
+    <div className="branch-hero-text">
+      <h1>{branch.branch_name}</h1>
+      <div className="branch-hero-meta">
+        <span><MapPin size={14} /> {branch.store_address || "Address not available"}</span>
       </div>
-
+    </div>
+  </div>
+</div>
       <div className="branch-info-strip">
         <div className="branch-info-strip-inner">
           <div className="branch-info-item">
