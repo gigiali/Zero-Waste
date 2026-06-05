@@ -924,6 +924,7 @@
       "pending": "قيد الانتظار",
       "underReview": "قيد المراجعة",
       "rejected": "مرفوض",
+      "blocked": "محظور",
       "unknown": "غير معروف"
     }
   },

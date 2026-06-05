@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Search, MoreVertical, CheckCircle, XCircle,
-  Trash2, Loader2, ArrowLeft, Store, Clock, AlertCircle,
+  Trash2, Loader2, ArrowLeft, Store, Clock, AlertCircle, ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
 import "./ManageBusinesses.css";
@@ -25,6 +25,7 @@ const statusConfig = {
   pending: { bg: "#fff6e0", text: "#ff9f43", dot: "#ff9f43", labelKey: "manageBusinesses.status.pending" },
   under_review: { bg: "#e7e7ff", text: "#696cff", dot: "#696cff", labelKey: "manageBusinesses.status.underReview" },
   rejected: { bg: "#ffeaea", text: "#ef4444", dot: "#ef4444", labelKey: "manageBusinesses.status.rejected" },
+  blocked: { bg: "#fff1f2", text: "#9f1239", dot: "#e11d48", labelKey: "manageBusinesses.status.blocked" },
 };
 const fallbackStatus = { bg: "#e8faf0", text: "#28c76f", dot: "#28c76f", labelKey: "manageBusinesses.status.active" };const getStatus = (s) => statusConfig[s?.toLowerCase?.()] ?? fallbackStatus;
 
@@ -48,39 +49,22 @@ function LoadingTimeoutAlert() {
   );
 }
 
-async function fetchAllVendors(token) {
-  let page = 1;
-  let allVendors = [];
-  while (true) {
-    try {
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
-
-      const res = await fetch(`${BASE_URL}/vendors?page=${page}`, {
-        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-        signal: controller.signal,
-      });
-      clearTimeout(timeout);
-
-      if (!res.ok) break;
-      const data = await res.json();
-      const isPaginated = data?.data?.data && Array.isArray(data.data.data);
-      if (isPaginated) {
-        allVendors = [...allVendors, ...data.data.data];
-        const lastPage = data.data.last_page ?? 1;
-        if (page >= lastPage) break;
-        page++;
-      } else {
-        const raw = data?.data ?? (Array.isArray(data) ? data : []);
-        allVendors = Array.isArray(raw) ? raw : [];
-        break;
-      }
-    } catch (err) {
-      if (err.name !== "AbortError") console.error("Fetch vendors error:", err);
-      break;
-    }
+async function fetchVendorsPage(token, page) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const res = await fetch(`${BASE_URL}/vendors?page=${page}`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    signal: controller.signal,
+  });
+  clearTimeout(timeout);
+  if (!res.ok) throw new Error("Failed to fetch vendors");
+  const data = await res.json();
+  const isPaginated = data?.data?.data && Array.isArray(data.data.data);
+  if (isPaginated) {
+    return { vendors: data.data.data, lastPage: data.data.last_page ?? 1 };
   }
-  return allVendors;
+  const raw = data?.data ?? (Array.isArray(data) ? data : []);
+  return { vendors: Array.isArray(raw) ? raw : [], lastPage: 1 };
 }
 
 function DeleteConfirmModal({ businessName, onConfirm, onCancel, busy }) {
@@ -482,6 +466,31 @@ function ActionMenu({ business, role, token, onStatusChange, onDelete }) {
     }
   };
 
+  const handleUnblock = async () => {
+    setBusy(true);
+    setOpen(false);
+    try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+      const userId = business.userId ?? business.id;
+      const res = await fetch(`${BASE_URL}/admin/users/${userId}/unblock`, {
+        method: "PATCH",
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      if (res.ok) {
+        onStatusChange(business.id, "active");
+      } else {
+        alert("Failed to unblock business.");
+      }
+    } catch (err) {
+      if (err.name !== "AbortError") console.error("Unblock error:", err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleDeleteConfirm = async () => {
     setBusy(true);
     try {
@@ -508,15 +517,14 @@ function ActionMenu({ business, role, token, onStatusChange, onDelete }) {
     }
   };
 
+  const isBlocked = business.status === "blocked";
+
   const actions = [
     {
       icon: <Store size={14} />,
       label: t("manageBusinesses.actions.viewDetails"),
       color: "#696cff",
-      onClick: () => {
-        setShowModal(true);
-        setOpen(false);
-      },
+      onClick: () => { setShowModal(true); setOpen(false); },
       show: canManage(role),
     },
     {
@@ -524,27 +532,28 @@ function ActionMenu({ business, role, token, onStatusChange, onDelete }) {
       label: t("manageBusinesses.actions.approve"),
       color: "#28c76f",
       onClick: handleApprove,
-      show: canManage(role) && !["approved", "rejected", "active"].includes(business.status),
+      show: canManage(role) && !isBlocked && !["approved", "rejected", "active"].includes(business.status),
     },
     {
       icon: <XCircle size={14} />,
       label: t("manageBusinesses.actions.reject"),
       color: "#ff9f43",
-      onClick: () => {
-        setShowRejectModal(true);
-        setOpen(false);
-      },
-      show: canManage(role) && !["approved", "rejected", "active"].includes(business.status),
+      onClick: () => { setShowRejectModal(true); setOpen(false); },
+      show: canManage(role) && !isBlocked && !["approved", "rejected", "active"].includes(business.status),
+    },
+    {
+      icon: <ShieldCheck size={14} />,
+      label: "Unblock",
+      color: "#10b981",
+      onClick: handleUnblock,
+      show: canManage(role) && isBlocked,
     },
     {
       icon: <Trash2 size={14} />,
       label: t("manageBusinesses.actions.delete"),
       color: "#ef4444",
-      onClick: () => {
-        setShowDeleteModal(true);
-        setOpen(false);
-      },
-      show: canDelete(role),
+      onClick: () => { setShowDeleteModal(true); setOpen(false); },
+      show: canDelete(role) && !isBlocked,
       divider: true,
     },
   ].filter((a) => a.show);
@@ -614,6 +623,24 @@ export default function ManageBusinesses() {
   const [loadingTimeout, setLoadingTimeout] = useState(false);
   const [fetchError, setFetchError] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [stats, setStats] = useState({ total_vendors: 0, by_status: { active: 0, pending: 0, rejected: 0, blocked: 0 } });
+
+  const fetchStats = useCallback(async () => {
+    if (!token) return;
+    try {
+      const res = await fetch(`${BASE_URL}/admin/vendors/stats`, {
+        headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setStats(data);
+      }
+    } catch { }
+  }, [token]);
+
+  useEffect(() => { fetchStats(); }, [fetchStats]);
 
   useEffect(() => {
     if (!role) return;
@@ -624,39 +651,37 @@ export default function ManageBusinesses() {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
+  useEffect(() => { setCurrentPage(1); }, [filterStatus, filterCategory, searchTerm]);
+
   useEffect(() => {
     if (!token) return;
 
-    const timeoutId = setTimeout(() => {
-      setLoadingTimeout(true);
-    }, LOAD_TIMEOUT);
+    const timeoutId = setTimeout(() => setLoadingTimeout(true), LOAD_TIMEOUT);
 
     (async () => {
       setDataLoading(true);
       setFetchError(null);
       try {
-        const [allVendorsResult, pendingResult] = await Promise.allSettled([
-          fetchAllVendors(token),
-          fetch(`${BASE_URL}/admin/vendor/pending`, {
+        const { vendors, lastPage: lp } = await fetchVendorsPage(token, currentPage);
+        setLastPage(lp);
+
+        let merged = vendors;
+        if (currentPage === 1) {
+          const pendingRes = await fetch(`${BASE_URL}/admin/vendor/pending`, {
             headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-          })
-            .then((r) => (r.ok ? r.json() : { data: { vendors: [] } }))
-            .catch(() => ({ data: { vendors: [] } })),
-        ]);
-
-        const allVendorsList = allVendorsResult.status === "fulfilled" ? allVendorsResult.value : [];
-        const pendingData = pendingResult.status === "fulfilled" ? pendingResult.value : {};
-        const pendingVendors = Array.isArray(pendingData?.data?.vendors) ? pendingData.data.vendors : [];
-
-        const pendingIds = new Set(pendingVendors.map((v) => v.id));
-        const merged = [
-          ...pendingVendors.map((v) => ({ ...v })),
-          ...allVendorsList.filter((v) => !pendingIds.has(v.id)),
-        ];
+          }).catch(() => null);
+          if (pendingRes?.ok) {
+            const pendingData = await pendingRes.json().catch(() => ({}));
+            const pendingVendors = Array.isArray(pendingData?.data?.vendors) ? pendingData.data.vendors : [];
+            const pendingIds = new Set(pendingVendors.map((v) => v.id));
+            merged = [...pendingVendors, ...vendors.filter((v) => !pendingIds.has(v.id))];
+          }
+        }
 
         setBusinesses(
           merged.map((v) => ({
             id: v.id,
+            userId: v.user_id ?? v.user?.id ?? null,
             name: v.business_name ?? v.name ?? t("manageBusinesses.unknownBusiness"),
             category: v.vendor_type ?? "—",
             status: v.status ?? "approved",
@@ -673,12 +698,17 @@ export default function ManageBusinesses() {
     })();
 
     return () => clearTimeout(timeoutId);
-  }, [token, t]);
+  }, [token, currentPage, t]);
 
-  const handleStatusChange = (id, status) =>
+  const handleStatusChange = (id, status) => {
     setBusinesses((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
+    fetchStats();
+  };
 
-  const handleDelete = (id) => setBusinesses((prev) => prev.filter((b) => b.id !== id));
+  const handleDelete = (id) => {
+    setBusinesses((prev) => prev.filter((b) => b.id !== id));
+    fetchStats();
+  };
 
   const filtered = businesses.filter((b) => {
     const matchSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -697,9 +727,10 @@ export default function ManageBusinesses() {
 
   const categories = [...new Set(businesses.map((b) => b.category))];
   const statuses = [...new Set(businesses.map((b) => b.status))];
-  const activeCount = businesses.filter((b) => ["approved", "active"].includes(b.status)).length;
-  const pendingCount = businesses.filter((b) => ["pending", "under_review"].includes(b.status)).length;
-  const rejectedCount = businesses.filter((b) => b.status === "rejected").length;
+  const activeCount = (stats.by_status?.active ?? 0) + (stats.by_status?.approved ?? 0);
+  const pendingCount = (stats.by_status?.pending ?? 0) + (stats.by_status?.under_review ?? 0);
+  const rejectedCount = stats.by_status?.rejected ?? 0;
+  const blockedCount = stats.by_status?.blocked ?? 0;
 
   return (
     <>
@@ -724,7 +755,7 @@ export default function ManageBusinesses() {
             </div>
             <div>
               <p className="biz-stat__label">{t("manageBusinesses.stats.totalRegistered")}</p>
-              <p className="biz-stat__value">{businesses.length}</p>
+              <p className="biz-stat__value">{stats.total_vendors ?? 0}</p>
             </div>
           </div>
           <div className="biz-stat biz-stat--emerald">
@@ -754,6 +785,17 @@ export default function ManageBusinesses() {
               <p className="biz-stat__value">{rejectedCount}</p>
             </div>
           </div>
+          {blockedCount > 0 && (
+            <div className="biz-stat" style={{ borderLeft: "4px solid #e11d48", background: "#fff1f2" }}>
+              <div className="biz-stat__icon" style={{ background: "#fce7f3" }}>
+                <ShieldCheck size={20} color="#e11d48" />
+              </div>
+              <div>
+                <p className="biz-stat__label" style={{ color: "#9f1239" }}>Blocked</p>
+                <p className="biz-stat__value" style={{ color: "#9f1239" }}>{blockedCount}</p>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="businesses-controls">
@@ -853,6 +895,38 @@ export default function ManageBusinesses() {
             </table>
           )}
         </div>
+
+        {!dataLoading && lastPage > 1 && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "12px", marginTop: "20px" }}>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              style={{
+                padding: "6px 14px", borderRadius: "7px", border: "1px solid #e7e7e9",
+                background: currentPage === 1 ? "#f5f5f9" : "#fff", color: currentPage === 1 ? "#b0b7c3" : "#566a7f",
+                cursor: currentPage === 1 ? "not-allowed" : "pointer", fontWeight: 500, fontSize: "0.875rem",
+              }}
+            >
+              ← Previous
+            </button>
+            <span style={{ fontSize: "0.875rem", color: "#566a7f", fontWeight: 500 }}>
+              Page {currentPage} of {lastPage}
+            </span>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((p) => Math.min(lastPage, p + 1))}
+              disabled={currentPage === lastPage}
+              style={{
+                padding: "6px 14px", borderRadius: "7px", border: "1px solid #e7e7e9",
+                background: currentPage === lastPage ? "#f5f5f9" : "#fff", color: currentPage === lastPage ? "#b0b7c3" : "#566a7f",
+                cursor: currentPage === lastPage ? "not-allowed" : "pointer", fontWeight: 500, fontSize: "0.875rem",
+              }}
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </div>
 
       <style>{`.mb-spin{animation:mb-spin 1s linear infinite}@keyframes mb-spin{to{transform:rotate(360deg)}}`}</style>

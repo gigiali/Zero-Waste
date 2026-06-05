@@ -70,7 +70,7 @@ function ActionMenu({ report, role, token, onStatusChange, onDelete, t }) {
   const handleToggleVisibility = async () => {
     setBusy(true);
     try {
-      const res = await fetch(`${BASE_URL}/admin/reviews/${report.id}/toggle-visibility`, {
+      const res = await fetch(`${BASE_URL}/reviews/${report.id}/toggle-visibility`, {
         method: "PATCH",
         headers: {
           Accept: "application/json",

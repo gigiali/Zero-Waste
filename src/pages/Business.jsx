@@ -1192,7 +1192,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
               </div>
               <div className="biz-impact">
                 <p className="biz-impact-label">{t("impact")}</p>
-                <p className="biz-impact-value">{filteredOrders.length} {t("orders")}</p>
+                <p className="biz-impact-value">{filteredOrders.length} {t("orders.title")}</p>
               </div>
             </div>
 
@@ -1244,9 +1244,9 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
                     <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                     <XAxis dataKey="day" tick={{ fontSize: 12 }} />
                     <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip formatter={(value) => [value, t("orders")]} />
+                    <Tooltip formatter={(value) => [value, t("orders.title")]} />
                     <Legend />
-                    <Bar dataKey="orders" name={t("orders")} radius={[4, 4, 0, 0]}>
+                    <Bar dataKey="orders" name={t("orders.title")} radius={[4, 4, 0, 0]}>
                       {(salesData && salesData.length > 0 ? salesData : FALLBACK_CHART).map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={`hsl(${220 + index * 10}, 70%, ${35 + (entry.orders / Math.max(...(salesData && salesData.length > 0 ? salesData.map(d => d.orders) : [1]), 1)) * 30}%)`} />
                       ))}

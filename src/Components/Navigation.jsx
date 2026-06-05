@@ -66,8 +66,9 @@ export default function Navigation({
       try {
         const lat = localStorage.getItem("userLocationLat") || 30.0444;
         const lng = localStorage.getItem("userLocationLng") || 31.2357;
+        const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
         const res = await fetch(
-          `/api/favorites?customer_lat=${lat}&customer_long=${lng}`,
+          `${apiUrl}/api/favorites?customer_lat=${lat}&customer_long=${lng}`,
           {
             headers: {
               Accept: "application/json",

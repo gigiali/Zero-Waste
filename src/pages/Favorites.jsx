@@ -32,9 +32,9 @@ export default function Favorites() {
     try {
       const token = getToken();
       if (!token) { navigate("/signin"); return; }
-
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
       const res = await fetch(
-        `/api/favorites?customer_lat=${getLat()}&customer_long=${getLng()}`,
+        `${apiUrl}/api/favorites?customer_lat=${getLat()}&customer_long=${getLng()}`,
         { headers: { Accept: "application/json", Authorization: `Bearer ${token}` } }
       );
 

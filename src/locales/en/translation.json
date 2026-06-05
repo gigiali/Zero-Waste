@@ -1135,6 +1135,7 @@
       "pending": "Pending",
       "underReview": "Under Review",
       "rejected": "Rejected",
+      "blocked": "Blocked",
       "unknown": "Unknown"
     }
   },
