@@ -75,8 +75,20 @@ function OrderTrackingStrip({ order, onDismiss }) {
       localStorage.getItem("token") ||
       sessionStorage.getItem("auth_token") ||
       sessionStorage.getItem("token");
+    
+    if (!token) {
+      alert("Please sign in to cancel an order");
+      return;
+    }
     try {
-      const orderId = order.orderNumber || order.id || order.reservationId;
+      const orderId = order.id || order.orderId;
+      
+      if (!orderId) {
+        console.error("❌ No order ID found", order);
+        alert("Cannot cancel: missing order ID");
+        return;
+      }
+      console.log("🗑️ Cancelling order ID:", orderId);
       const res = await fetch(`${BASE_URL}/api/orders/${orderId}/cancel`, {
         method: "POST",
         headers: {
@@ -85,15 +97,18 @@ function OrderTrackingStrip({ order, onDismiss }) {
         },
       });
       const data = await res.json();
+      
       if (res.ok) {
+        console.log("✅ Cancel successful:", data);
         setIsCancelled(true);
         setTimeout(() => onDismiss(), 2000);
       } else {
+        console.error("❌ Cancel failed:", data);
         alert(data.message || "Failed to cancel order");
       }
     } catch (err) {
-      console.error(err);
-      alert("Error cancelling order");
+      console.error("❌ Cancel error:", err);
+      alert("Error cancelling order. Please try again.");
     }
   };
 
