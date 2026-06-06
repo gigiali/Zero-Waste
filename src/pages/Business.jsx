@@ -637,6 +637,7 @@ export default function Business() {
   const [updatingOrderId, setUpdatingOrderId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
   const [deleteBranchId, setDeleteBranchId] = useState(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const isSavingRef = React.useRef(false);
   const isFetchingOffersRef = React.useRef(false);
   const isFetchingOrdersRef = React.useRef(false); 
@@ -1090,13 +1091,16 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
     { id: "reviews", icon: MessageSquare, label: t("common.reviews"), onClick: () => document.getElementById("reviews-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "sales", icon: History, label: t("salesHistory"), onClick: () => document.getElementById("sales-section")?.scrollIntoView({ behavior: "smooth" }) },
     { id: "notifications", icon: Bell, label: t("nav.notifications"), badge: unreadCount > 0 ? unreadCount : null, onClick: () => setShowNotifications(true) },
-    { id: "language", icon: Globe, label: language === "en" ? "English" : "العربية", onClick: () => handleLanguageChange(language === "en" ? "ar" : "en") },
+    { id: "language", icon: Globe, label: language === "en" ? "العربية" : "English", onClick: () => handleLanguageChange(language === "en" ? "ar" : "en") },
     { id: "branches", icon: GitBranch, label: t("branches"), expandable: true, expanded: showBranches, onToggle: () => setShowBranches((b) => !b), children: branches, hasAddBranch: true },
   ];
 
   return (
     <div className="biz-root">
-      <aside className="biz-sidebar">
+      {mobileSidebarOpen && (
+        <div className="biz-sidebar-overlay" onClick={() => setMobileSidebarOpen(false)} />
+      )}
+      <aside className={`biz-sidebar${mobileSidebarOpen ? " biz-sidebar--open" : ""}`}>
         <div className="biz-logo">
   <img src="/images/zerowaste-logo.png" alt="ZeroWaste" className="biz-logo-img" />
   <span className="biz-logo-text"></span>
@@ -1145,7 +1149,12 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
               );
             }
             return (
-              <button type="button" key={item.id} className="biz-nav-btn" onClick={item.onClick}>
+              <button
+                type="button"
+                key={item.id}
+                className="biz-nav-btn"
+                onClick={() => { item.onClick(); setMobileSidebarOpen(false); }}
+              >
                 <span style={{ display: "flex", alignItems: "center", gap: "10px", flex: 1 }}>
                   <span className="biz-nav-icon-wrap"><Icon size={16} /></span>
                   <span>{item.label}</span>
@@ -1168,6 +1177,15 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
       {showNotifications && <NotificationsPanel onClose={() => setShowNotifications(false)} />}
 
       <main className="biz-main">
+        <button
+          type="button"
+          className="biz-mobile-menu-btn"
+          onClick={() => setMobileSidebarOpen((v) => !v)}
+          aria-label="Open menu"
+        >
+          ☰
+        </button>
+
         {isLoading && (
           <div className="biz-skeleton-wrapper">
             <div className="biz-skeleton-header" />
@@ -1429,7 +1447,7 @@ const res = await fetch(`${apiUrl}/api/vendor/offers/${id}`, {
             <p className="biz-modal-body">{t("confirmDelete")}</p>
             <div className="biz-modal-actions-center">
               <button className="biz-modal-btn-cancel" onClick={() => setDeleteBranchId(null)}>{t("common.cancel")}</button>
-              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>{t("common.delete")}</button>
+              <button className="biz-modal-btn-danger" onClick={confirmDeleteBranch}>{t("delete")}</button>
             </div>
           </div>
         </div>

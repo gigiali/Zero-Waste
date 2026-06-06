@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;
@@ -110,3 +112,33 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* ═══════════════════════════════════════════
+   Arabic / RTL global rules
+   ═══════════════════════════════════════════ */
+
+[dir="rtl"],
+[dir="rtl"] body {
+  font-family: 'Tajawal', 'Cairo', 'Segoe UI', system-ui, sans-serif;
+  text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] textarea,
+[dir="rtl"] select {
+  text-align: right;
+  direction: rtl;
+}
+
+[dir="rtl"] button {
+  font-family: 'Tajawal', 'Cairo', inherit;
+}
+
+/* Flip generic flex rows so items flow right → left */
+[dir="rtl"] .flex-row-ltr {
+  flex-direction: row-reverse;
+}
+
+/* Logical padding helpers */
+[dir="rtl"] .pl-reset { padding-left: 0; }
+[dir="rtl"] .pr-reset { padding-right: 0; }

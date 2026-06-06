@@ -342,8 +342,10 @@ function OrderTrackingStrip({ order, onDismiss }) {
         body: formData,
       });
       const responseData = await response.json();
-      if (!response.ok)
+      if (!response.ok) {
+        if (response.status === 400) { onDismiss(); return; }
         throw new Error(responseData.message || "Failed to submit review");
+      }
       setSubmitted(true);
       setReviewDismissed(true);
       setReviewSubmitted(true);

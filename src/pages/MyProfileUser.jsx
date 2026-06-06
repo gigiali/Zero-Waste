@@ -141,6 +141,7 @@ function ChangePasswordDrawer({ onClose }) {
    Confirm Modal
 ───────────────────────────────────────────── */
 function ConfirmModal({ emoji, title, message, confirmLabel, onConfirm, onCancel }) {
+  const { t } = useTranslation();
   return (
     <div className="usr-overlay" onClick={onCancel}>
       <div className="usr-modal" onClick={(e) => e.stopPropagation()}>
@@ -218,15 +219,28 @@ function ReviewModal({ order, onClose, onSubmitted }) {
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to submit review.");
+        let msg = "Failed to submit review.";
+        try {
+          const data = await res.json();
+          msg = typeof data.message === "string"
+            ? data.message
+            : Array.isArray(data.message)
+              ? data.message.join(" ")
+              : Object.values(data.errors ?? data.message ?? {}).flat().join(" ") || msg;
+        } catch { /* non-JSON response — keep default msg */ }
+
+        if (res.status === 400) {
+          setError(msg);
+          return;
+        }
+        throw new Error(msg);
       }
 
       const data = await res.json();
       onSubmitted(order.id, data.review || data.data || { rating, comment, id: Date.now() });
       onClose();
     } catch (err) {
-      setError(err.message || "Something went wrong.");
+      setError(typeof err.message === "string" ? err.message : "Something went wrong.");
     } finally {
       setIsLoading(false);
     }
@@ -314,7 +328,24 @@ function ReviewModal({ order, onClose, onSubmitted }) {
           </div>
         )}
 
-        {error && <p style={{ color: "#ef4444", fontSize: "13px", marginBottom: "10px" }}>{error}</p>}
+        {error && (
+          <div style={{
+            background: "#fffbeb",
+            border: "1px solid #fde68a",
+            borderRadius: "8px",
+            padding: "10px 14px",
+            marginBottom: "10px",
+            display: "flex",
+            alignItems: "flex-start",
+            gap: "8px",
+            fontSize: "13px",
+            color: "#92400e",
+            textAlign: "start",
+          }}>
+            <span style={{ flexShrink: 0, marginTop: "1px" }}>ℹ️</span>
+            <span>{error}</span>
+          </div>
+        )}
 
         <div className="usr-modal-actions">
           <button className="usr-modal-cancel" onClick={onClose}>{t('common.cancel')}</button>

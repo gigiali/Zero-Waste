@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap');
+
 :root {
   --green: #10b981;
   --green-dark: #059669;
@@ -1333,24 +1335,9 @@
   to { transform: rotate(360deg); }
 }
 
-/* ── Responsive ── */
+/* ── Responsive: large screens ── */
 @media (max-width: 1440px) {
   .biz-kpis { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (max-width: 1024px) {
-  .biz-charts { flex-direction: column; }
-}
-
-@media (max-width: 768px) {
-  :root { --sidebar-w: 0px; }
-  .biz-sidebar { display: none; }
-  .biz-main { margin-left: 0; padding: 16px; }
-  .biz-kpis { grid-template-columns: 1fr; }
-  .biz-skeleton-kpis { grid-template-columns: 1fr; }
-  .biz-field-row { grid-template-columns: 1fr; }
-  .biz-welcome { flex-direction: column; gap: 12px; text-align: center; }
-  .mb-details-grid { grid-template-columns: 1fr; }
 }
 
 .biz-status-select {
@@ -1462,4 +1449,142 @@
 
 [dir="rtl"] .biz-review-left {
   flex-direction: row-reverse;
+}
+
+/* ── RTL: Arabic font ── */
+[dir="rtl"] .biz-root,
+[dir="rtl"] .biz-sidebar,
+[dir="rtl"] .biz-nav-btn,
+[dir="rtl"] .biz-branch-btn,
+[dir="rtl"] .biz-field label,
+[dir="rtl"] .biz-field input,
+[dir="rtl"] .biz-field textarea,
+[dir="rtl"] .biz-field select {
+  font-family: 'Tajawal', 'Cairo', sans-serif;
+}
+
+/* ── RTL: branch button text alignment ── */
+[dir="rtl"] .biz-branch-btn {
+  text-align: right;
+}
+
+/* ── RTL: KPI icon flips to left ── */
+[dir="rtl"] .biz-kpi-icon {
+  right: auto;
+  left: 18px;
+}
+
+/* ── RTL: chart / section title accent bar ── */
+[dir="rtl"] .biz-chart-title::before,
+[dir="rtl"] .biz-section-title::before {
+  margin-left: 0;
+  margin-right: 0;
+  order: 1;
+}
+
+/* ── RTL: sidebar profile flip ── */
+[dir="rtl"] .biz-sidebar-profile {
+  flex-direction: row-reverse;
+}
+
+/* ── Mobile hamburger button ── */
+.biz-mobile-menu-btn {
+  display: none;
+  position: fixed;
+  top: 14px;
+  left: 14px;
+  z-index: 200;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  font-size: 1.2rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16,185,129,0.35);
+  transition: all 0.2s ease;
+  align-items: center;
+  justify-content: center;
+}
+
+.biz-mobile-menu-btn:hover {
+  opacity: 0.9;
+  transform: scale(1.04);
+}
+
+[dir="rtl"] .biz-mobile-menu-btn {
+  left: auto;
+  right: 14px;
+}
+
+/* ── Mobile sidebar overlay ── */
+.biz-sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  z-index: 99;
+  animation: fadeIn 0.2s ease;
+}
+
+/* ── Sidebar open state (mobile) ── */
+.biz-sidebar--open {
+  transform: translateX(0) !important;
+}
+
+/* ── Enhanced responsive ── */
+@media (max-width: 1024px) {
+  .biz-kpis { grid-template-columns: repeat(2, 1fr); }
+  .biz-charts { flex-direction: column; }
+}
+
+@media (max-width: 768px) {
+  :root { --sidebar-w: 0px; }
+
+  .biz-mobile-menu-btn {
+    display: flex;
+  }
+
+  .biz-sidebar-overlay {
+    display: block;
+  }
+
+  .biz-sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+    width: 240px;
+    z-index: 100;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.18);
+  }
+
+  [dir="rtl"] .biz-sidebar {
+    transform: translateX(100%);
+  }
+
+  .biz-main {
+    margin-left: 0;
+    padding: 64px 14px 14px;
+  }
+
+  [dir="rtl"] .biz-main {
+    margin-right: 0;
+    padding: 64px 14px 14px;
+  }
+
+  .biz-kpis { grid-template-columns: repeat(2, 1fr); }
+  .biz-skeleton-kpis { grid-template-columns: repeat(2, 1fr); }
+  .biz-field-row { grid-template-columns: 1fr; }
+  .biz-welcome { flex-direction: column; gap: 14px; text-align: center; padding: 20px 18px; }
+  .biz-welcome-title { font-size: 1.15rem; }
+  .biz-impact { text-align: center; }
+  .mb-details-grid { grid-template-columns: 1fr; }
+  .biz-charts { flex-direction: column; }
+}
+
+@media (max-width: 480px) {
+  .biz-kpis { grid-template-columns: 1fr 1fr; }
+  .biz-welcome-title { font-size: 1rem; }
+  .biz-kpi-value { font-size: 1.4rem; }
+  .biz-main { padding: 60px 10px 10px; }
 }

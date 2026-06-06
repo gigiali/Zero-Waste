@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { useAuth } from "../Context/AuthContext";
 import { useTranslation } from "react-i18next";
+import AdminSidebar from "../Components/AdminSidebar";
 import "./Admin.css";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
@@ -99,14 +100,6 @@ const SustainabilityCard = ({ title, value, subtitle, icon: Icon, color }) => (
   </div>
 );
 
-const NavItem = ({ icon: Icon, label, active, onClick, badge }) => (
-  <button type="button" className={`sidebar-nav-item ${active ? "active" : ""}`} onClick={onClick}>
-    <Icon size={18} />
-    <span>{label}</span>
-    {badge && <span className="sidebar-nav-badge">{badge}</span>}
-    {active && <ChevronRight size={14} className="sidebar-nav-arrow" />}
-  </button>
-);
 
 function DeleteConfirmModal({ offer, onConfirm, onCancel, isDeleting, t }) {
   return (
@@ -196,55 +189,96 @@ function AllOffersSection({ token, t }) {
     } catch { return v; }
   };
 
+  const getSavingsPct = (orig, disc) => {
+    const o = parseFloat(orig), d = parseFloat(disc);
+    if (!o || !d || o <= d) return null;
+    return Math.round(((o - d) / o) * 100);
+  };
+
+  const getExpiryState = (exp) => {
+    if (!exp) return "none";
+    const ms = new Date(exp) - Date.now();
+    if (ms < 0) return "expired";
+    if (ms < 86400000) return "urgent";
+    if (ms < 3 * 86400000) return "soon";
+    return "ok";
+  };
+
+  const EXPIRY_COLORS = {
+    expired: { bg: "#fef2f2", text: "#dc2626", dot: "#dc2626" },
+    urgent:  { bg: "#fff7ed", text: "#ea580c", dot: "#ea580c" },
+    soon:    { bg: "#fefce8", text: "#ca8a04", dot: "#ca8a04" },
+    ok:      { bg: "#f0fdf4", text: "#16a34a", dot: "#16a34a" },
+    none:    { bg: "#f8fafc", text: "#94a3b8", dot: "#94a3b8" },
+  };
+
   return (
-    <div className="orders-card">
+    <div style={{ background: "#fff", borderRadius: "16px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", overflow: "hidden", border: "1px solid #f1f5f9" }}>
       {deleteTarget && (
         <DeleteConfirmModal offer={deleteTarget} onConfirm={handleDelete} onCancel={() => setDeleteTarget(null)} isDeleting={isDeleting} t={t} />
       )}
 
-      <div className="orders-card__header">
-        <div className="orders-card__title-row">
-          <Package size={20} color="#696cff" />
-          <h3>{t("admin.allOffers")}</h3>
-          <span className="orders-count-badge">{filtered.length}</span>
-        </div>
-        <div className="orders-card__controls">
-          <div className="search-box">
-            <Search size={14} color="#8592a3" />
-            <input type="text" placeholder={t("admin.searchPlaceholder")} value={search}
-              onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
+      {/* Header */}
+      <div style={{ padding: "20px 24px 16px", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "12px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{ background: "#ede9fe", borderRadius: "10px", padding: "8px", display: "flex" }}>
+            <Package size={20} color="#7c3aed" />
           </div>
-          <button type="button" className="refresh-btn" onClick={fetchOffers} title={t("common.refresh")}><RefreshCw size={14} /></button>
+          <div>
+            <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 700, color: "#1e293b" }}>{t("admin.allOffers")}</h3>
+            <p style={{ margin: 0, fontSize: "0.78rem", color: "#94a3b8" }}>{filtered.length} {filtered.length === 1 ? "offer" : "offers"} found</p>
+          </div>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "7px 12px" }}>
+            <Search size={14} color="#94a3b8" />
+            <input
+              type="text"
+              placeholder={t("admin.searchPlaceholder")}
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+              style={{ border: "none", background: "none", outline: "none", fontSize: "0.85rem", color: "#334155", width: "180px" }}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={fetchOffers}
+            title={t("common.refresh")}
+            style={{ background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "10px", padding: "8px", cursor: "pointer", display: "flex", color: "#64748b", transition: "all 0.15s" }}
+          >
+            <RefreshCw size={15} />
+          </button>
         </div>
       </div>
 
       {deleteSuccess && (
-        <div style={{ padding: "10px 22px", background: "#e8f5e9", color: "#28c76f", fontSize: "0.85rem", fontWeight: 600, borderBottom: "1px solid #d1fae5" }}>
-          ✓ {deleteSuccess}
+        <div style={{ padding: "10px 24px", background: "#f0fdf4", color: "#16a34a", fontSize: "0.83rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px", borderBottom: "1px solid #dcfce7" }}>
+          <span style={{ fontSize: "1rem" }}>✓</span> {deleteSuccess}
         </div>
       )}
 
       {loading ? (
-        <div className="loading-state"><Loader2 size={18} className="spin" /> {t("admin.loadingOffers")}</div>
+        <div style={{ padding: "48px", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", color: "#94a3b8" }}>
+          <Loader2 size={20} style={{ animation: "admin-spin 1s linear infinite" }} /> {t("admin.loadingOffers")}
+        </div>
       ) : error ? (
-        <div className="error-state"><AlertCircle size={16} /> {error}</div>
+        <div style={{ padding: "48px", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", color: "#ef4444" }}>
+          <AlertCircle size={18} /> {error}
+        </div>
       ) : offers.length === 0 ? (
-        <div className="empty-state"><Package size={40} color="#cbd5e1" /><p>{t("admin.noOffers")}</p></div>
+        <div style={{ padding: "60px 24px", textAlign: "center", color: "#94a3b8" }}>
+          <Package size={44} color="#e2e8f0" style={{ marginBottom: "12px" }} />
+          <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 500 }}>{t("admin.noOffers")}</p>
+        </div>
       ) : (
         <>
-          <div className="table-wrapper">
-            <table className="orders-table">
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "780px" }}>
               <thead>
-                <tr>
-                  <th>#</th>
-                  <th>{t("admin.title")}</th>
-                  <th>{t("admin.vendor")}</th>
-                  <th>{t("admin.branch")}</th>
-                  <th>{t("admin.originalPrice")}</th>
-                  <th>{t("admin.discountPrice")}</th>
-                  <th>{t("admin.quantityLeft")}</th>
-                  <th>{t("admin.expiresIn")}</th>
-                  <th>{t("admin.action")}</th>
+                <tr style={{ background: "#f8fafc", borderBottom: "1px solid #f1f5f9" }}>
+                  {["#", t("admin.title"), t("admin.vendor"), t("admin.discountPrice"), t("admin.quantityLeft"), t("admin.expiresIn"), t("admin.action")].map((h, i) => (
+                    <th key={i} style={{ padding: "9px 14px", textAlign: "left", fontSize: "0.68rem", fontWeight: 700, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.07em", whiteSpace: "nowrap" }}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -259,43 +293,123 @@ function AllOffersSection({ token, t }) {
                     offer.vendor?.business_name ||
                     offer.branch?.branch_name ||
                     "—";
-                  const branchName =
-                    offer.branch?.branch_name ||
-                    offer.branch?.store_address ||
-                    "—";
+                  const savingsPct  = getSavingsPct(offer.original_price, offer.discount_price);
+                  const expiryState = getExpiryState(offer.expiration_time);
+                  const expiryCol   = EXPIRY_COLORS[expiryState];
+                  const qty         = offer.quantity_available ?? null;
+                  const isLowStock  = qty !== null && qty <= 3;
+
                   return (
-                    <tr key={offer.id ?? idx}>
-                      <td className="order-id">#{offer.id}</td>
-                      <td>
+                    <tr
+                      key={offer.id ?? idx}
+                      style={{ borderBottom: "1px solid #f8fafc", transition: "background 0.12s" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "#fafafa"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                    >
+                      {/* ID */}
+                      <td style={{ padding: "10px 14px", fontSize: "0.7rem", fontWeight: 700, color: "#c7d2fe", fontFamily: "monospace", width: "44px" }}>
+                        #{offer.id}
+                      </td>
+
+                      {/* Title + image */}
+                      <td style={{ padding: "10px 14px" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                          {imageUrl ? (
-                            <img src={imageUrl} alt={offer.title}
-                              style={{ width: 36, height: 36, borderRadius: 8, objectFit: "cover", flexShrink: 0 }}
-                              onError={(e) => { e.target.style.display = "none"; }} />
-                          ) : (
-                            <div style={{ width: 36, height: 36, borderRadius: 8, background: "#f3f4f6", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.1rem", flexShrink: 0 }}>🍽️</div>
-                          )}
-                          <span style={{ fontWeight: 600, color: "#2f3349", fontSize: "0.85rem" }}>{offer.title || "—"}</span>
+                          <div style={{ flexShrink: 0 }}>
+                            {imageUrl ? (
+                              <img
+                                src={imageUrl}
+                                alt={offer.title}
+                                style={{ width: 34, height: 34, borderRadius: 8, objectFit: "cover", border: "1.5px solid #f1f5f9" }}
+                                onError={(e) => { e.target.style.display = "none"; e.target.nextSibling.style.display = "flex"; }}
+                              />
+                            ) : null}
+                            <div style={{ width: 34, height: 34, borderRadius: 8, background: "linear-gradient(135deg, #ede9fe, #ddd6fe)", display: imageUrl ? "none" : "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem" }}>🍽️</div>
+                          </div>
+                          <div>
+                            <p style={{ margin: 0, fontWeight: 600, color: "#1e293b", fontSize: "0.8rem", lineHeight: 1.3 }}>{offer.title || "—"}</p>
+                            <p style={{ margin: "1px 0 0", fontSize: "0.69rem", color: "#94a3b8" }}>{offer.branch?.branch_name || offer.branch?.store_address || ""}</p>
+                          </div>
                         </div>
                       </td>
-                      <td style={{ color: "#8592a3", fontSize: "0.82rem" }}>{vendorName}</td>
-                      <td style={{ color: "#8592a3", fontSize: "0.82rem" }}>{branchName}</td>
-                      <td style={{ color: "#8592a3" }}>{offer.original_price ?? "—"}</td>
-                      <td style={{ fontWeight: 700, color: "#28c76f" }}>{offer.discount_price ?? "—"}</td>
-                      <td style={{ color: "#566a7f" }}>{offer.quantity_available ?? "—"}</td>
-                      <td style={{ color: "#566a7f", fontSize: "0.8rem" }}>{fmtExpiry(offer.expiration_time)}</td>
-                      <td>
+
+                      {/* Vendor */}
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                          <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#f0fdf4", border: "1.5px solid #bbf7d0", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.62rem", fontWeight: 700, color: "#16a34a", flexShrink: 0 }}>
+                            {(vendorName[0] || "?").toUpperCase()}
+                          </div>
+                          <span style={{ fontSize: "0.77rem", color: "#475569", fontWeight: 500 }}>{vendorName}</span>
+                        </div>
+                      </td>
+
+                      {/* Price */}
+                      <td style={{ padding: "10px 14px" }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+                          <span style={{ fontWeight: 700, color: "#7c3aed", fontSize: "0.84rem" }}>
+                            EGP {offer.discount_price ?? "—"}
+                          </span>
+                          {offer.original_price && (
+                            <span style={{ fontSize: "0.69rem", color: "#94a3b8", textDecoration: "line-through" }}>
+                              EGP {offer.original_price}
+                            </span>
+                          )}
+                          {savingsPct && (
+                            <span style={{ display: "inline-flex", alignItems: "center", background: "#dcfce7", color: "#16a34a", fontSize: "0.64rem", fontWeight: 700, borderRadius: "4px", padding: "1px 5px", width: "fit-content" }}>
+                              -{savingsPct}%
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Quantity */}
+                      <td style={{ padding: "10px 14px" }}>
+                        {qty === null ? (
+                          <span style={{ color: "#cbd5e1", fontSize: "0.75rem" }}>—</span>
+                        ) : (
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            background: isLowStock ? "#fef2f2" : "#f0fdf4",
+                            color: isLowStock ? "#dc2626" : "#16a34a",
+                            border: `1px solid ${isLowStock ? "#fecaca" : "#bbf7d0"}`,
+                            borderRadius: "6px", padding: "3px 8px",
+                            fontSize: "0.73rem", fontWeight: 700,
+                          }}>
+                            {isLowStock && <span style={{ fontSize: "0.65rem" }}>⚠</span>}
+                            {qty} left
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Expiry */}
+                      <td style={{ padding: "10px 14px" }}>
+                        <span style={{
+                          display: "inline-flex", alignItems: "center", gap: "5px",
+                          background: expiryCol.bg, color: expiryCol.text,
+                          borderRadius: "6px", padding: "3px 8px",
+                          fontSize: "0.7rem", fontWeight: 600, whiteSpace: "nowrap",
+                        }}>
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: expiryCol.dot, flexShrink: 0 }} />
+                          {expiryState === "expired" ? "Expired" : fmtExpiry(offer.expiration_time)}
+                        </span>
+                      </td>
+
+                      {/* Delete */}
+                      <td style={{ padding: "10px 14px" }}>
                         <button
                           onClick={() => setDeleteTarget(offer)}
                           title={t("admin.deleteOffer")}
                           style={{
-                            background: "#fef2f2", border: "1px solid #fecaca", borderRadius: "8px",
-                            padding: "6px 10px", cursor: "pointer", color: "#ff4d49",
-                            display: "flex", alignItems: "center", gap: "4px",
-                            fontSize: "0.78rem", fontWeight: 600,
+                            display: "inline-flex", alignItems: "center", gap: "4px",
+                            background: "#fef2f2", border: "1px solid #fecaca",
+                            borderRadius: "7px", padding: "5px 10px",
+                            cursor: "pointer", color: "#dc2626",
+                            fontSize: "0.73rem", fontWeight: 600,
+                            transition: "all 0.14s",
                           }}
+                          onMouseEnter={(e) => { e.currentTarget.style.background = "#fee2e2"; e.currentTarget.style.borderColor = "#fca5a5"; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.background = "#fef2f2"; e.currentTarget.style.borderColor = "#fecaca"; }}
                         >
-                          <Trash2 size={14} /> {t("admin.delete")}
+                          <Trash2 size={12} /> {t("admin.delete")}
                         </button>
                       </td>
                     </tr>
@@ -305,23 +419,25 @@ function AllOffersSection({ token, t }) {
             </table>
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
-            <div className="pagination">
-              <span className="pagination__info">
-                {t("admin.showing")} {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} {t("admin.of")} {filtered.length}
+            <div style={{ padding: "14px 24px", borderTop: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "8px" }}>
+              <span style={{ fontSize: "0.8rem", color: "#94a3b8" }}>
+                Showing {(page - 1) * PER_PAGE + 1}–{Math.min(page * PER_PAGE, filtered.length)} of {filtered.length}
               </span>
-              <div className="pagination__controls">
-                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="pagination__btn">‹ {t("admin.prev")}</button>
+              <div style={{ display: "flex", gap: "4px" }}>
+                <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="pagination__btn">‹</button>
                 {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => i + 1).map((pg) => (
                   <button key={pg} onClick={() => setPage(pg)} className={`pagination__btn ${pg === page ? "active" : ""}`}>{pg}</button>
                 ))}
                 {totalPages > 5 && <span className="pagination__ellipsis">…</span>}
-                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="pagination__btn">{t("admin.next")} ›</button>
+                <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="pagination__btn">›</button>
               </div>
             </div>
           )}
         </>
       )}
+      <style>{`@keyframes admin-spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
@@ -341,8 +457,6 @@ const Admin = () => {
   };
 
   const [activeSection, setActiveSection] = useState("dashboard");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [langDropdownOpen, setLangDropdownOpen] = useState(false);
 
   const [weeklyData, setWeeklyData] = useState([]);
   const [pieData, setPieData] = useState([]);
@@ -581,96 +695,20 @@ const Admin = () => {
     );
   }
 
-  const navItems = isSupport(role) 
-  ? [
-      { id: "dashboard", icon: LayoutDashboard, label: t("admin.dashboard") },
-      { id: "orders", icon: ShoppingBag, label: t("admin.latestOrders"), badge: (() => {
-        const yesterday = new Date(Date.now() - 86400000);
-        const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
-        return recent > 0 ? recent : null;
-      })() },
-      { id: "activity", icon: Activity, label: t("admin.recentActivity") },
-      { id: "sustainability", icon: Leaf, label: t("admin.sustainabilityImpact") },
-    ]
-  : [
-      { id: "dashboard", icon: LayoutDashboard, label: t("admin.dashboard") },
-      { id: "offers", icon: Package, label: t("admin.allOffers") },
-      { id: "orders", icon: ShoppingBag, label: t("admin.latestOrders"), badge: (() => {
-        const yesterday = new Date(Date.now() - 86400000);
-        const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
-        return recent > 0 ? recent : null;
-      })() },
-      { id: "activity", icon: Activity, label: t("admin.recentActivity") },
-      { id: "sustainability", icon: Leaf, label: t("admin.sustainabilityImpact") },
-    ];
-
-  const managementItems = canManage(role) ? [
-    { id: "users",      icon: Users,         label: t("admin.users"),      path: "/admin/users" },
-    { id: "businesses", icon: ClipboardList, label: t("admin.businesses"), path: "/admin/businesses" },
-    { id: "reviews",    icon: Star,          label: t("admin.reviews"),    path: "/admin/review-moderation" },
-  ] : isSupport(role) ? [
-  ] : [];
+  const ordersBadge = (() => {
+    const yesterday = new Date(Date.now() - 86400000);
+    const recent = allOrders.filter(o => new Date(o.created_at || o.order_date) > yesterday).length;
+    return recent > 0 ? recent : null;
+  })();
 
   return (
     <div className="admin-shell">
-      <aside className={`admin-sidebar ${sidebarOpen ? "open" : "closed"}`}>
-        <div className="biz-logo">
-          <img src="/images/zerowaste-logo.png" alt="ZeroWaste Logo" className="biz-logo-img" />
-          {sidebarOpen && (
-            <span className="biz-logo__role">
-              {ROLE_LABEL[role] ?? role}
-            </span>
-          )}
-        </div>
-
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen((v) => !v)} type="button">
-          {sidebarOpen ? <X size={16} /> : <Menu size={16} />}
-        </button>
-
-        <nav className="sidebar-nav">
-          {sidebarOpen && <p className="sidebar-nav-section-title">{t("admin.menu")}</p>}
-          {navItems.map((item) => (
-            <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
-              active={activeSection === item.id} badge={item.badge} onClick={() => item.path ? navigate(item.path) : setActiveSection(item.id)} />
-          ))}
-
-          {sidebarOpen && managementItems.length > 0 && <p className="sidebar-nav-section-title">{t("admin.management")}</p>}
-          {managementItems.map((item) => (
-            <NavItem key={item.id} icon={item.icon} label={sidebarOpen ? item.label : ""}
-              active={activeSection === item.id} onClick={() => navigate(item.path)} />
-          ))}
-
-          <div className="sidebar-nav-divider" />
-          <NavItem icon={Bell} label={sidebarOpen ? t("admin.notifications") : ""}
-            active={activeSection === "notifications"} badge={notifUnread > 0 ? notifUnread : null}
-            onClick={() => setActiveSection("notifications")} />
-
-          <div className="sidebar-lang-wrapper">
-            <button type="button" className="sidebar-nav-item" onClick={() => setLangDropdownOpen((v) => !v)}>
-              <Languages size={18} />
-              {sidebarOpen && (<><span>{t("admin.language")}</span><ChevronDown size={14} style={{ marginLeft: "auto" }} /></>)}
-            </button>
-            {langDropdownOpen && (
-              <div className="lang-dropdown">
-                <button type="button" className={`lang-option ${i18n.language === "en" ? "active" : ""}`}
-                  onClick={() => { i18n.changeLanguage("en"); setLangDropdownOpen(false); }}>🇬🇧 English</button>
-                <button type="button" className={`lang-option ${i18n.language === "ar" ? "active" : ""}`}
-                  onClick={() => { i18n.changeLanguage("ar"); setLangDropdownOpen(false); }}>🇪🇬 العربية</button>
-              </div>
-            )}
-          </div>
-        </nav>
-
-        {sidebarOpen && (
-          <div className="sidebar-profile" onClick={() => navigate("/admin/profile")} style={{ cursor: "pointer" }}>
-            <div className="sidebar-profile__avatar">{(ROLE_LABEL[role] ?? "A")[0]}</div>
-            <div className="sidebar-profile__info">
-              <p className="sidebar-profile__name">{t("admin.admin")}</p>
-              <p className="sidebar-profile__role">{ROLE_LABEL[role] ?? role}</p>
-            </div>
-          </div>
-        )}
-      </aside>
+      <AdminSidebar
+        activeSection={activeSection}
+        onSectionChange={setActiveSection}
+        notifUnread={notifUnread}
+        ordersBadge={ordersBadge}
+      />
 
       <main className="admin-main">
         <header className="admin-topbar">

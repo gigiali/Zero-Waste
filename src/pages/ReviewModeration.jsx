@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "../Components/AdminLayout";
 import { useTranslation } from "react-i18next";
 import {
   Search,
@@ -11,7 +12,6 @@ import {
   ShieldAlert,
   EyeOff,
   BookOpen,
-  ArrowLeft,
   Clock,
 } from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
@@ -236,13 +236,10 @@ export default function ReviewModeration() {
   const totalHidden  = reviews.filter((r) => r.status === "hidden").length;
 
   return (
+    <AdminLayout>
     <div className="rm-page">
       <div className="rm-header">
         <div className="rm-header__left">
-          <button className="rm-back-btn" onClick={() => navigate("/admin")}>
-            <ArrowLeft size={16} />
-            {t("reviewModeration.backToAdmin")}
-          </button>
           <div className="rm-header__title-row">
             <span className="rm-header__icon"><ShieldAlert size={22} /></span>
             <h1 className="rm-title">{t("reviewModeration.title")}</h1>
@@ -401,5 +398,6 @@ export default function ReviewModeration() {
         </div>
       </div>
     </div>
+    </AdminLayout>
   );
 }

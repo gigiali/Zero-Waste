@@ -6,6 +6,7 @@ import {
   CheckCircle, XCircle, X, AlertCircle,
 } from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
+import AdminLayout from "../Components/AdminLayout";
 import "./UserManagement.css";
 
 function SkeletonRow() {
@@ -430,14 +431,12 @@ if (!role || !canViewUsers(role)) {
   };
 
   return (
+    <AdminLayout>
     <div className="um-shell">
       <Toast toasts={toasts} removeToast={removeToast} />
 
       <div className="um-header">
         <div className="um-header__left">
-          <button className="um-back-btn" onClick={() => navigate("/admin")}>
-            <ChevronLeft size={16} /> Dashboard
-          </button>
           <div>
             <h1 className="um-title">User Management</h1>
             <p className="um-subtitle">Manage customers & vendors</p>
@@ -654,5 +653,6 @@ if (!role || !canViewUsers(role)) {
 
       <style>{`@keyframes um-spin { to { transform: rotate(360deg); } } .um-spin { animation: um-spin 1s linear infinite; }`}</style>
     </div>
+    </AdminLayout>
   );
 }

@@ -15,6 +15,7 @@ import { useCart } from "../Context/CartContext";
 import { useAuth } from "../Context/AuthContext";
 import { NotificationsBell } from "./Notificationsdropdown";
 import { useLocationContext } from "../Context/LocationContext";
+import "./Navigation.css";
 
 export default function Navigation({
   borderBottomColor = "#e5e7eb",
@@ -27,6 +28,7 @@ export default function Navigation({
   const { totalItems } = useCart();
   const { isLoggedIn, logout, user, updateUser } = useAuth();
   const { t, i18n } = useTranslation();
+  const isRTL = i18n.language === "ar";
   const { locationName, loadingLocation, fetchNearbyAndFee, clearLocation } =
     useLocationContext();
 
@@ -164,7 +166,7 @@ export default function Navigation({
     const lang = code.toLowerCase();
     setSelectedLanguage(code);
     await i18n.changeLanguage(lang);
-    if (updateUser) updateUser({ language: lang });
+    if (updateUser && isLoggedIn) updateUser({ language: lang });
     updateLanguageOnServer(lang);
   };
 
@@ -328,366 +330,168 @@ export default function Navigation({
   window.location.href = "/home";
 };
 
-  const pillStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
-    padding: "0.5rem 0.75rem",
-    borderRadius: "8px",
-    border: "1px solid #e5e7eb",
-    background: "var(--nav-pill-bg, white)",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-  };
-  const pillHoverIn = (e) => {
-    e.currentTarget.style.background = "#f8fafc";
-    e.currentTarget.style.borderColor = "#cbd5e1";
-  };
-  const pillHoverOut = (e) => {
-    e.currentTarget.style.background = "white";
-    e.currentTarget.style.borderColor = "#e5e7eb";
-  };
-  const avatarStyle = {
-    width: "36px",
-    height: "36px",
-    borderRadius: "50%",
-    background: "white",
-    border: "2px solid #10b981",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    cursor: "pointer",
-    boxShadow: "0 2px 8px rgba(16,185,129,0.2)",
-    transition: "transform 0.15s, box-shadow 0.15s",
-  };
-  const avatarHoverIn = (e) => {
-    e.currentTarget.style.transform = "scale(1.08)";
-    e.currentTarget.style.boxShadow = "0 4px 14px rgba(16,185,129,0.35)";
-  };
-  const avatarHoverOut = (e) => {
-    e.currentTarget.style.transform = "scale(1)";
-    e.currentTarget.style.boxShadow = "0 2px 8px rgba(16,185,129,0.2)";
-  };
-
   return (
     <>
-      <div
+      <nav
+        className="navbar"
         style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
           borderBottom: `1px solid ${borderBottomColor}`,
-          padding: "0.75rem 2rem",
-          background: "var(--nav-bg, #fafafa)",
-          boxShadow: showShadow ? "0 1px 4px rgba(0,0,0,0.04)" : "none",
-          position: "sticky",
-          top: 0,
-          zIndex: 200,
+          boxShadow: showShadow ? "0 2px 16px rgba(0,0,0,0.05)" : "none",
         }}
       >
-        <div
-          style={{
-            cursor: "pointer",
-            display: "flex",
-            alignItems: "center",
-          }}
-          onClick={() => navigate("/home")}
-        >
+        {/* ── Brand ── */}
+        <div className="nav-brand" onClick={() => navigate("/home")}>
           <img
             src="/images/zerowaste-logo.png"
-            alt="Zero Waste logo"
-            onError={(e) => {
-              e.currentTarget.src = "/images/e.png";
-            }}
-            style={{
-              width: "160px",
-              height: "140px",
-              objectFit: "contain",
-              marginTop: "-60px",
-              marginBottom: "-60px",
-              filter: "drop-shadow(0 2px 8px rgba(16,185,129,0.08))",
-            }}
+            alt="Zero Waste"
+            className="nav-logo"
+            onError={(e) => { e.currentTarget.src = "/images/e.png"; }}
           />
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1.25rem" }}>
+
+        {/* ── Right cluster ── */}
+        <div className="nav-items">
+
+          {/* Location */}
           {!hideLocation && (
-            <div
-              style={{
-                ...pillStyle,
-                color: locationName ? "#10b981" : "#6b7280",
-                fontWeight: locationName ? 600 : 500,
-                border: locationName
-                  ? "1px solid #22c55e"
-                  : "1px solid #e5e7eb",
-                background: locationName ? "#f0fdf4" : "white",
-                opacity: loadingLocation ? 0.7 : 1,
-              }}
-              onClick={() => setShowMap(true)}
-              onMouseEnter={(e) => {
-                if (!locationName) {
-                  e.currentTarget.style.background = "#f0fdf4";
-                  e.currentTarget.style.borderColor = "#d1fae5";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (!locationName) {
-                  e.currentTarget.style.background = "white";
-                  e.currentTarget.style.borderColor = "#e5e7eb";
-                }
-              }}
-            >
-              <MapPin size={18} />
-              <span style={{ fontSize: "0.9rem" }}>
-                {loadingLocation ? t("navigation.gettingFee") : locationName || t("navigation.location")}
-              </span>
-              {locationName && !loadingLocation && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    clearLocation();
-                  }}
-                  title="Clear location"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    background: "none",
-                    color: "#10b981",
-                    border: "none",
-                    borderRadius: "50%",
-                    padding: "0.1rem",
-                    cursor: "pointer",
-                    fontSize: "0.75rem",
-                    transition: "color 0.2s",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.color = "#ef4444")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.color = "#10b981")
-                  }
-                >
-                  <X size={14} />
-                </button>
-              )}
-            </div>
+            <>
+              <button
+                className={`nav-location ${locationName ? "nav-location--set" : ""}`}
+                onClick={() => setShowMap(true)}
+                style={{ opacity: loadingLocation ? 0.65 : 1 }}
+                title={locationName || t("navigation.location")}
+              >
+                <MapPin size={15} />
+                <span className="nav-location__text">
+                  {loadingLocation
+                    ? t("navigation.gettingFee")
+                    : locationName || t("navigation.location")}
+                </span>
+                {locationName && !loadingLocation && (
+                  <span
+                    className="nav-location__clear"
+                    role="button"
+                    tabIndex={0}
+                    onClick={(e) => { e.stopPropagation(); clearLocation(); }}
+                    onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.stopPropagation(); clearLocation(); } }}
+                    title="Clear location"
+                  >
+                    <X size={12} />
+                  </span>
+                )}
+              </button>
+              <div className="nav-divider" />
+            </>
           )}
 
+          {/* Cart */}
           {!hideCart && (
-            <div
-              style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
+            <button
+              className="nav-icon-btn"
               onClick={() => navigate("/card")}
-              title="Cart"
-              onMouseEnter={pillHoverIn}
-              onMouseLeave={pillHoverOut}
+              title={t("navigation.cart") || "Cart"}
             >
-              <ShoppingCart size={18} />
+              <ShoppingCart size={19} />
               {totalItems > 0 && (
-                <span
-                  style={{
-                    position: "absolute",
-                    top: "-6px",
-                    right: "-6px",
-                    background: "#22c55e",
-                    color: "white",
-                    borderRadius: "50%",
-                    width: "16px",
-                    height: "16px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "0.65rem",
-                    fontWeight: "bold",
-                    border: "2px solid white",
-                    boxShadow: "0 2px 4px rgba(34,197,94,0.2)",
-                  }}
-                >
+                <span className="badge green-badge">
                   {totalItems > 99 ? "99+" : totalItems}
                 </span>
               )}
-            </div>
+            </button>
           )}
 
-          <div
-            style={{ ...pillStyle, position: "relative", color: "#6b7280" }}
+          {/* Favorites */}
+          <button
+            className="nav-icon-btn"
             onClick={() => navigate("/favorites")}
-            title="Favorites"
-            onMouseEnter={pillHoverIn}
-            onMouseLeave={pillHoverOut}
+            title={t("navigation.favorites") || "Favorites"}
           >
-            <Heart size={18} />
+            <Heart size={19} />
             {favCount > 0 && (
-              <span
-                style={{
-                  position: "absolute",
-                  top: "-6px",
-                  right: "-6px",
-                  background: "#ef4444",
-                  color: "white",
-                  borderRadius: "50%",
-                  width: "16px",
-                  height: "16px",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "0.65rem",
-                  fontWeight: "bold",
-                  border: "2px solid white",
-                }}
-              >
+              <span className="badge">
                 {favCount > 99 ? "99+" : favCount}
               </span>
             )}
-          </div>
+          </button>
 
+          {/* Notifications */}
           <NotificationsBell
             show={showNotifications}
             onToggle={() => setShowNotifications((v) => !v)}
             notifRef={notifRef}
           />
 
-          <div
-            data-lang-dropdown
-            style={{
-              position: "relative",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem",
-              cursor: "pointer",
-              color: "#374151",
-            }}
-            onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-          >
-            <Globe size={20} />
-            <span>{selectedLanguage}</span>
+          <div className="nav-divider" />
+
+          {/* Language switcher */}
+          <div className="language-switcher" data-lang-dropdown onClick={() => setIsLangDropdownOpen((v) => !v)}>
+            <button className="nav-lang-btn">
+              <Globe size={15} />
+              <span>{selectedLanguage}</span>
+            </button>
             {isLangDropdownOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 8px)",
-                  right: 0,
-                  background: "var(--nav-pill-bg, white)",
-                  borderRadius: "8px",
-                  boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
-                  border: "1px solid #e5e7eb",
-                  minWidth: "150px",
-                  zIndex: 1000,
-                }}
-              >
-                {[
-                  ["EN", "English"],
-                  ["AR", "Arabic"],
-                ].map(([code, label]) => (
+              <div className="language-dropdown">
+                {[["EN", "🇬🇧", "English"], ["AR", "🇪🇬", "العربية"]].map(([code, flag, label]) => (
                   <div
                     key={code}
-                    style={{
-                      padding: "0.75rem 1rem",
-                      cursor: "pointer",
-                      backgroundColor:
-                        selectedLanguage === code ? "#f0fdf4" : "white",
-                      display: "flex",
-                      justifyContent: "space-between",
-                    }}
+                    className={`language-option ${selectedLanguage === code ? "active" : ""}`}
                     onClick={(e) => {
                       e.stopPropagation();
                       handleLanguageChange(code);
                       setIsLangDropdownOpen(false);
                     }}
-                    onMouseEnter={(e) => {
-                      if (selectedLanguage !== code)
-                        e.currentTarget.style.backgroundColor = "#f9fafb";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor =
-                        selectedLanguage === code ? "#f0fdf4" : "white";
-                    }}
                   >
-                    <span>{label}</span>
-                    {selectedLanguage === code && (
-                      <div
-                        style={{
-                          width: "8px",
-                          height: "8px",
-                          background: "#10b981",
-                          borderRadius: "50%",
-                          alignSelf: "center",
-                        }}
-                      />
-                    )}
+                    <span>{flag} {label}</span>
+                    {selectedLanguage === code && <span className="active-dot" />}
                   </div>
                 ))}
               </div>
             )}
           </div>
 
+          <div className="nav-divider" />
+
+          {/* Profile / Auth */}
           {!hideProfile ? (
             isLoggedIn ? (
-              <div
-                style={{ display: "flex", alignItems: "center", gap: "1rem" }}
-              >
-                <div
-                  onClick={() => navigate("/profile")}
-                  title="My Profile"
-                  style={avatarStyle}
-                  onMouseEnter={avatarHoverIn}
-                  onMouseLeave={avatarHoverOut}
-                >
-                  <User size={18} color="#10b981" />
-                </div>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
                 <button
+                  className="nav-icon-btn nav-avatar"
+                  onClick={() => navigate("/profile")}
+                  title={t("navigation.myProfile") || "My Profile"}
+                >
+                  <User size={17} />
+                </button>
+                <button
+                  className="nav-logout-btn"
                   onClick={() => setShowLogoutConfirm(true)}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
-                    background: "none",
-                    border: "1.5px solid #ef4444",
-                    color: "#ef4444",
-                    borderRadius: "8px",
-                    padding: "0.4rem 0.8rem",
-                    cursor: "pointer",
-                    fontSize: "0.85rem",
-                    fontWeight: 600,
-                  }}
                 >
                   {t("navigation.logOut")}
                 </button>
               </div>
             ) : (
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "0.5rem",
-                  cursor: "pointer",
-                  background: "#10b981",
-                  color: "white",
-                  borderRadius: "8px",
-                  padding: "0.45rem 1rem",
-                  fontWeight: 600,
-                  fontSize: "0.9rem",
-                }}
+              <button
+                className="nav-signin-btn"
                 onClick={() => navigate("/signin")}
               >
-                <LogIn size={18} />
-                <span>{t("navigation.signIn")}</span>             
-                </div>
+                <LogIn size={16} />
+                <span>{t("navigation.signIn")}</span>
+              </button>
             )
           ) : (
-            <div ref={profileMenuRef} style={{ position: "relative" }}>
-              <div
+            <div ref={profileMenuRef}>
+              <button
+                className="nav-icon-btn nav-avatar"
                 onClick={() => navigate("/profile")}
-                title="My Profile"
-                style={avatarStyle}
-                onMouseEnter={avatarHoverIn}
-                onMouseLeave={avatarHoverOut}
+                title={t("navigation.myProfile") || "My Profile"}
               >
-                <User size={18} color="#10b981" />
-              </div>
+                <User size={17} />
+              </button>
             </div>
           )}
+
         </div>
-      </div>
+      </nav>
 
       {showLogoutConfirm && (
         <div
@@ -830,7 +634,8 @@ export default function Navigation({
                   size={18}
                   style={{
                     position: "absolute",
-                    left: "12px",
+                    left: isRTL ? "auto" : "12px",
+                    right: isRTL ? "12px" : "auto",
                     top: "50%",
                     transform: "translateY(-50%)",
                     color: "#9ca3af",
@@ -846,12 +651,13 @@ export default function Navigation({
                   }
                   style={{
                     width: "100%",
-                    padding: "10px 36px",
+                    padding: isRTL ? "10px 48px 10px 36px" : "10px 36px",
                     border: "1px solid #e5e7eb",
                     borderRadius: "10px",
                     fontSize: "0.95rem",
                     outline: "none",
                     boxSizing: "border-box",
+                    direction: isRTL ? "rtl" : "ltr",
                   }}
                 />
                 {mapSearchQuery && (
@@ -859,7 +665,8 @@ export default function Navigation({
                     size={16}
                     style={{
                       position: "absolute",
-                      right: "48px",
+                      right: isRTL ? "auto" : "48px",
+                      left: isRTL ? "48px" : "auto",
                       top: "50%",
                       transform: "translateY(-50%)",
                       color: "#9ca3af",
@@ -884,7 +691,8 @@ export default function Navigation({
                   title="Use my current location"
                   style={{
                     position: "absolute",
-                    right: "12px",
+                    right: isRTL ? "auto" : "12px",
+                    left: isRTL ? "12px" : "auto",
                     top: "50%",
                     transform: "translateY(-50%)",
                     display: "flex",

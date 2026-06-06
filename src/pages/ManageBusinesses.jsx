@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   Search, MoreVertical, CheckCircle, XCircle,
-  Trash2, Loader2, ArrowLeft, Store, Clock, AlertCircle, ShieldCheck,
+  Trash2, Loader2, Store, Clock, AlertCircle, ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "../Context/AuthContext";
+import AdminLayout from "../Components/AdminLayout";
 import "./ManageBusinesses.css";
 
 const BASE_URL = "https://zero-waste-production.up.railway.app/api";
@@ -49,6 +50,8 @@ function LoadingTimeoutAlert() {
   );
 }
 
+const STATUS_API_VALUES = ["active", "pending", "rejected", "blocked"];
+
 async function fetchVendorsPage(token, page) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
@@ -65,6 +68,24 @@ async function fetchVendorsPage(token, page) {
   }
   const raw = data?.data ?? (Array.isArray(data) ? data : []);
   return { vendors: Array.isArray(raw) ? raw : [], lastPage: 1 };
+}
+
+async function fetchVendorsByStatus(token, status, page) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), API_TIMEOUT);
+  const res = await fetch(`${BASE_URL}/admin/vendor/status?status=${status}&page=${page}`, {
+    headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
+    signal: controller.signal,
+  });
+  clearTimeout(timeout);
+  if (!res.ok) throw new Error(`Failed to fetch vendors with status: ${status}`);
+  const data = await res.json();
+  // Handle Laravel paginated response: { data: { data: [...], last_page: N } }
+  if (data?.data?.data && Array.isArray(data.data.data)) {
+    return { vendors: data.data.data, lastPage: data.data.last_page ?? 1 };
+  }
+  // Flat array response: { data: [...] }
+  return { vendors: Array.isArray(data.data) ? data.data : [], lastPage: 1 };
 }
 
 function DeleteConfirmModal({ businessName, onConfirm, onCancel, busy }) {
@@ -662,31 +683,34 @@ export default function ManageBusinesses() {
       setDataLoading(true);
       setFetchError(null);
       try {
-        const { vendors, lastPage: lp } = await fetchVendorsPage(token, currentPage);
-        setLastPage(lp);
+        if (filterStatus !== "all") {
+          // Call the status-specific API endpoint with pagination
+          const { vendors, lastPage: lp } = await fetchVendorsByStatus(token, filterStatus, currentPage);
+          setLastPage(lp);
+          setBusinesses(
+            vendors.map((v) => ({
+              id: v.id,
+              userId: v.user_id ?? v.user?.id ?? null,
+              name: v.business_name ?? v.name ?? t("manageBusinesses.unknownBusiness"),
+              category: v.vendor_type ?? "—",
+              status: v.user?.status ?? v.status ?? filterStatus,
+            }))
+          );
+        } else {
+          // Load all vendors with pagination + pending merge
+          const { vendors, lastPage: lp } = await fetchVendorsPage(token, currentPage);
+          setLastPage(lp);
 
-        let merged = vendors;
-        if (currentPage === 1) {
-          const pendingRes = await fetch(`${BASE_URL}/admin/vendor/pending`, {
-            headers: { Accept: "application/json", Authorization: `Bearer ${token}` },
-          }).catch(() => null);
-          if (pendingRes?.ok) {
-            const pendingData = await pendingRes.json().catch(() => ({}));
-            const pendingVendors = Array.isArray(pendingData?.data?.vendors) ? pendingData.data.vendors : [];
-            const pendingIds = new Set(pendingVendors.map((v) => v.id));
-            merged = [...pendingVendors, ...vendors.filter((v) => !pendingIds.has(v.id))];
-          }
+          setBusinesses(
+            vendors.map((v) => ({
+              id: v.id,
+              userId: v.user_id ?? v.user?.id ?? null,
+              name: v.business_name ?? v.name ?? t("manageBusinesses.unknownBusiness"),
+              category: v.vendor_type ?? "—",
+              status: v.status ?? "approved",
+            }))
+          );
         }
-
-        setBusinesses(
-          merged.map((v) => ({
-            id: v.id,
-            userId: v.user_id ?? v.user?.id ?? null,
-            name: v.business_name ?? v.name ?? t("manageBusinesses.unknownBusiness"),
-            category: v.vendor_type ?? "—",
-            status: v.status ?? "approved",
-          }))
-        );
       } catch (err) {
         console.error("Fetch Error:", err);
         setFetchError(err.message);
@@ -698,7 +722,7 @@ export default function ManageBusinesses() {
     })();
 
     return () => clearTimeout(timeoutId);
-  }, [token, currentPage, t]);
+  }, [token, currentPage, filterStatus, t]);
 
   const handleStatusChange = (id, status) => {
     setBusinesses((prev) => prev.map((b) => (b.id === id ? { ...b, status } : b)));
@@ -712,35 +736,21 @@ export default function ManageBusinesses() {
 
   const filtered = businesses.filter((b) => {
     const matchSearch = b.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchStatus = filterStatus === "all" || b.status === filterStatus;
     const matchCat = filterCategory === "all" || b.category === filterCategory;
-    if (!role || !canViewBusinesses(role)) {
-  return (
-    <div style={{ padding: "20px", textAlign: "center" }}>
-      <AlertCircle size={40} />
-      <p>You don't have permission to manage businesses.</p>
-    </div>
-  );
-}
-    return matchSearch && matchStatus && matchCat;
+    return matchSearch && matchCat;
   });
 
   const categories = [...new Set(businesses.map((b) => b.category))];
-  const statuses = [...new Set(businesses.map((b) => b.status))];
   const activeCount = (stats.by_status?.active ?? 0) + (stats.by_status?.approved ?? 0);
   const pendingCount = (stats.by_status?.pending ?? 0) + (stats.by_status?.under_review ?? 0);
   const rejectedCount = stats.by_status?.rejected ?? 0;
   const blockedCount = stats.by_status?.blocked ?? 0;
 
   return (
-    <>
+    <AdminLayout>
       <div className="businesses-page">
         <div className="businesses-header">
           <div className="businesses-header__left">
-            <button type="button" className="businesses-back-btn" onClick={() => navigate("/admin")}>
-              <ArrowLeft size={15} />
-              {t("manageBusinesses.backToAdmin")}
-            </button>
             <div>
               <h1 className="businesses-title">{t("manageBusinesses.title")}</h1>
               <p className="businesses-subtitle">{t("manageBusinesses.subtitle")}</p>
@@ -811,13 +821,11 @@ export default function ManageBusinesses() {
           <div className="filters">
             <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="filter-select">
               <option value="all">{t("manageBusinesses.controls.allStates")}</option>
-              {statuses
-                .filter(Boolean)
-                .map((s) => (
-                  <option key={s} value={s}>
-                    {t(getStatus(s).labelKey)}
-                  </option>
-                ))}
+              {STATUS_API_VALUES.map((s) => (
+                <option key={s} value={s}>
+                  {t(getStatus(s).labelKey)}
+                </option>
+              ))}
             </select>
             <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="filter-select">
               <option value="all">{t("manageBusinesses.controls.allSectors")}</option>
@@ -930,6 +938,6 @@ export default function ManageBusinesses() {
       </div>
 
       <style>{`.mb-spin{animation:mb-spin 1s linear infinite}@keyframes mb-spin{to{transform:rotate(360deg)}}`}</style>
-    </>
+    </AdminLayout>
   );
 }
