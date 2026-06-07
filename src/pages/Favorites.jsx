@@ -63,8 +63,8 @@ export default function Favorites() {
 
     try {
       const token = getToken();
-      const res = await fetch(`/api/favorites/toggle`, {
-        method: "POST",
+      const apiUrl = import.meta.env.VITE_API_URL || window.location.origin;
+      const res = await fetch(`${apiUrl}/api/favorites/toggle`, {        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
